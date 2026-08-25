@@ -87,4 +87,8 @@ def install(app):
             return jsonify({"error": exc.message}), exc.status
 
         g.user_email = claims.get("sub")
+        # The per-session API budget is keyed on this. Including `iat` means
+        # signing in again starts a fresh allowance, while one long-lived token
+        # cannot spend without limit.
+        g.session_key = f"{claims.get('sub')}:{claims.get('iat')}"
         return None

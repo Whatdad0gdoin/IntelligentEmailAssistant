@@ -69,6 +69,9 @@ class Config:
         self.openai_api_version = _optional("OPENAI_API_VERSION", "2024-10-21")
         self.openai_temperature = _float("OPENAI_TEMPERATURE", "0")
         self.openai_timeout_seconds = _float("OPENAI_TIMEOUT_SECONDS", "20")
+        # Optional. Set for Azure OpenAI or a local gateway; empty means the
+        # SDK default (api.openai.com).
+        self.openai_base_url = _optional("OPENAI_BASE_URL", "")
 
         # Budget governance. The FIT3163 settings wireframe specifies a $5/week
         # cap; the per-session request cap is the mechanism that enforces it.
@@ -82,6 +85,24 @@ class Config:
         # The Week 6 deck states < 5 seconds; that is the number we report against.
         self.latency_target_seconds = _float("LATENCY_TARGET_SECONDS", "5")
         self.metrics_window = _int("METRICS_WINDOW", 100)
+
+        # --- Email source adapter (section 1) -------------------------------
+        # "fixture" reads RFC-822 .eml files from disk. That directory stands in
+        # for the mail server, exactly as an IMAP host would; it is the *source*
+        # of email, not the app persisting anything (NFR-03). A real source
+        # slots in behind the same interface without touching routes.
+        self.email_source = _optional("EMAIL_SOURCE", "fixture")
+        self.email_fixture_dir = _optional(
+            "EMAIL_FIXTURE_DIR",
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "adapters", "fixtures"),
+        )
+        # Length of the header-derived preview shown in the inbox list.
+        self.snippet_chars = _int("SNIPPET_CHARS", 140)
+
+        # --- Voice (FR-05) ---------------------------------------------------
+        # Below this, the UI shows the transcript back and asks the user to pick
+        # an action rather than dispatching (section 6.3).
+        self.intent_confidence_threshold = _float("INTENT_CONFIDENCE_THRESHOLD", "0.6")
 
         # --- CORS -----------------------------------------------------------
         self.cors_origins = [

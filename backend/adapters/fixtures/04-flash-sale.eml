@@ -1,0 +1,26 @@
+From: TechDeals <offers@techdeals-mail.example>
+To: Student <student@monash.edu>
+Subject: 48-hour flash sale - up to 60% off
+Date: Mon, 24 Aug 2026 06:00:00 +1000
+Message-ID: <7e02f9aa-promo-004@techdeals-mail.example>
+X-Unread: true
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+<html>
+  <head><style>.hdr { color: #d97706; }</style></head>
+  <body>
+    <h1 class="hdr">Our biggest sale of the season is here</h1>
+    <p>Grab premium gear at unbeatable prices before the clock runs out.
+       Up to <strong>60% off</strong> laptops, headphones and accessories.</p>
+    <ul>
+      <li>Laptops from $899</li>
+      <li>Headphones from $79</li>
+    </ul>
+    <p>This offer ends in 48 hours. Shop now and don&rsquo;t miss out.</p>
+    <hr>
+    <p><a href="https://techdeals-mail.example/u">Unsubscribe</a> |
+       <a href="https://techdeals-mail.example/p">Manage preferences</a></p>
+  </body>
+</html>

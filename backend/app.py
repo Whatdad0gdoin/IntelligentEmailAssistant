@@ -14,8 +14,11 @@ from flask_cors import CORS
 from backend.config import Config
 from backend.middleware import jwt as jwt_middleware
 from backend.middleware import logging_filter
+from backend.routes import ai as ai_routes
 from backend.routes import auth as auth_routes
 from backend.routes import health as health_routes
+from backend.routes import inbox as inbox_routes
+from backend.routes import voice as voice_routes
 
 
 def create_app(config=None):
@@ -37,6 +40,9 @@ def create_app(config=None):
 
     app.register_blueprint(health_routes.bp)
     app.register_blueprint(auth_routes.bp)
+    app.register_blueprint(inbox_routes.bp)   # FR-08
+    app.register_blueprint(ai_routes.bp)      # FR-01, FR-02, FR-03
+    app.register_blueprint(voice_routes.bp)   # FR-05
 
     @app.errorhandler(404)
     def _not_found(_):

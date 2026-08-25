@@ -1,0 +1,31 @@
+transcript,expected_intent
+summarise the email from david,summarise
+can you summarize the latest email,summarise
+give me a quick summary of the message from sarah,summarise
+sum up the last email for me,summarise
+brief me on the github security alert,summarise
+summarise this one please,summarise
+uh give me the gist of the flash sale email,summarise
+condense the message from david robinson,summarise
+whats the enrolment email about,summarise
+short summary of the feedback from dr ford,summarise
+read the email from sarah out loud,read
+read this one to me,read
+read aloud the summary of the latest email,read
+can you read me the message from dr ford,read
+play the summary for the github alert,read
+read out the enrolment email,read
+read it to me please,read
+start reading the message from david,read
+say the summary out loud,read
+um read that last one to me,read
+draft a reply to david,draft
+write a response to sarah saying i can make it,draft
+reply to the enrolment email,draft
+compose an answer to dr ford,draft
+draft a polite decline to the dinner invitation,draft
+write back to david robinson confirming friday,draft
+start a reply to the last email,draft
+can you draft a response for me,draft
+answer the message from sarah um saying thanks,draft
+prepare a reply to the github alert,draft
