@@ -96,4 +96,54 @@ export async function login(email, password) {
   });
 }
 
+/** GET /api/inbox -> { groups: { Work: [...], ..., Review: [...] } } (FR-08) */
+export async function fetchInbox({ signal } = {}) {
+  return request("/api/inbox", { signal });
+}
+
+/** POST /api/summarise -> { email_id, summary[], action_items[], grounded, ungrounded_flags[] } (FR-01) */
+export async function summarise(emailId, { signal } = {}) {
+  return request("/api/summarise", { method: "POST", body: { email_id: emailId }, signal });
+}
+
+/**
+ * POST /api/classify -> { results: [{ id, category, confidence, ... }] } (FR-02)
+ *
+ * Batch by design: one round trip for the inbox, not one per row (NFR-01).
+ * Each entry needs { id, subject, body }.
+ */
+export async function classify(emails, { signal } = {}) {
+  return request("/api/classify", { method: "POST", body: { emails }, signal });
+}
+
+/**
+ * POST /api/draft -> { draft, grounded, ungrounded_flags[] } (FR-03)
+ *
+ * Returns text and nothing else. There is no send endpoint on the backend and
+ * this client deliberately does not invent one: approving a draft is a separate
+ * user action, never a side effect of generating it.
+ */
+export async function draft(emailId, instruction, { signal } = {}) {
+  const body = { email_id: emailId };
+  if (instruction && instruction.trim()) body.instruction = instruction.trim();
+  return request("/api/draft", { method: "POST", body, signal });
+}
+
+/**
+ * POST /api/voice/intent -> { intent, target_email_id, confidence } (FR-05)
+ *
+ * `intent` is one of summarise | read | draft | unknown. The audio never leaves
+ * the browser: recognition happens client-side and only the transcript is sent.
+ *
+ * `emails` is optional context ({ id, sender_name, subject }) that lets the
+ * backend resolve "the one from Sarah" onto a real id deterministically.
+ */
+export async function voiceIntent(transcript, emails = [], { signal } = {}) {
+  return request("/api/voice/intent", {
+    method: "POST",
+    body: { transcript, emails },
+    signal,
+  });
+}
+
 export { request };

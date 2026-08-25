@@ -1,13 +1,20 @@
 /* Extracted from InboxIQ.jsx. Markup and classes unchanged.
 
-   The AI action buttons currently call onAction, which shows the teammate's
-   "not functional yet" toast. They are wired to real endpoints in steps 5, 6
-   and 8; until then they must keep telling the truth about not working. */
+   The AI buttons used to call onAction, which showed a "not functional yet"
+   toast for all five. Four of them now open the feature that does the work,
+   with this email already selected. Only Tone & Translate still raises the
+   toast, because FR-06/FR-07 have no endpoint behind them.
+
+   `soon` on each action is the same flag the sidebar reads, taken from the same
+   FEATURES table, so a button here and a nav item there cannot disagree about
+   whether something is built. */
 import {
   MessageSquareReply, Mic, Paperclip, SlidersHorizontal, Sparkles, Volume2,
 } from "lucide-react";
 
-import { CATEGORIES } from "../lib/constants.js";
+import { CATEGORIES, FEATURES } from "../lib/constants.js";
+
+const isSoon = (id) => Boolean(FEATURES.find((f) => f.id === id)?.soon);
 
 export const MAIL_ACTIONS = [
   { id: "summarise", label: "Summarise", icon: Sparkles },
@@ -17,9 +24,13 @@ export const MAIL_ACTIONS = [
   { id: "voice", label: "Voice Reply", icon: Mic },
 ];
 
-
-export default function ReadingPane({ email, onClose, onAction }) {
+export default function ReadingPane({ email, onClose, onFeature, onUnavailable }) {
   const cat = CATEGORIES.find((c) => c.key === email.cat);
+
+  // Selecting the email is the caller's job (the row click already did it), so
+  // opening a feature is just a view change.
+  const open = (id, label) => (isSoon(id) ? onUnavailable(label) : onFeature(id));
+
   return (
     <div className="reader" key={email.id}>
       {/* Action toolbar */}
@@ -31,9 +42,14 @@ export default function ReadingPane({ email, onClose, onAction }) {
           {MAIL_ACTIONS.map((a) => {
             const AI = a.icon;
             return (
-              <button key={a.id} className="action-btn" onClick={() => onAction(a.label)}>
+              <button
+                key={a.id}
+                className={`action-btn ${isSoon(a.id) ? "is-soon" : ""}`}
+                onClick={() => open(a.id, a.label)}
+              >
                 <AI size={15} strokeWidth={2.2} />
                 <span>{a.label}</span>
+                {isSoon(a.id) && <span className="nav-soon">soon</span>}
               </button>
             );
           })}
@@ -69,12 +85,12 @@ export default function ReadingPane({ email, onClose, onAction }) {
         )}
       </div>
 
-      {/* Footer reply bar (non-functional) */}
+      {/* Footer reply bar */}
       <div className="reader-foot">
-        <button className="reply-btn" onClick={() => onAction("Draft Reply")}>
+        <button className="reply-btn" onClick={() => onFeature("reply")}>
           <MessageSquareReply size={16} strokeWidth={2.2} /> Reply
         </button>
-        <button className="reply-btn ghost" onClick={() => onAction("Read Aloud")}>
+        <button className="reply-btn ghost" onClick={() => onFeature("speak")}>
           <Volume2 size={16} strokeWidth={2.2} /> Read Aloud
         </button>
       </div>

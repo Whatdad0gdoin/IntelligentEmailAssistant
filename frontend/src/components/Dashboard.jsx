@@ -1,22 +1,35 @@
 /**
- * Authenticated app shell. Adapted from the teammate's Dashboard.
+ * Authenticated app shell.
  *
- * Changes from the original:
- *  - emails come from a prop rather than a module-scope constant, so step 4 can
- *    swap the placeholder fixtures for GET /api/inbox without touching layout;
- *  - the Settings button is wired (it was a dead control with no onClick);
- *  - the toast timer no longer hangs off `window`.
+ * Routing note. This used to send every AI and Voice feature to <ComingSoon>
+ * and pass a hardcoded `soon` prop to every one of their sidebar entries. That
+ * was accurate when none of the routes existed; it stopped being accurate the
+ * moment they shipped, and nothing in the code noticed, because the badge and
+ * the placeholder were both literals rather than statements about the build.
+ *
+ * Now there is one source of truth: `soon` lives on the feature in
+ * lib/constants.js, the sidebar reads it, and this switch sends a feature to
+ * <ComingSoon> only when the feature actually carries the flag. Tone &
+ * Translate (FR-06/FR-07) and Settings are the two that still do -- there is no
+ * endpoint behind either of them.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Hammer, Inbox as InboxIcon, LogOut, PenLine, Settings as SettingsIcon } from "lucide-react";
+import { Hammer, LogOut, PenLine, Settings as SettingsIcon } from "lucide-react";
 
 import ComingSoon from "./ComingSoon.jsx";
 import SideItem from "./SideItem.jsx";
+import CategoriseView from "../views/Categorise.jsx";
 import DraftView from "../views/Draft.jsx";
 import InboxView from "../views/Inbox.jsx";
 import SettingsView from "../views/Settings.jsx";
+import SpeakView from "../views/Speak.jsx";
+import SummariseView from "../views/Summarise.jsx";
+import VoiceView from "../views/Voice.jsx";
 import { FEATURES } from "../lib/constants.js";
+
+/** Voice intent -> the view that performs it (FR-05). */
+const INTENT_VIEW = { summarise: "summarise", read: "speak", draft: "reply" };
 
 export default function Dashboard({ user, emails, onLogout }) {
   const [active, setActive] = useState("inbox");
@@ -25,8 +38,6 @@ export default function Dashboard({ user, emails, onLogout }) {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
-  // The original stashed this timer on window.__iqToast, which leaks across
-  // mounts and survives logout. A ref is scoped to the component and cleans up.
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   const showToast = (label) => {
@@ -41,6 +52,14 @@ export default function Dashboard({ user, emails, onLogout }) {
 
   const backToInbox = () => setActive("inbox");
 
+  /** A confirmed voice intent lands the user on the view that does the thing. */
+  const runIntent = (intent, emailId) => {
+    if (emailId) setSelected(emailId);
+    setActive(INTENT_VIEW[intent] ?? "inbox");
+  };
+
+  const featureProps = { emails, selected, setSelected, onBack: backToInbox };
+
   let main;
   if (active === "inbox") {
     main = (
@@ -52,13 +71,22 @@ export default function Dashboard({ user, emails, onLogout }) {
         selected={selected}
         setSelected={setSelected}
         unreadCount={unreadCount}
-        onAction={showToast}
+        onFeature={setActive}
+        onUnavailable={showToast}
       />
     );
+  } else if (active === "summarise") {
+    main = <SummariseView {...featureProps} />;
+  } else if (active === "categorise") {
+    main = <CategoriseView emails={emails} onBack={backToInbox} />;
+  } else if (active === "reply") {
+    main = <DraftView {...featureProps} />;
+  } else if (active === "speak") {
+    main = <SpeakView {...featureProps} />;
+  } else if (active === "voice") {
+    main = <VoiceView emails={emails} onRun={runIntent} onBack={backToInbox} />;
   } else if (active === "settings") {
     main = <SettingsView onBack={backToInbox} />;
-  } else if (active === "reply") {
-    main = <DraftView onBack={backToInbox} />;
   } else {
     main = <ComingSoon feature={activeFeature} onBack={backToInbox} />;
   }
@@ -74,9 +102,9 @@ export default function Dashboard({ user, emails, onLogout }) {
         <nav className="side-nav">
           <SideItem f={FEATURES[0]} active={active} onClick={setActive} badge={unreadCount} />
           <div className="nav-group-label">AI Tools</div>
-          {FEATURES.filter((f) => f.group === "ai").map((f) => <SideItem key={f.id} f={f} active={active} onClick={setActive} soon />)}
+          {FEATURES.filter((f) => f.group === "ai").map((f) => <SideItem key={f.id} f={f} active={active} onClick={setActive} />)}
           <div className="nav-group-label">Voice</div>
-          {FEATURES.filter((f) => f.group === "voice").map((f) => <SideItem key={f.id} f={f} active={active} onClick={setActive} soon />)}
+          {FEATURES.filter((f) => f.group === "voice").map((f) => <SideItem key={f.id} f={f} active={active} onClick={setActive} />)}
         </nav>
         <div className="side-foot">
           <button className={`side-mini ${active === "settings" ? "active" : ""}`} onClick={() => setActive("settings")}>
@@ -100,7 +128,7 @@ export default function Dashboard({ user, emails, onLogout }) {
           <span className="toast-icon"><Hammer size={15} strokeWidth={2.4} /></span>
           <div className="toast-text">
             <b>{toast}</b>
-            <span>This feature is not functional yet - coming in a later step.</span>
+            <span>Not built in this release — FR-06/FR-07 are out of scope.</span>
           </div>
         </div>
       )}

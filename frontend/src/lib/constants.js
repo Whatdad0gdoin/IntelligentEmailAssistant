@@ -18,12 +18,29 @@ export const ROTATING = [
   { icon: Languages, text: "Reply in any language, any tone" },
 ];
 
+/**
+ * Nav features.
+ *
+ * `soon: true` marks a feature with no implementation behind it, and it is the
+ * ONLY thing that puts the amber "soon" badge in the sidebar. It used to be a
+ * literal prop passed to every AI and Voice item in Dashboard, which meant the
+ * badge kept appearing on features whose endpoints had already shipped -- the
+ * label described the state of the sidebar, not the state of the build.
+ *
+ * The rule now: a feature is `soon` when there is no route serving it.
+ *   FR-01 summarise   -> POST /api/summarise    built
+ *   FR-02 categorise  -> POST /api/classify     built
+ *   FR-03 reply       -> POST /api/draft        built
+ *   FR-05 voice       -> POST /api/voice/intent built
+ *   speak             -> browser speechSynthesis, no backend needed
+ *   FR-06/07 tone     -> nothing. Out of scope for this build, stays `soon`.
+ */
 export const FEATURES = [
   { id: "inbox", label: "Inbox", icon: Inbox, group: "main" },
   { id: "summarise", label: "Summarise", icon: Sparkles, group: "ai", desc: "Condense unread emails into a 2–3 sentence brief." },
   { id: "categorise", label: "Auto-Categorise", icon: ListChecks, group: "ai", desc: "Sort every email into Work, Personal, Promotions & Studies." },
   { id: "reply", label: "Draft Reply", icon: MessageSquareReply, group: "ai", desc: "Generate a reply you review and approve before sending." },
-  { id: "tone", label: "Tone & Translate", icon: SlidersHorizontal, group: "ai", desc: "Rewrite replies in any tone, or translate to any language." },
+  { id: "tone", label: "Tone & Translate", icon: SlidersHorizontal, group: "ai", soon: true, desc: "Rewrite replies in any tone, or translate to any language." },
   { id: "speak", label: "Read Aloud", icon: Volume2, group: "voice", desc: "Listen to summaries with built-in text-to-speech." },
   { id: "voice", label: "Voice Commands", icon: Mic, group: "voice", desc: "Control your inbox hands-free with your voice." },
 ];

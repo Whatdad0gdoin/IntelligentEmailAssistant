@@ -26,7 +26,8 @@ export default function Inbox({
   selected,
   setSelected,
   unreadCount,
-  onAction,
+  onFeature,
+  onUnavailable,
 }) {
   const openEmail = shown.find((e) => e.id === selected) || emails.find((e) => e.id === selected);
 
@@ -93,7 +94,12 @@ export default function Inbox({
       {/* RIGHT: reading pane */}
       <div className="inbox-right">
         {openEmail ? (
-          <ReadingPane email={openEmail} onClose={() => setSelected(null)} onAction={onAction} />
+          <ReadingPane
+            email={openEmail}
+            onClose={() => setSelected(null)}
+            onFeature={onFeature}
+            onUnavailable={onUnavailable}
+          />
         ) : (
           <div className="reader-empty">
             <div className="reader-empty-icon"><InboxIcon size={40} strokeWidth={1.6} /></div>
