@@ -193,3 +193,40 @@ describe("reader layout", () => {
     expect(last).toMatch(/overflow-y:\s*auto/);
   });
 });
+
+describe("the selected row is not clipped", () => {
+  /** Last declaration of `prop` within any rule whose selector matches. */
+  const lastDecl = (selectorNeedle, prop) => {
+    const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    let value = null;
+    for (const m of withoutComments.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (!m[1].includes(selectorNeedle)) continue;
+      const pattern = new RegExp("(?:^|;)\\s*" + prop + "\\s*:\\s*([^;]+)", "g");
+      const d = [...m[2].matchAll(pattern)];
+      if (d.length) value = d[d.length - 1][1].trim();
+    }
+    return value;
+  };
+
+  it("draws its ring inside the element, so a scroll container cannot cut it", () => {
+    // The list scrolls and .inbox-left is overflow:hidden, so an outset ring on
+    // the first row loses its top and left edges. inset survives both.
+    const shadow = lastDecl(".mail-row.sel", "box-shadow");
+    expect(shadow, ".mail-row.sel has no box-shadow rule").not.toBeNull();
+    expect(shadow).toMatch(/inset/);
+  });
+
+  it("the scrolling list has padding on every side, not just the right", () => {
+    const padding = lastDecl(".mail-list", "padding");
+    expect(padding, ".mail-list has no padding rule").not.toBeNull();
+    const parts = padding.split(/\s+/);
+    // A single value applies to all sides; otherwise every side must be > 0.
+    const sides = parts.length === 1 ? [parts[0], parts[0], parts[0], parts[0]]
+      : parts.length === 2 ? [parts[0], parts[1], parts[0], parts[1]]
+      : parts.length === 3 ? [parts[0], parts[1], parts[2], parts[1]]
+      : parts;
+    for (const side of sides) {
+      expect(parseFloat(side), `padding side "${side}" leaves no room for the ring`).toBeGreaterThan(0);
+    }
+  });
+});

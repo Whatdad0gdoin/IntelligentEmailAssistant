@@ -11,11 +11,13 @@
  * below threshold. It is never a silent fallback to Work.
  */
 
-import { AlertCircle, Bell, Inbox as InboxIcon, Search } from "lucide-react";
+import { useState } from "react";
+import { AlertCircle, Inbox as InboxIcon, Search, X } from "lucide-react";
 
 import ReadingPane from "../components/ReadingPane.jsx";
 import { CATEGORIES, REVIEW_CATEGORY } from "../lib/constants.js";
 import { formatReceived } from "../lib/format.js";
+import { matchesQuery, normaliseQuery, searchEmails } from "../lib/search.js";
 
 const GROUP_ORDER = ["Work", "Personal", "Promotions", "Studies", "Review"];
 
@@ -83,6 +85,8 @@ export default function Inbox({
   pendingAction,
   onActionConsumed,
 }) {
+  const [query, setQuery] = useState("");
+
   const total = GROUP_ORDER.reduce((n, g) => n + (groups[g]?.length || 0), 0);
   const unreadCount = GROUP_ORDER.reduce(
     (n, g) => n + (groups[g] || []).filter((e) => e.unread).length,
@@ -94,6 +98,21 @@ export default function Inbox({
     return filter === "all" || filter === name;
   });
 
+  const q = normaliseQuery(query);
+  const matches = (email) => matchesQuery(email, q);
+
+  // Search results are one list: splitting six hits across five headed
+  // sections buries them. Same for "All", which reads as a single inbox
+  // rather than five stacked ones.
+  const flatten = (names) => searchEmails(names.flatMap((name) => groups[name] || []), q);
+
+  const searching = q.length > 0;
+  const showFlat = searching || filter === "all";
+  const flatList = showFlat ? flatten(GROUP_ORDER) : [];
+  const groupedNames = showFlat
+    ? []
+    : GROUP_ORDER.filter((name) => (groups[name] || []).some(matches));
+
   let rowIndex = 0;
 
   return (
@@ -102,18 +121,24 @@ export default function Inbox({
         <header className="main-head">
           <div>
             <h1 className="main-title">Inbox</h1>
-            <p className="main-sub">
-              {loading ? "Classifying…" : `${unreadCount} unread · ${total} total`}
-            </p>
-          </div>
-          <div className="head-actions">
-            <button className="icon-btn" aria-label="Notifications"><Bell size={18} /></button>
+            {loading && <p className="main-sub">Classifying…</p>}
           </div>
         </header>
 
         <div className="search-box wide">
           <Search size={16} className="search-icon" />
-          <input placeholder="Search mail…" />
+          <input
+            type="search"
+            placeholder="Search mail…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search mail"
+          />
+          {searching && (
+            <button className="search-clear" onClick={() => setQuery("")} aria-label="Clear search">
+              <X size={15} />
+            </button>
+          )}
         </div>
 
         <div className="filter-row">
@@ -153,12 +178,37 @@ export default function Inbox({
           <div className="reader-empty"><h3>No emails</h3><p>The mailbox is empty.</p></div>
         )}
 
-        {!loading && !error && visibleGroups.map((name) => (
+        {!loading && !error && searching && (
+          <p className="search-summary">
+            {flatList.length === 0
+              ? "No messages match"
+              : `${flatList.length} ${flatList.length === 1 ? "message" : "messages"} matching`}{" "}
+            <b>“{query.trim()}”</b>
+          </p>
+        )}
+
+        {/* One flat list: either a search result set, or the "All" view. */}
+        {!loading && !error && showFlat && (
+          <div className="mail-list">
+            {flatList.map((email) => (
+              <MailRow
+                key={email.id}
+                email={email}
+                index={rowIndex++}
+                selected={selected === email.id}
+                onSelect={setSelected}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* A single category, still headed so the Review explanation has a home. */}
+        {!loading && !error && groupedNames.map((name) => (
           <section className="mail-group" key={name}>
             <h2 className="mail-group-head" style={{ "--c": COLOR_BY_LABEL[name] }}>
               <span className="chip-dot" />
               {name}
-              <span className="mail-group-count">{groups[name].length}</span>
+              <span className="mail-group-count">{(groups[name] || []).filter(matches).length}</span>
             </h2>
             {name === "Review" && (
               <p className="mail-group-note">
@@ -166,7 +216,7 @@ export default function Inbox({
               </p>
             )}
             <div className="mail-list">
-              {groups[name].map((email) => (
+              {(groups[name] || []).filter(matches).map((email) => (
                 <MailRow
                   key={email.id}
                   email={email}

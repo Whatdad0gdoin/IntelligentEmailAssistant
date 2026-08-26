@@ -778,3 +778,62 @@ body { background:var(--paper); overflow:hidden; }
   border-color: var(--blue);
   color: var(--blue-deep);
 }
+
+/* ===== SEARCH =====
+   Filters the emails already loaded, so typing costs no request and no API
+   budget. The clear button matters: `type="search"` renders a native clear
+   affordance in some browsers and nothing in others, so the app supplies its
+   own rather than depending on the engine. */
+.search-box { position: relative; }
+.iq button.search-clear {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: var(--paper-2);
+  color: var(--ink-3);
+  transition: background 0.15s, color 0.15s;
+}
+.iq button.search-clear:hover {
+  background: var(--ink-3);
+  color: #fff;
+}
+/* Chrome draws its own X on type=search; ours is the one that clears state. */
+.search-box input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.search-summary {
+  font-size: 13px;
+  color: var(--grey);
+  margin: 0 2px 14px;
+  line-height: 1.5;
+}
+.search-summary b { color: var(--ink-2); font-weight: 600; }
+
+/* ===== SELECTED-ROW RING NO LONGER CLIPPED =====
+   `.mail-row.sel` draws its ring with `box-shadow: 0 0 0 4px`, which extends
+   4px on every side. Its scroll container had `padding-right: 4px` and nothing
+   on the other three, and `.inbox-left` is `overflow: hidden`, so the left and
+   top of the ring were cut off - most visibly on the first row, which has no
+   row above it to hide the seam.
+
+   Two changes, because either alone leaves an edge case:
+
+   1. The ring is now drawn INSIDE the element with an inset shadow, so no
+      amount of clipping can remove it. This is what fixes the reported bug.
+   2. The list still gains symmetric padding, because the hover state uses an
+      outset shadow too and that was being clipped in the same way. */
+.inbox-left .mail-list {
+  padding: 4px 6px 6px 4px;
+}
+.iq button.mail-row.sel {
+  border-color: var(--blue);
+  box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.30);
+}
+.iq button.mail-row.sel:hover {
+  box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.30), var(--shadow-md);
+}
