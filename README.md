@@ -4,7 +4,7 @@ FIT3164 · Group DS-25 · Project 10
 
 An LLM-powered email assistant: summarisation, categorisation, human-in-the-loop
 reply drafting, and voice interaction. React SPA → Flask REST API → LLM
-orchestrator → OpenAI API.
+orchestrator → OpenAI API.  
 
 ## Build status
 

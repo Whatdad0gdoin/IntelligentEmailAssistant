@@ -94,3 +94,24 @@ describe("sign-in", () => {
     await expect(api.login("a@b.com", "pw")).rejects.toThrow(/could not reach the server/i);
   });
 });
+
+describe("backend not running", () => {
+  it("says the API is unreachable when a 5xx carries no JSON body", async () => {
+    // What Vite's proxy returns when it cannot connect to Flask.
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => {
+        throw new SyntaxError("Unexpected token < in JSON");
+      },
+    });
+
+    await expect(api.request("/api/inbox")).rejects.toThrow(/cannot reach the api server/i);
+  });
+
+  it("still surfaces a genuine backend 500 that carries a JSON error", async () => {
+    global.fetch = mockFetch(500, { error: "Internal server error" });
+
+    await expect(api.request("/api/inbox")).rejects.toThrow("Internal server error");
+  });
+});

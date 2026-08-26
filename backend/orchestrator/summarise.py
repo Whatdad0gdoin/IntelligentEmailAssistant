@@ -20,6 +20,7 @@ import logging
 from backend.orchestrator import prompts
 from backend.orchestrator.cache import SUMMARY_CACHE
 from backend.orchestrator.client import LLMError, get_client
+from backend.orchestrator.provenance import locate
 from backend.orchestrator.grounding import check_grounding
 from backend.orchestrator.preprocess import preprocess
 from backend.orchestrator.schemas import (
@@ -138,6 +139,10 @@ def summarise_email(email, config, session_key=None, user=None, use_cache=True):
         "email_id": email.id,
         "summary": sentences,
         "action_items": action_items,
+        # Character offsets into the preprocessed body, so the UI can show
+        # which passage each sentence came from. Computed deterministically
+        # here, never asked of the model (rule 5).
+        "provenance": locate(sentences, cleaned.text),
         "grounded": result.grounded,
         "ungrounded_flags": result.as_api_flags(),
     }

@@ -18,3 +18,9 @@ frontend/.vite/
 # OS / editor
 .DS_Store
 Thumbs.db
+
+# Evaluation data: downloaded archives and extractions are large and
+# redistributable only under their own licences. Regenerate with
+# `python -m eval.build_dataset`. The curated CSVs ARE committed.
+eval/data/raw/
+eval/data/interim/

@@ -79,6 +79,17 @@ async function request(path, { method = "GET", body, signal, isAuthAttempt = fal
   }
 
   if (!response.ok) {
+    // The dev server proxies /api to Flask. When Flask is not running, the
+    // proxy itself answers with a 5xx and a non-JSON body -- which read as
+    // "Request failed (500)" and sent us hunting for a server bug that did not
+    // exist. A real backend error always carries a JSON { error } payload, so
+    // the absence of one on a 5xx means the API was never reached.
+    if (response.status >= 500 && payload === null) {
+      throw new ApiError(
+        "Cannot reach the API server. Start the backend with: python -m backend.run",
+        response.status
+      );
+    }
     throw new ApiError(payload?.error || `Request failed (${response.status})`, response.status);
   }
 
@@ -144,6 +155,15 @@ export async function voiceIntent(transcript, emails = [], { signal } = {}) {
     body: { transcript, emails },
     signal,
   });
+}
+
+/** GET /api/inbox/:id -> the message with its preprocessed body.
+ *
+ * The list endpoint returns snippets only, so the reading pane needs this to
+ * render a message. The body is fetched per request and never persisted.
+ */
+export async function getEmail(emailId, { signal } = {}) {
+  return request(`/api/inbox/${encodeURIComponent(emailId)}`, { signal });
 }
 
 export { request };

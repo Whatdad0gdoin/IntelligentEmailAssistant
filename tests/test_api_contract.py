@@ -43,7 +43,13 @@ def test_summarise_returns_the_documented_shape(client, auth_headers, stub_llm):
                            headers=auth_headers)
     assert response.status_code == 200
     body = response.get_json()
-    assert set(body) == {"email_id", "summary", "action_items", "grounded", "ungrounded_flags"}
+    # `provenance` extends the spec's documented shape (section 3). It is an
+    # approved scope addition, not drift: it carries the character offsets
+    # behind each summary sentence so the UI can show where it came from.
+    assert set(body) == {
+        "email_id", "summary", "action_items", "grounded", "ungrounded_flags",
+        "provenance",
+    }
     assert 2 <= len(body["summary"]) <= 3
 
 

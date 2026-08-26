@@ -1,44 +1,110 @@
 /**
  * Inbox view (FR-08).
  *
- * Adapted from the original InboxView. Markup and CSS classes are unchanged;
- * the one structural change is that the email list now arrives as a prop
- * instead of being read from a module-scope constant. The original component
- * took `shown` as a prop but still reached for the module-level EMAILS array
- * for its counts, which meant the list and the counts had two different
- * sources -- that has to be one source before a real API can feed it (step 4).
+ * Renders the five buckets the server already grouped: Work, Personal,
+ * Promotions, Studies and Review. The user does no sorting -- that is the
+ * requirement. The category chips filter which groups are shown; they narrow
+ * the view rather than reordering it, so the grouping always holds.
  *
- * NOT YET DONE (step 4): grouping by category, the Review bucket, and the
- * skeleton loader. Today this still renders one flat list, as the teammate
- * wrote it.
+ * Review carries its explanation inline (section 4.3): an email lands there
+ * when the classifier's evidence failed verification or its confidence was
+ * below threshold. It is never a silent fallback to Work.
  */
 
-import { Bell, Inbox as InboxIcon, Paperclip, Search, Star } from "lucide-react";
+import { AlertCircle, Bell, Inbox as InboxIcon, Search } from "lucide-react";
 
 import ReadingPane from "../components/ReadingPane.jsx";
-import { CATEGORIES } from "../lib/constants.js";
+import { CATEGORIES, REVIEW_CATEGORY } from "../lib/constants.js";
+import { formatReceived } from "../lib/format.js";
+
+const GROUP_ORDER = ["Work", "Personal", "Promotions", "Studies", "Review"];
+
+const COLOR_BY_LABEL = CATEGORIES.reduce((acc, c) => {
+  acc[c.label] = c.color;
+  return acc;
+}, { Review: REVIEW_CATEGORY.color });
+
+/** NFR-01 mitigation: the inbox classifies on load, so show real structure
+ *  while that round trip is in flight rather than an empty screen. */
+function InboxSkeleton() {
+  return (
+    <div className="mail-list" aria-busy="true" aria-label="Loading inbox">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <div className="mail-row skel" key={i} style={{ animationDelay: `${i * 60}ms` }}>
+          <span className="skel-avatar" />
+          <div className="mail-body">
+            <span className="skel-line w40" />
+            <span className="skel-line w70" />
+            <span className="skel-line w90" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MailRow({ email, selected, onSelect, index }) {
+  const color = COLOR_BY_LABEL[email.category] || REVIEW_CATEGORY.color;
+  const initials = (email.sender_name || email.sender || "?").slice(0, 2).toUpperCase();
+  return (
+    <button
+      className={`mail-row ${email.unread ? "unread" : ""} ${selected ? "sel" : ""}`}
+      style={{ animationDelay: `${index * 45}ms` }}
+      onClick={() => onSelect(email.id)}
+    >
+      <span className="mail-avatar" style={{ background: color }}>{initials}</span>
+      <div className="mail-body">
+        <div className="mail-line1">
+          <span className="mail-from">{email.sender_name || email.sender}</span>
+          <span className="mail-time">{formatReceived(email.received_at)}</span>
+        </div>
+        <div className="mail-line2">
+          <span className="mail-subject">{email.subject}</span>
+        </div>
+        <p className="mail-preview">{email.snippet}</p>
+      </div>
+      {email.unread && <span className="unread-dot" />}
+    </button>
+  );
+}
 
 export default function Inbox({
-  emails,
-  shown,
+  groups,
+  loading,
+  error,
   filter,
   setFilter,
   selected,
   setSelected,
-  unreadCount,
-  onFeature,
-  onUnavailable,
+  openEmail,
+  openBody,
+  bodyLoading,
+  onRetry,
+  pendingAction,
+  onActionConsumed,
 }) {
-  const openEmail = shown.find((e) => e.id === selected) || emails.find((e) => e.id === selected);
+  const total = GROUP_ORDER.reduce((n, g) => n + (groups[g]?.length || 0), 0);
+  const unreadCount = GROUP_ORDER.reduce(
+    (n, g) => n + (groups[g] || []).filter((e) => e.unread).length,
+    0
+  );
+
+  const visibleGroups = GROUP_ORDER.filter((name) => {
+    if ((groups[name] || []).length === 0) return false;
+    return filter === "all" || filter === name;
+  });
+
+  let rowIndex = 0;
 
   return (
     <div className={`inbox-split ${selected ? "has-selection" : ""}`}>
-      {/* LEFT: list */}
       <div className="inbox-left">
         <header className="main-head">
           <div>
             <h1 className="main-title">Inbox</h1>
-            <p className="main-sub">{unreadCount} unread · {emails.length} total</p>
+            <p className="main-sub">
+              {loading ? "Classifying…" : `${unreadCount} unread · ${total} total`}
+            </p>
           </div>
           <div className="head-actions">
             <button className="icon-btn" aria-label="Notifications"><Bell size={18} /></button>
@@ -52,59 +118,82 @@ export default function Inbox({
 
         <div className="filter-row">
           <button className={`chip ${filter === "all" ? "on" : ""}`} onClick={() => setFilter("all")}>
-            All <span className="chip-count">{emails.length}</span>
+            All <span className="chip-count">{total}</span>
           </button>
-          {CATEGORIES.map((c) => {
-            const n = emails.filter((e) => e.cat === c.key).length;
+          {GROUP_ORDER.map((name) => {
+            const n = (groups[name] || []).length;
+            if (n === 0) return null;
             return (
-              <button key={c.key} className={`chip ${filter === c.key ? "on" : ""}`} onClick={() => setFilter(c.key)} style={{ "--chip": c.color }}>
-                <span className="chip-dot" /> {c.label} <span className="chip-count">{n}</span>
+              <button
+                key={name}
+                className={`chip ${filter === name ? "on" : ""}`}
+                onClick={() => setFilter(name)}
+                style={{ "--chip": COLOR_BY_LABEL[name] }}
+              >
+                <span className="chip-dot" /> {name} <span className="chip-count">{n}</span>
               </button>
             );
           })}
         </div>
 
-        <div className="mail-list">
-          {shown.map((e, i) => {
-            const cat = CATEGORIES.find((c) => c.key === e.cat);
-            return (
-              <button key={e.id} className={`mail-row ${e.unread ? "unread" : ""} ${selected === e.id ? "sel" : ""}`} style={{ animationDelay: `${i * 45}ms` }} onClick={() => setSelected(e.id)}>
-                <span className="mail-avatar" style={{ background: cat?.color }}>{e.initials}</span>
-                <div className="mail-body">
-                  <div className="mail-line1">
-                    <span className="mail-from">{e.from}</span>
-                    <span className="mail-time">{e.time}</span>
-                  </div>
-                  <div className="mail-line2">
-                    <span className="mail-subject">
-                      {e.star && <Star size={13} className="ic-star" fill="#D97706" stroke="#D97706" />}
-                      {e.subject}
-                    </span>
-                    {e.attach && <Paperclip size={13} className="ic-attach" />}
-                  </div>
-                  <p className="mail-preview">{e.preview}</p>
-                </div>
-                {e.unread && <span className="unread-dot" />}
-              </button>
-            );
-          })}
-        </div>
+        {loading && <InboxSkeleton />}
+
+        {error && !loading && (
+          <div className="inbox-error" role="alert">
+            <AlertCircle size={18} />
+            <div>
+              <b>Could not load your inbox.</b>
+              <p>{error}</p>
+              <button className="chip" onClick={onRetry}>Try again</button>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && total === 0 && (
+          <div className="reader-empty"><h3>No emails</h3><p>The mailbox is empty.</p></div>
+        )}
+
+        {!loading && !error && visibleGroups.map((name) => (
+          <section className="mail-group" key={name}>
+            <h2 className="mail-group-head" style={{ "--c": COLOR_BY_LABEL[name] }}>
+              <span className="chip-dot" />
+              {name}
+              <span className="mail-group-count">{groups[name].length}</span>
+            </h2>
+            {name === "Review" && (
+              <p className="mail-group-note">
+                Low confidence, unverified label — these were not filed automatically.
+              </p>
+            )}
+            <div className="mail-list">
+              {groups[name].map((email) => (
+                <MailRow
+                  key={email.id}
+                  email={email}
+                  index={rowIndex++}
+                  selected={selected === email.id}
+                  onSelect={setSelected}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
 
-      {/* RIGHT: reading pane */}
       <div className="inbox-right">
         {openEmail ? (
           <ReadingPane
             email={openEmail}
-            onClose={() => setSelected(null)}
-            onFeature={onFeature}
-            onUnavailable={onUnavailable}
+            body={openBody}
+            bodyLoading={bodyLoading}
+            pendingAction={pendingAction}
+            onActionConsumed={onActionConsumed}
           />
         ) : (
           <div className="reader-empty">
             <div className="reader-empty-icon"><InboxIcon size={40} strokeWidth={1.6} /></div>
             <h3>Select an email to read</h3>
-            <p>Choose a message from your inbox to view it here and try the AI tools.</p>
+            <p>Choose a message to view it here and use the AI tools on it.</p>
           </div>
         )}
       </div>

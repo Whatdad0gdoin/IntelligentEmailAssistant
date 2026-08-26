@@ -1,0 +1,1063 @@
+id,provenance,text_origin,label_source,label_confidence,category,subject,body,sender,received_at,source_ref
+generated-39354d7e8578,generated,synthetic,generation_prompt,strong,Studies,Research Ethics Approval Status,"Dear Student,
+
+I am writing to inform you that your application for research ethics approval for your project (Unit Code: RES101) has been reviewed. Please note that the approval is contingent upon addressing the feedback provided by the ethics committee, which you can find attached to this email. Ensure that you submit the revised documents by October 15, 2023, to avoid any delays in your research timeline.
+
+If you have any questions regarding the feedback or the revision process, feel free to reach out. I recommend scheduling a meeting if you need further clarification.
+
+Best regards,
+
+A. Chen
+Unit Coordinator
+Monash University",Unit Coordinator <a.chen@monash.edu>,,scenario=research ethics approval; tone=brief and administrative
+generated-32d6b85e2690,generated,synthetic,generation_prompt,strong,Studies,Reminder: Academic Integrity Module Completion,"Dear Student,
+
+I hope this message finds you well. I wanted to remind you that the deadline for completing the Academic Integrity module has been moved to November 15th, 2023, due to unforeseen circumstances. I apologize for any inconvenience this may cause, but it is crucial for your thesis progress. Please let me know if you have any questions or need assistance.
+
+Best regards,
+R. Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,scenario=academic integrity module reminder; tone=apologetic about a change
+generated-a120c2762f22,generated,synthetic,generation_prompt,strong,Studies,Urgent: Group Project Coordination Required,"Dear Alex,
+
+I hope this message finds you well. I need to remind you that the deadline for submitting your group project proposal for SCI2010 is this Friday, October 6th, at 5 PM. Please ensure that you coordinate with your team members and finalize your submission by then. If you have any questions or need assistance, feel free to reach out.
+
+Best regards,
+
+Faculty Admin
+Monash University",Faculty Admin <science.admin@monash.edu>,,"scenario=group project coordination; tone=urgent, with a deadline in the next few days"
+generated-55165e4c3da1,generated,synthetic,generation_prompt,strong,Studies,Change in Thesis Supervision Meeting Schedule,"Dear Alex,
+
+I hope this message finds you well. I regret to inform you that there has been a scheduling conflict with Dr. Smith, and we will need to reschedule your thesis supervision meeting originally set for October 15th at 2 PM in Room 305. Please let me know your availability for the following week, and I will do my best to accommodate.
+
+Thank you for your understanding.
+
+Best regards,
+
+Faculty Admin
+Monash University",Faculty Admin <science.admin@monash.edu>,,scenario=thesis supervision meeting; tone=apologetic about a change
+generated-94134d69c206,generated,synthetic,generation_prompt,strong,Studies,Unit Enrolment Issue - Immediate Attention Required,"Dear Alex, 
+
+We have encountered an issue with your enrolment in the unit SCI2010: Advanced Biology for the upcoming semester. Please visit the Faculty Office in Building 12, Room 204, by Friday, October 6, to resolve this matter. Ensure you bring your student ID and any relevant documentation. 
+
+Best regards,
+Faculty Administration",Faculty Admin <science.admin@monash.edu>,,scenario=unit enrolment problem; tone=brief and administrative
+generated-f7edf0b7241c,generated,synthetic,generation_prompt,strong,Studies,Urgent: Exam Timetable Release,"Dear Student,
+
+We are writing to inform you that the exam timetable for Semester 2 will be released on Monday, October 30th, at 9:00 AM. It is crucial that you review your schedule promptly, as any conflicts must be reported to the Examinations Office by Friday, November 3rd. Please check your student portal for updates and ensure you are prepared for your upcoming assessments.
+
+Best regards,
+Examinations Office
+Monash University",Examinations Office <exams@monash.edu>,,"scenario=exam timetable release; tone=urgent, with a deadline in the next few days"
+generated-ad9434d07ac6,generated,synthetic,generation_prompt,strong,Studies,Urgent: Lecture Recording Unavailable,"Hi there,
+
+I hope this message finds you well. I wanted to inform you that the recording for our last lecture on October 10th (Unit Code: PSY101, Room 204) is currently unavailable due to a technical issue. Since the deadline for our group project is approaching on October 20th, it’s crucial that we find a way to access the lecture content. If you have any notes or resources from that session, could you please share them with me as soon as possible? 
+
+Thanks for your help! Let’s ensure we’re all on the same page before the submission date. 
+
+Best,
+K. Silva",Group Member <k.silva@student.monash.edu>,,"scenario=lecture recording unavailable; tone=urgent, with a deadline in the next few days"
+generated-dfe4154f92c3,generated,synthetic,generation_prompt,strong,Studies,Update on Lecture Recording Availability,"Dear Student,
+
+I hope this message finds you well. I regret to inform you that the recording for our recent lecture on October 10th (Unit Code: PSY101, Room 204) is currently unavailable due to a technical issue. I understand how important these resources are for your studies, and I sincerely apologize for any inconvenience this may cause. Please feel free to reach out if you have any questions or need further assistance.
+
+Best regards,
+
+J. Nguyen
+Tutor, Monash University",Tutor <j.nguyen@monash.edu>,,scenario=lecture recording unavailable; tone=apologetic about a change
+generated-07c00901e1e0,generated,synthetic,generation_prompt,strong,Studies,Textbook List for Next Semester,"Dear Student,
+
+We hope this message finds you well. As you prepare for the upcoming semester, please find below the list of required textbooks for your courses:
+
+1. **ENG101 - Introduction to Literature**: ""Literary Analysis: A Guide to Reading and Writing"" by John Smith, ISBN: 978-1234567890.
+2. **BIO202 - Principles of Biology**: ""Biology: The Dynamic Science"" by Peter Raven, ISBN: 978-9876543210.
+3. **MATH303 - Calculus III**: ""Calculus: Early Transcendentals"" by James Stewart, ISBN: 978-1119532330.
+4. **HIST404 - Modern World History**: ""A History of the Modern World"" by Robert Strayer, ISBN: 978-1599821234.
+
+Please ensure you acquire these texts before classes begin on February 5, 2024. You can find them at the campus bookstore located in Building A, Room 101, or through our online portal. If you have any questions, feel free to reach out to us at studentservices@monash.edu. 
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,"scenario=textbook list for next semester; tone=detailed, listing several numbered points"
+generated-a777e242263b,generated,synthetic,generation_prompt,strong,Studies,Reminder: Upcoming Fee Due Date,"Dear Student,
+
+I hope this message finds you well. I would like to remind you of the following important details regarding your tuition fees:
+
+1. The due date for your semester fees is March 15, 2024.
+2. Please ensure that your payment is processed by this date to avoid any late fees.
+3. If you have any questions or need assistance, feel free to reach out to the finance office at finance@monash.edu.
+
+Thank you for your attention to this matter.
+
+Best regards,
+
+Tutor J. Nguyen
+Monash University",Tutor <j.nguyen@monash.edu>,,"scenario=fee due date reminder; tone=detailed, listing several numbered points"
+generated-5255c0fac3b4,generated,synthetic,generation_prompt,strong,Studies,Reminder: Student Society AGM Scheduled,"Dear Student,
+
+This is a reminder that the Annual General Meeting (AGM) for the Student Society will take place on Thursday, March 15, 2024, at 5:00 PM in Room 204 of the Student Union Building. Your attendance is important as we will be discussing key initiatives for the upcoming year and electing new committee members.
+
+Please ensure you review the agenda attached to this email prior to the meeting. If you have any questions or cannot attend, let me know by March 10.
+
+Best regards,
+J. Nguyen
+Tutor, Monash University",Tutor <j.nguyen@monash.edu>,,scenario=student society AGM; tone=brief and administrative
+generated-e2a0414f9e16,generated,synthetic,generation_prompt,strong,Studies,Coordination for Group Project Submission,"Dear Student,
+
+I hope this message finds you well. As we approach the deadline for the group project for unit CSE2010, scheduled for submission on November 15, 2023, I would like to remind you to ensure that all members of your group are aligned on their respective tasks. Please confirm that you have scheduled a meeting in Room 204 of the Engineering Building to finalize your presentation and report by next week.
+
+Additionally, I encourage you to utilize the shared Google Drive folder for document collaboration. It is essential that all contributions are uploaded by November 10, 2023, to allow for adequate review time. Should you have any questions or require further assistance, do not hesitate to reach out.
+
+Best regards,
+
+J. Nguyen
+Tutor, CSE2010
+Monash University",Tutor <j.nguyen@monash.edu>,,scenario=group project coordination; tone=formal and procedural
+generated-3070765705c7,generated,synthetic,generation_prompt,strong,Studies,Urgent: Scholarship Application Outcome,"Dear Alex,
+
+I hope this message finds you well. I wanted to inform you that the outcome of your scholarship application will be released on Friday, October 27th, and it is crucial that you prepare any necessary documentation for the next steps. Please ensure you check your email regularly, as you will need to respond promptly if you are selected. Let me know if you have any questions.
+
+Best regards,
+Ravi Patel",Thesis Supervisor <r.patel@monash.edu>,,"scenario=scholarship application outcome; tone=urgent, with a deadline in the next few days"
+generated-982b06251a2f,generated,synthetic,generation_prompt,strong,Studies,Urgent: Supervisor Feedback Required on Draft Submission,"Dear Student,
+
+We hope this message finds you well. This is a reminder that your supervisor, Dr. Emily Carter, has provided feedback on your draft for the unit ENG2002, which is due for final submission on October 15, 2023. It is crucial that you review her comments and make the necessary revisions by October 10, 2023, to ensure you meet the deadline. 
+
+Please check your student email for Dr. Carter's detailed feedback and reach out to her directly if you have any questions or need clarification. Your timely response is essential for your academic progress.
+
+Best regards,
+Student Services
+Monash University",Student Services <no-reply@monash.edu>,,"scenario=supervisor feedback on a draft; tone=urgent, with a deadline in the next few days"
+generated-2f98054a022a,generated,synthetic,generation_prompt,strong,Studies,Urgent: Lab Safety Induction Required Before Next Week,"Hi there,
+I hope this message finds you well. I wanted to remind you that the lab safety induction for our upcoming project in BCB101 is scheduled for this Friday, October 27th, at 2 PM in Room 305. It’s crucial that you attend, as we cannot begin our experiments without completing this training. Please confirm your attendance as soon as possible.
+Best, 
+K. Silva",Group Member <k.silva@student.monash.edu>,,"scenario=lab safety induction; tone=urgent, with a deadline in the next few days"
+generated-e7222b3c3447,generated,synthetic,generation_prompt,strong,Studies,Correction to Your Unit Guide for PSY101,"Dear Student,
+
+We hope this message finds you well. We would like to sincerely apologize for an error in the unit guide for PSY101 that was distributed last week. The assessment weightings were incorrectly listed; the final exam should account for 50% of your overall grade, not 40% as previously stated. We understand that this may cause confusion, and we appreciate your understanding as we rectify this mistake.
+
+Please refer to the updated unit guide available on the student portal by the end of the day. If you have any questions or concerns, do not hesitate to reach out to us at this email or visit us in Room 204, Building 12. Thank you for your patience and understanding.
+
+Best regards,
+Examinations Office
+Monash University",Examinations Office <exams@monash.edu>,,scenario=unit guide correction; tone=apologetic about a change
+generated-2e7836efedae,generated,synthetic,generation_prompt,strong,Studies,Change of Tutorial Room for Upcoming Sessions,"Dear Student,
+
+I am writing to inform you that there has been a change in the location of our upcoming tutorial sessions for the unit THS301. Starting from next week, the tutorials will be held in Room 204 of the Social Sciences Building instead of the previously scheduled Room 101. Please ensure that you adjust your plans accordingly for the sessions on October 10th and October 17th.
+
+If you have any questions or concerns regarding this change, do not hesitate to reach out. I appreciate your understanding and look forward to our discussions in the new venue.
+
+Best regards,
+
+R. Patel
+Thesis Supervisor
+Monash University",Thesis Supervisor <r.patel@monash.edu>,,scenario=tutorial room change; tone=formal and procedural
+generated-98c35adad25b,generated,synthetic,generation_prompt,strong,Studies,Course Plan Advice for Your Upcoming Semester,"Dear Student,
+
+Thank you for reaching out to Student Services regarding your course plan. We understand that planning your semester can be challenging, and we are here to help. Here are some key points to consider:
+
+1. Review your degree requirements in the Monash Handbook to ensure you are on track for graduation.
+2. Consider enrolling in a mix of core and elective units to maintain a balanced workload. 
+3. If you are interested in a minor, check the prerequisites and availability for units in the upcoming semester.
+4. Don’t forget to factor in any extracurricular commitments you may have, as they can impact your study schedule.
+5. Lastly, remember to consult with your academic advisor during their office hours in Room 204, Building 5, on Wednesdays from 2 PM to 4 PM for personalized guidance.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,"scenario=course plan advice; tone=detailed, listing several numbered points"
+generated-2d8ee16c1ee9,generated,synthetic,generation_prompt,strong,Studies,Urgent: Research Ethics Approval Needed by October 15,"Dear Alex,
+
+I hope this message finds you well. I wanted to remind you that your application for research ethics approval for your project, ""Impact of Social Media on Student Well-being,"" must be submitted by October 15 to ensure you can begin your data collection as planned. Please make sure to address all feedback from the ethics committee and include any necessary documentation.
+
+If you have any questions or need assistance with the submission process, do not hesitate to reach out. It’s crucial that we meet this deadline to avoid any delays in your research timeline.
+
+Best regards,
+
+A. Chen
+Unit Coordinator, PSY1010
+Monash University",Unit Coordinator <a.chen@monash.edu>,,"scenario=research ethics approval; tone=urgent, with a deadline in the next few days"
+generated-a15ce1532f4f,generated,synthetic,generation_prompt,strong,Studies,Update on Research Ethics Approval Process,"Dear Alex,
+
+I hope this message finds you well. I wanted to inform you that there has been a slight delay in the approval of your research ethics application for the project titled ""Impact of Social Media on Student Well-being"" (Unit Code: PSY301). The review committee has requested additional information, which means we will need to push back our initial timeline. I apologize for any inconvenience this may cause and appreciate your understanding as we work through this process.
+
+Best regards,
+
+Jasmine Nguyen
+Tutor, Monash University",Tutor <j.nguyen@monash.edu>,,scenario=research ethics approval; tone=apologetic about a change
+generated-447d3905963f,generated,synthetic,generation_prompt,strong,Studies,Urgent: Feedback Needed on Draft Before Friday,"Hi Alex,
+
+I hope this message finds you well. I just received feedback from Dr. Thompson on our draft for the research project (Unit Code: RES123) and we need to make revisions by this Friday, October 27th. Can you please review the comments and let me know your thoughts by Wednesday? It’s crucial we address these points to stay on track.
+
+Thanks,
+K. Silva",Group Member <k.silva@student.monash.edu>,,"scenario=supervisor feedback on a draft; tone=urgent, with a deadline in the next few days"
+generated-86ed92eb24cc,generated,synthetic,generation_prompt,strong,Studies,Course Plan Adjustment,"Dear Alex,
+
+I hope this message finds you well. I wanted to apologize for the recent changes to the course schedule for PSY101, which will now be held in Room 204 instead of our usual location. I understand this may disrupt your planning, and I’m here to help you adjust your course plan accordingly. Please let me know if you’d like to discuss this further or if you have any questions.
+
+Best regards,
+
+Jasmine Nguyen
+Tutor, Monash University",Tutor <j.nguyen@monash.edu>,,scenario=course plan advice; tone=apologetic about a change
+generated-7a5d6852f116,generated,synthetic,generation_prompt,strong,Studies,Update on Your Scholarship Application Outcome,"Dear Alex, 
+
+I hope this message finds you well. I regret to inform you that there has been a change regarding the outcome of your scholarship application for the 2024 academic year. Due to unforeseen circumstances, the committee has decided to revise the selection criteria, which may affect your eligibility. We understand how disappointing this news is and encourage you to reach out if you have any questions or need further assistance.
+
+Best regards,
+
+Faculty Admin
+Monash University",Faculty Admin <science.admin@monash.edu>,,scenario=scholarship application outcome; tone=apologetic about a change
+generated-b00da6004638,generated,synthetic,generation_prompt,strong,Studies,Release of Exam Timetable,"Dear Student,
+
+I hope this message finds you well. I would like to inform you that the exam timetable for the upcoming semester has been released and is now available for your review on the university portal. Please ensure that you check the specific dates and times for your courses, particularly for unit code PSY301, which is scheduled for May 15th at 9:00 AM in Room 204 of the Psychology Building.
+
+It is crucial that you prepare accordingly and reach out if you have any conflicts or concerns regarding your schedule. Should you need further assistance, do not hesitate to contact me.
+
+Best regards,
+
+Dr. R. Patel
+Thesis Supervisor
+Monash University",Thesis Supervisor <r.patel@monash.edu>,,scenario=exam timetable release; tone=formal and procedural
+generated-58bf74c73636,generated,synthetic,generation_prompt,strong,Studies,Exciting News: Exam Timetable is Out!,"Hi there! I hope you’re doing well as we approach the end of the semester. I wanted to let you know that the exam timetable has just been released, and you can find it on the Monash University portal under the ‘Exams’ section. Make sure to check your specific unit codes, especially for our Psychology 101 and Sociology 202 classes, as they have some unique scheduling this year.
+
+I know this can be a stressful time, but remember to take breaks and stay organized. If you want to form a study group or need help with any of the material, just let me know! We’re in this together, and I’m here to support you. Good luck with your preparations!",Group Member <k.silva@student.monash.edu>,,scenario=exam timetable release; tone=warm and encouraging
+generated-6745af500122,generated,synthetic,generation_prompt,strong,Studies,Reminder: Graduation Application Deadline Approaching,"Dear Student,
+
+I hope this message finds you well! I wanted to remind you that the deadline for submitting your graduation application for the upcoming ceremony on December 15th is fast approaching. Please ensure that you complete your application by November 1st to avoid any last-minute issues. If you have any questions or need assistance, feel free to reach out to me or visit the Student Services office in Building 10, Room 204.
+
+Graduating is a significant milestone, and I am excited for you as you prepare for this next chapter. Remember to celebrate your achievements and take a moment to reflect on all the hard work that has brought you here. Wishing you all the best!
+
+Warm regards,
+
+J. Nguyen
+Tutor, Monash University",Tutor <j.nguyen@monash.edu>,,scenario=graduation application; tone=warm and encouraging
+generated-707a4c24e33d,generated,synthetic,generation_prompt,strong,Studies,Graduation Application Process,"Dear Student,
+
+I hope this message finds you well. I would like to remind you that the deadline for submitting your graduation application for the upcoming ceremony on December 15, 2023, is November 1, 2023. Please ensure that you complete the application through the student portal and verify that all your academic requirements are met. If you have any outstanding units or issues, it is crucial to address them before the deadline.
+
+Additionally, if you have any questions regarding the application process or need assistance, do not hesitate to reach out to me or visit my office during consultation hours in Room 204, Building 12. We are here to support you in this important milestone of your academic journey.
+
+Best regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,scenario=graduation application; tone=formal and procedural
+generated-f08be9bd59f6,generated,synthetic,generation_prompt,strong,Studies,Lecture Recording Unavailability Notification,"Dear Student,
+
+We regret to inform you that the recording for the lecture of unit ENG1010, held on October 10, 2023, in Room 204, is currently unavailable due to technical issues. Our team is actively working to resolve this matter, but we do not have an estimated time for when the recording will be accessible.
+
+We understand the importance of these resources for your studies and appreciate your patience during this time. Please check the unit's online portal for any updates or alternative resources that may be provided.
+
+If you have any further questions, feel free to reach out.
+
+Best regards,
+Library Services
+Monash University",Library Services <library@monash.edu>,,scenario=lecture recording unavailable; tone=brief and administrative
+generated-d665517ac391,generated,synthetic,generation_prompt,strong,Studies,Urgent: Lecture Recording Unavailable for Review,"Dear Student,
+
+We regret to inform you that the recording for the lecture on October 10th for unit code PSY101, held in Room 204 of the Psychology Building, is currently unavailable due to a technical issue. This is particularly concerning as the review of this lecture is crucial for your upcoming assessment due on October 20th. 
+
+We are actively working to resolve this issue and hope to have the recording restored by the end of this week. In the meantime, please reach out to your classmates for notes or consider attending the supplementary session scheduled for October 15th. 
+
+We appreciate your understanding and will keep you updated on the situation.
+
+Best regards,
+Library Services
+Monash University",Library Services <library@monash.edu>,,"scenario=lecture recording unavailable; tone=urgent, with a deadline in the next few days"
+generated-27b4c25b2586,generated,synthetic,generation_prompt,strong,Studies,Conference Travel Funding Application,"Dear Student,
+
+We would like to inform you that the application period for conference travel funding is now open. If you are planning to attend the International Research Conference in Melbourne from March 15-17, 2024, please submit your application by February 1, 2024. Ensure that you include all necessary documentation, including a detailed budget and a letter of acceptance from the conference organizers.
+
+For further information, please refer to the funding guidelines available on our website or contact us directly at library@monash.edu. We look forward to supporting your academic endeavors.
+
+Best regards,
+Library Services",Library Services <library@monash.edu>,,scenario=conference travel funding; tone=brief and administrative
+generated-f717de589bba,generated,synthetic,generation_prompt,strong,Studies,Urgent: Change of Tutorial Room for Upcoming Session,"Dear Student,
+
+I need to inform you that our tutorial scheduled for Thursday, October 12th, will now be held in Room 204 of the Humanities Building instead of our usual location. Please make a note of this change as it is crucial for our discussion on your thesis progress. Let me know if you have any questions or if this poses a conflict.
+
+Best regards,
+R. Patel",Thesis Supervisor <r.patel@monash.edu>,,"scenario=tutorial room change; tone=urgent, with a deadline in the next few days"
+generated-2fa4381ca26d,generated,synthetic,generation_prompt,strong,Studies,Library Loan Recall Notification,"Dear Student,
+
+I hope this message finds you well. I am writing to inform you that the library has initiated a recall for the item you currently have on loan, titled ""Advanced Topics in Quantum Mechanics"" (ISBN: 978-3-16-148410-0). Please take note of the following important details regarding this recall:
+
+1. The new due date for the item is now set for October 15, 2023.
+2. You are required to return the book to the library by this date to avoid any late fees.
+3. If you need additional time, please contact the library directly at library@monash.edu to discuss possible options.
+4. The item is being recalled due to a high demand from other students in the PHYS3001 course.
+
+Thank you for your attention to this matter. If you have any questions or concerns, feel free to reach out.
+
+Best regards,
+
+Faculty Admin 
+Monash University 
+science.admin@monash.edu",Faculty Admin <science.admin@monash.edu>,,"scenario=library loan recall; tone=detailed, listing several numbered points"
+generated-23ee63925c92,generated,synthetic,generation_prompt,strong,Studies,Thesis Supervision Meeting Confirmation,"Dear [Student's Name],
+
+I hope this message finds you well. I would like to confirm our upcoming thesis supervision meeting scheduled for Thursday, October 12, 2023, at 2:00 PM in Room 305 of the Arts Building. During our meeting, we will cover the following points:
+
+1. Review your current progress on Chapter 2 and any challenges you are facing.
+2. Discuss the feedback from your recent literature review submission.
+3. Outline the timeline for your next milestones, particularly the data collection phase.
+4. Address any questions you may have regarding the thesis format and submission guidelines.
+
+Please come prepared with any materials you wish to discuss. I look forward to our meeting.
+
+Best regards,
+
+Dr. Jane Nguyen
+Tutor, Monash University
+j.nguyen@monash.edu",Tutor <j.nguyen@monash.edu>,,"scenario=thesis supervision meeting; tone=detailed, listing several numbered points"
+generated-12921a0cb617,generated,synthetic,generation_prompt,strong,Studies,"Unit Enrolment Issue for Semester 1, 2024","Dear [Student's Name],
+
+I hope this message finds you well. I am writing to inform you that there appears to be a problem with your enrolment in the unit BFA1010, scheduled for Semester 1, 2024. Please check your student portal for any notifications regarding prerequisites or restrictions, and ensure that you have completed the necessary steps by the enrolment deadline of March 1, 2024. If you require further assistance, do not hesitate to reach out to the enrolment office.
+
+Best regards,
+K. Silva",Group Member <k.silva@student.monash.edu>,,scenario=unit enrolment problem; tone=formal and procedural
+generated-361d02cd089f,generated,synthetic,generation_prompt,strong,Studies,Graduation Application Confirmation,"Dear Student,
+
+We have received your graduation application for the upcoming ceremony scheduled for December 15, 2023. Please ensure that all outstanding library fines are settled by November 30, 2023, to avoid any delays in your graduation process. Additionally, verify that your personal details are up to date in the student portal by the same date.
+
+If you have any questions regarding your application or library account, feel free to reach out to us at library@monash.edu. We wish you the best in your final semester.
+
+Best regards,
+Library Services
+Monash University",Library Services <library@monash.edu>,,scenario=graduation application; tone=brief and administrative
+generated-2f7adbc4e64c,generated,synthetic,generation_prompt,strong,Studies,Group Project Coordination,"Dear Alex,
+
+I hope this message finds you well! I wanted to check in regarding your group project for the unit ENG3002. It’s important to ensure everyone is on the same page, so please coordinate a meeting with your teammates in Room 204 next week. I’m confident that with your leadership, you’ll all create something remarkable!
+
+Best regards,
+Ravi Patel",Thesis Supervisor <r.patel@monash.edu>,,scenario=group project coordination; tone=warm and encouraging
+generated-8c2d5970faa1,generated,synthetic,generation_prompt,strong,Studies,Urgent: Practical Class Swap Request,"Dear Student,
+
+I hope this message finds you well. I am writing to address your request for a swap in your practical class schedule for Unit BIO101, currently set for Wednesdays at 2 PM in Room 305. Due to a scheduling conflict, I need to finalize the class allocations by this Friday, October 6th. 
+
+If you could confirm your availability for the Thursday session at 10 AM in Room 207, it would greatly assist in accommodating your request. Please respond as soon as possible so we can ensure a smooth transition for all students involved.
+
+Thank you for your prompt attention to this matter.
+
+Best regards,
+
+A. Chen
+Unit Coordinator, BIO101
+Monash University",Unit Coordinator <a.chen@monash.edu>,,"scenario=practical class swap request; tone=urgent, with a deadline in the next few days"
+generated-d06bb63d79b7,generated,synthetic,generation_prompt,strong,Studies,Let's Coordinate Our Group Project!,"Hi Alex,
+
+I hope you’re doing well! I wanted to touch base regarding our group project for COM101, especially since our presentation is coming up on November 15th. It would be great if we could set up a time to meet and discuss our individual sections. How does Thursday at 3 PM in Room 204 sound to you? 
+
+I believe we can really bring our ideas together and create something amazing. Let me know if that works for you or if there’s another time that’s better. Looking forward to collaborating!
+
+Best,
+Katherine",Group Member <k.silva@student.monash.edu>,,scenario=group project coordination; tone=warm and encouraging
+generated-eef33fff707b,generated,synthetic,generation_prompt,strong,Studies,Urgent: Action Required for Unit Enrolment Issue,"Dear [Student's Name],
+
+We have identified a problem with your enrolment in the unit EDU1234, which is scheduled to begin on Monday, October 30th. It is crucial that you resolve this issue by Friday, October 27th, to ensure your access to course materials and library resources. Please visit us in the Library Services office, Room 204, or reply to this email as soon as possible to discuss your options.
+
+Failure to address this matter by the deadline may result in your inability to participate in the unit. We appreciate your prompt attention to this urgent issue and look forward to assisting you.
+
+Best regards,
+Library Services
+Monash University",Library Services <library@monash.edu>,,"scenario=unit enrolment problem; tone=urgent, with a deadline in the next few days"
+generated-0d63beab9986,generated,synthetic,generation_prompt,strong,Studies,Update on WAM and Results Release Timing,"Dear Student,
+
+We regret to inform you that there has been a change in the schedule for the release of your Weighted Average Mark (WAM) and final results. Originally set for November 15, the new date is now November 22. We understand that this may cause inconvenience, and we sincerely apologize for any disruption this may bring to your planning.
+
+Please rest assured that we are working diligently to ensure that all results are accurate and available as soon as possible. If you have any questions or concerns, do not hesitate to reach out to us at student.services@monash.edu. Thank you for your understanding.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,scenario=WAM and results release; tone=apologetic about a change
+generated-ef6efb3f1645,generated,synthetic,generation_prompt,strong,Studies,Notice of Student Society AGM,"Dear Student,
+
+I hope this message finds you well. I am writing to inform you about the upcoming Annual General Meeting (AGM) for the Science Student Society, scheduled for Thursday, November 16, 2023, at 5:00 PM in Room 204 of the Science Building. Please find below the key details regarding the meeting:
+
+1. Election of new committee members for the 2024 academic year.
+2. Review of the society’s activities and financial report from the past year.
+3. Discussion of upcoming events and initiatives for the next semester.
+4. Open floor for suggestions and feedback from members.
+
+Your participation is crucial for the success of our society, and we encourage you to attend. If you have any questions or would like to propose agenda items, please feel free to reach out.
+
+Best regards,
+
+Faculty Admin
+Monash University",Faculty Admin <science.admin@monash.edu>,,"scenario=student society AGM; tone=detailed, listing several numbered points"
+generated-1e8b8bb4b91c,generated,synthetic,generation_prompt,strong,Studies,Exam Timetable Release for Semester 2,"Dear Student,
+
+I hope this message finds you well! I am pleased to inform you that the exam timetable for Semester 2 has been officially released. You can find the schedule on the university portal under the ‘Examinations’ section. Please take a moment to review your exam dates and times, as they will begin on November 15th and run through November 29th.
+
+If you have any questions or concerns regarding your timetable, feel free to reach out to me. Remember to stay organized and manage your study time effectively. Wishing you all the best as you prepare for your exams!
+
+Warm regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,scenario=exam timetable release; tone=warm and encouraging
+generated-9697448577c8,generated,synthetic,generation_prompt,strong,Studies,Lecture Recording Unavailable,"Dear Student,
+
+I hope this message finds you well. I wanted to inform you that the recording for our recent lecture on October 10th for Unit ENG101 has unfortunately become unavailable due to a technical issue. I understand how important these resources are for your studies, so please feel free to reach out if you have any questions or need clarification on the material covered. I'm here to help!
+
+Best regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,scenario=lecture recording unavailable; tone=warm and encouraging
+generated-2157a608c7d8,generated,synthetic,generation_prompt,strong,Studies,Feedback on Draft Submission,"Hi Team,
+
+I hope this message finds you well. I wanted to inform you that I received feedback from our supervisor, Dr. Thompson, regarding our draft for the project due on October 15th (Unit Code: PSY301). The comments are quite detailed and highlight several areas for improvement, particularly in the methodology section. 
+
+Please review the feedback in the shared Google Drive folder by the end of this week, so we can discuss our revisions in our next meeting on October 5th at 2 PM in Room 204. Let me know if you have any questions.
+
+Best,
+K. Silva",Group Member <k.silva@student.monash.edu>,,scenario=supervisor feedback on a draft; tone=brief and administrative
+generated-812bce17c218,generated,synthetic,generation_prompt,strong,Studies,Request to Swap Practical Class,"Hi there! I hope you’re doing well. I wanted to reach out to see if you might be open to swapping practical classes with me this week. I’m currently in the Wednesday 2 PM session for BIO101 in Room 204, but I have a scheduling conflict that I didn’t anticipate. If you’re in the Thursday 10 AM session and could switch, I’d really appreciate it! Let me know if that works for you, and thanks so much for considering it. Looking forward to hearing from you soon!",Group Member <k.silva@student.monash.edu>,,scenario=practical class swap request; tone=warm and encouraging
+generated-e5b704ce2aa5,generated,synthetic,generation_prompt,strong,Studies,Change of Tutorial Room for Unit XYZ101,"Dear Student,
+
+I am writing to inform you that the tutorial for unit XYZ101 scheduled for Wednesday, October 25th, will now be held in Room 204, Building A instead of the previously assigned Room 101. Please make a note of this change and ensure you arrive at the correct location for the session. If you have any questions or concerns, feel free to reach out.
+
+Best regards,
+
+J. Nguyen
+Tutor, XYZ101
+j.nguyen@monash.edu",Tutor <j.nguyen@monash.edu>,,scenario=tutorial room change; tone=formal and procedural
+generated-05ab934e247b,generated,synthetic,generation_prompt,strong,Studies,Urgent: Special Consideration Outcome Notification,"Dear Student,
+
+We are writing to inform you that your application for special consideration regarding unit code PSY101 has been reviewed. The outcome of your request is now available for you to view in your student portal. Please log in by October 5th to see the details and any necessary actions you may need to take.
+
+It is crucial that you address any requirements outlined in the outcome by the specified deadline to ensure your academic standing is not affected. If you have any questions or need further assistance, please contact our office at studentservices@monash.edu.
+
+Thank you for your prompt attention to this matter.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,"scenario=special consideration outcome; tone=urgent, with a deadline in the next few days"
+generated-ef63e32cca7b,generated,synthetic,generation_prompt,strong,Studies,Friendly Reminder: Upcoming Fee Due Date,"Dear Alex,
+
+I hope this message finds you well! I wanted to gently remind you that the fee payment for your current semester is due on March 15, 2024. If you have any questions or need assistance, please don’t hesitate to reach out. We’re here to support you!
+
+Best regards,
+
+Faculty Admin
+Monash University",Faculty Admin <science.admin@monash.edu>,,scenario=fee due date reminder; tone=warm and encouraging
+generated-9c53e83a876e,generated,synthetic,generation_prompt,strong,Studies,Update on Your Placement Application,"Dear Student,
+
+We hope this message finds you well! We wanted to inform you that your placement application for the upcoming semester has been successfully received and is currently under review. We appreciate your patience during this process and encourage you to reach out if you have any questions. Best of luck, and we look forward to supporting you on your journey!
+
+Warm regards,
+The Examinations Office",Examinations Office <exams@monash.edu>,,scenario=placement application update; tone=warm and encouraging
+generated-71d6699b8bda,generated,synthetic,generation_prompt,strong,Studies,WAM and Results Release Information,"Dear Student,
+
+I hope this message finds you well. I would like to inform you that the results for Unit XYZ123 will be released on Friday, November 10, 2023, at 5 PM. You can access your results through the student portal. 
+
+Additionally, your Weighted Average Mark (WAM) will be updated shortly after the results are published. Please ensure that you check your email for any further updates regarding this process. 
+
+If you have any questions, feel free to reach out.
+
+Best regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,scenario=WAM and results release; tone=brief and administrative
+generated-c4c1db1b462a,generated,synthetic,generation_prompt,strong,Studies,Change in Exam Timetable,"Hi there,
+I hope this message finds you well. I wanted to inform you that there has been a change in the exam timetable for our unit, BMS101, which will now take place on June 15th instead of June 10th. I apologize for any inconvenience this may cause, and I appreciate your understanding as we navigate these adjustments. Please let me know if you have any questions.",Group Member <k.silva@student.monash.edu>,,scenario=exam timetable release; tone=apologetic about a change
+generated-a6354f0ded09,generated,synthetic,generation_prompt,strong,Studies,Change of Tutorial Room for Our Next Session,"Hi there! I hope this message finds you well. I wanted to let you know that our tutorial for Unit ENG101 will be held in Room 204 instead of our usual spot in Room 102 this Thursday, October 12th. I think this new space will be great for our discussions, and I’m looking forward to seeing how it enhances our learning experience.
+
+If you have any questions or need help finding the new room, feel free to reach out. Let’s make the most of our time together, and I’m excited to see everyone there! Best, K. Silva",Group Member <k.silva@student.monash.edu>,,scenario=tutorial room change; tone=warm and encouraging
+generated-1ce2ffca4e2d,generated,synthetic,generation_prompt,strong,Studies,Change in Assignment Deadline for SCI101,"Dear Student,
+
+I hope this message finds you well. I am writing to inform you of a change regarding the assignment deadline for SCI101, originally due on October 15, 2023. Please note the following updates:
+
+1. The new deadline is now set for October 22, 2023, to accommodate recent scheduling conflicts.
+2. All submissions should be uploaded via the Moodle platform by 5:00 PM on the new due date.
+3. If you have any questions or require further clarification, please do not hesitate to reach out to your course coordinator, Dr. Emily Tran, at emily.tran@monash.edu.
+
+Thank you for your understanding, and best of luck with your assignment.
+
+Best regards,
+
+Faculty Admin
+Monash University
+science.admin@monash.edu",Faculty Admin <science.admin@monash.edu>,,"scenario=assignment deadline change; tone=detailed, listing several numbered points"
+generated-5bddfc887b9c,generated,synthetic,generation_prompt,strong,Studies,"Release of Exam Timetable for Semester 2, 2023","Dear Student,
+
+We are pleased to inform you that the exam timetable for Semester 2, 2023 has been released. Please take note of the following important details:
+
+1. Exams will be held from November 15 to November 29, 2023.
+2. Your specific exam schedule can be accessed via the student portal under the ‘Exams’ section.
+3. Ensure you check the location and time for each of your units, particularly for SCI201 (Room 204, Building 12) and SCI301 (Room 101, Building 15).
+
+If you have any questions, feel free to reach out.
+
+Best regards,
+Faculty Admin",Faculty Admin <science.admin@monash.edu>,,"scenario=exam timetable release; tone=detailed, listing several numbered points"
+generated-7c688bc58992,generated,synthetic,generation_prompt,strong,Studies,Change of Date for Student Society AGM,"Dear Alex,
+
+I hope this message finds you well. I wanted to inform you that the Student Society's Annual General Meeting, originally scheduled for March 15th, has been moved to March 22nd due to a scheduling conflict with another event in Room 204 of the Student Union. I sincerely apologize for any inconvenience this may cause, especially since I know you were looking forward to participating.
+
+Please let me know if you have any questions or if there’s anything I can assist you with regarding the new date. Thank you for your understanding, and I appreciate your flexibility.
+
+Best regards,
+Ravi Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,scenario=student society AGM; tone=apologetic about a change
+generated-b56887893786,generated,synthetic,generation_prompt,strong,Studies,Change in Group Project Coordination,"Dear Alex,
+
+I hope this message finds you well. I want to sincerely apologize for the last-minute change regarding our group project coordination. Due to a scheduling conflict, I will need to move our meeting originally set for October 10th in Room 305 to October 12th at the same time. I understand this may disrupt your plans, and I appreciate your flexibility.
+
+Please let me know if this new date works for you and the rest of the group. I value your input and want to ensure we stay on track with our project timeline. Thank you for your understanding, and I look forward to our discussion.
+
+Best regards,
+Ravi Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,scenario=group project coordination; tone=apologetic about a change
+generated-ebc0e15e15ca,generated,synthetic,generation_prompt,strong,Studies,Change of Tutorial Room for Upcoming Session,"Dear Alex,
+
+I hope this message finds you well. I wanted to inform you that there has been a change in the location of our upcoming tutorial session scheduled for Thursday, October 12th, at 2 PM. We will now be meeting in Room 204 of the Humanities Building instead of our usual Room 101. I apologize for any inconvenience this may cause, but the change was necessary due to a scheduling conflict.
+
+Please let me know if you have any questions or if this new location poses any issues for you. Thank you for your understanding, and I look forward to seeing you there.
+
+Best regards,
+
+Dr. R. Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,scenario=tutorial room change; tone=apologetic about a change
+generated-a2dc9609984c,generated,synthetic,generation_prompt,strong,Studies,Outcome of Your Special Consideration Request,"Dear [Student's Name],
+
+I am writing to inform you that your request for special consideration regarding your thesis submission has been reviewed. Unfortunately, the committee has decided not to grant the extension you requested. Please ensure that you submit your work by the original deadline of October 15, 2023, in Room 204 of the Faculty of Arts building.
+
+If you have any further questions or need assistance, feel free to reach out. Best of luck with your final preparations.
+
+Regards,
+R. Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,scenario=special consideration outcome; tone=brief and administrative
+generated-0b3214c4a7e4,generated,synthetic,generation_prompt,strong,Studies,Upcoming Thesis Supervision Meeting,"Dear Alex,
+
+I hope this message finds you well! I wanted to remind you of our upcoming thesis supervision meeting scheduled for Tuesday, October 10th, at 2:00 PM in Room 305 of the Science Building. I’m looking forward to discussing your progress and any challenges you might be facing. Please feel free to bring any questions or topics you’d like to cover.
+
+Best regards,
+
+Faculty Admin",Faculty Admin <science.admin@monash.edu>,,scenario=thesis supervision meeting; tone=warm and encouraging
+generated-204cc1ae3319,generated,synthetic,generation_prompt,strong,Studies,Update on Conference Travel Funding,"Dear Alex,
+
+I hope this message finds you well. I wanted to reach out regarding the travel funding for the upcoming International Conference on Environmental Science in Melbourne. Unfortunately, due to unforeseen budget constraints, we are unable to provide the full amount we initially discussed. I understand this may impact your plans, and I sincerely apologize for any inconvenience this may cause.
+
+We can still offer partial funding of $500, which I hope will help with your travel expenses. Please let me know if you would like to discuss this further or if you have any questions. 
+
+Thank you for your understanding.
+
+Best regards,
+
+Jasmine Nguyen
+Tutor, Environmental Science
+Monash University",Tutor <j.nguyen@monash.edu>,,scenario=conference travel funding; tone=apologetic about a change
+generated-b43a799f1545,generated,synthetic,generation_prompt,strong,Studies,Lecture Recording Unavailable for Week 5,"Dear Student,
+
+I hope this message finds you well. I wanted to inform you that the recording for the Week 5 lecture (Unit Code: PSY101) held on October 10th in Room 204 has unfortunately not been uploaded due to a technical issue. We are currently working with the IT department to resolve this matter as quickly as possible. 
+
+In the meantime, please refer to the lecture slides available on Moodle for your review. If you have any questions or need further clarification on the material, feel free to reach out.
+
+Thank you for your understanding.
+
+Best regards,
+K. Silva",Group Member <k.silva@student.monash.edu>,,scenario=lecture recording unavailable; tone=brief and administrative
+generated-0af18da72bc3,generated,synthetic,generation_prompt,strong,Studies,Outcome of Your Scholarship Application,"Dear [Student's Name],
+
+I hope this message finds you well. I am writing to inform you about the outcome of your recent scholarship application for the Monash Graduate Research Scholarship. After careful consideration by the selection committee, I regret to inform you that your application was not successful this time. 
+
+The committee received a high volume of applications, and the competition was particularly intense this year. I encourage you to seek feedback on your application, which may help strengthen your future submissions. If you have any questions or would like to discuss this further, please feel free to reach out.
+
+Best regards,
+
+Dr. R. Patel
+Thesis Supervisor
+Monash University",Thesis Supervisor <r.patel@monash.edu>,,scenario=scholarship application outcome; tone=formal and procedural
+generated-eb3d818908b5,generated,synthetic,generation_prompt,strong,Studies,Unit Enrolment Issue - Action Required,"Dear Student,
+
+We have identified an issue with your enrolment in unit BMS1010 for the upcoming semester. Please log into your student portal by October 15th to review your enrolment status and make any necessary adjustments. If you encounter any difficulties, do not hesitate to contact our office.
+
+Thank you for your prompt attention to this matter. We appreciate your cooperation in ensuring your enrolment is accurate and up to date.
+
+Best regards,
+Student Services
+Monash University",Student Services <no-reply@monash.edu>,,scenario=unit enrolment problem; tone=brief and administrative
+generated-70010826b3b6,generated,synthetic,generation_prompt,strong,Studies,Urgent: Coordination for Group Project Submission,"Hi Alex,
+
+I hope this message finds you well. We need to finalize our sections for the group project by this Friday, October 27th, to ensure we have enough time for revisions. Can you please confirm your availability for a meeting in Room 204 of the Arts Building tomorrow at 3 PM? It’s crucial that we align our work before the deadline.
+
+Thanks,
+K. Silva",Group Member <k.silva@student.monash.edu>,,"scenario=group project coordination; tone=urgent, with a deadline in the next few days"
+generated-d4af9abf3277,generated,synthetic,generation_prompt,strong,Studies,Course Plan Guidance for Your Academic Journey,"Dear Student,
+
+We hope this message finds you well! As you prepare for the upcoming semester, we encourage you to review your course plan and consider how it aligns with your academic goals. If you have any questions or need assistance, please feel free to reach out to our office in Building 10, Room 204, or schedule an appointment with an advisor. We're here to support you every step of the way!
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,scenario=course plan advice; tone=warm and encouraging
+generated-ed008a383d35,generated,synthetic,generation_prompt,strong,Studies,Urgent: Research Ethics Approval Required by October 15th,"Dear Alex,
+
+I hope this message finds you well. I am writing to remind you that your application for research ethics approval for your project, ""Impact of Urban Green Spaces on Mental Health,"" must be submitted by October 15th to ensure compliance with university regulations. Please ensure that all necessary documents, including the ethics application form and participant consent templates, are completed and submitted to the ethics committee in Room 204, Building 12.
+
+If you have any questions or need assistance with the submission process, do not hesitate to reach out. It is crucial that we meet this deadline to avoid any delays in your research timeline.
+
+Best regards,
+
+Faculty Admin
+Monash University",Faculty Admin <science.admin@monash.edu>,,"scenario=research ethics approval; tone=urgent, with a deadline in the next few days"
+generated-1365650db950,generated,synthetic,generation_prompt,strong,Studies,Urgent: WAM and Results Release Information,"Dear Student,
+
+I hope this message finds you well. I wanted to remind you that the Weighted Average Mark (WAM) calculations and final results for Unit XYZ123 will be released on Friday, November 3rd, at 5 PM. It is crucial that you check your results promptly, as any discrepancies must be reported to me by Monday, November 6th, to ensure they can be addressed before the final submission deadline.
+
+Please make sure to review your grades carefully and reach out if you have any questions or concerns. Your timely attention to this matter is greatly appreciated.
+
+Best regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,"scenario=WAM and results release; tone=urgent, with a deadline in the next few days"
+generated-4455d9ee3056,generated,synthetic,generation_prompt,strong,Studies,Fee Due Date Reminder,"Dear Student,
+
+This is a reminder that your tuition fees for the semester are due on Friday, March 15, 2024. Please ensure that your payment is processed by this date to avoid any late fees or penalties. You can make your payment through the Student Portal or at the Student Services office located in Building A, Room 102.
+
+If you have any questions regarding your fees or payment options, do not hesitate to contact our office at studentservices@monash.edu. We appreciate your attention to this matter and wish you a successful semester ahead.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,scenario=fee due date reminder; tone=formal and procedural
+generated-6e9fce643996,generated,synthetic,generation_prompt,strong,Studies,Important Update: Library Loan Recall Notification,"Dear Student,
+
+We hope this message finds you well. We regret to inform you that the item you currently have on loan, titled ""Advanced Data Analysis"" (ISBN: 978-1234567890), has been recalled due to a high demand from other users. We understand that this may cause inconvenience, and we sincerely apologize for any disruption this may bring to your studies. Please return the item to the library by October 15, 2023, to avoid any late fees.
+
+If you need assistance finding alternative resources or have any questions regarding this recall, please do not hesitate to reach out to us at library@monash.edu or visit us at the Library Services desk in Room 204. Thank you for your understanding and cooperation.
+
+Best regards,
+Library Services",Library Services <library@monash.edu>,,scenario=library loan recall; tone=apologetic about a change
+generated-8dbb0c6b8df5,generated,synthetic,generation_prompt,strong,Studies,Exciting Opportunity for Conference Travel Funding,"Dear Alex,
+
+I hope this message finds you well! I wanted to remind you that the application deadline for the conference travel funding is approaching on March 15th. This is a fantastic opportunity to present your research at the upcoming International Science Conference in Melbourne. If you have any questions or need assistance with your application, please feel free to reach out.
+
+Best regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,scenario=conference travel funding; tone=warm and encouraging
+generated-658e4429a6e0,generated,synthetic,generation_prompt,strong,Studies,Update on Special Consideration Outcome,"Dear [Student's Name],
+
+I hope this message finds you well. I wanted to inform you that the outcome of your special consideration request for the unit MTH101 has been reviewed, and unfortunately, it has been denied. I understand this may be disappointing news, especially given the circumstances you shared. 
+
+Please know that I empathize with your situation, and I encourage you to reach out to the academic support team if you need assistance moving forward. If you have any questions or would like to discuss this further, feel free to contact me.
+
+Best regards,
+K. Silva",Group Member <k.silva@student.monash.edu>,,scenario=special consideration outcome; tone=apologetic about a change
+generated-7be6988a7376,generated,synthetic,generation_prompt,strong,Studies,Urgent: Graduation Application Deadline Approaching,"Dear [Student's Name],
+
+I hope this message finds you well. I wanted to remind you that the deadline for submitting your graduation application is this Friday, October 27th. It is crucial that you complete this process to ensure your eligibility for the upcoming ceremony in December. Please make sure to review all required documents and submit them to the Student Services office in Room 204, Building 12.
+
+If you have any questions or need assistance with your application, do not hesitate to reach out. Time is of the essence, and I want to ensure you don’t miss this important milestone.
+
+Best regards,
+R. Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,"scenario=graduation application; tone=urgent, with a deadline in the next few days"
+generated-23b1d7692f37,generated,synthetic,generation_prompt,strong,Studies,Urgent: Course Plan Advice Needed Before Friday,"Dear Student,
+
+I hope this message finds you well. I wanted to remind you that the deadline for submitting your course plan for the upcoming semester is this Friday, October 6th. It’s crucial that we finalize your selections to ensure you meet all prerequisites for your major. Please review the course offerings for the next term and let me know if you have any questions or need guidance. I am available for a quick meeting in my office (Room 204, Building A) on Wednesday or Thursday between 2 PM and 4 PM.
+
+Best regards,
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,"scenario=course plan advice; tone=urgent, with a deadline in the next few days"
+generated-8e454553d5ed,generated,synthetic,generation_prompt,strong,Studies,Research Ethics Approval Update,"Dear Alex,
+
+I hope this message finds you well! I wanted to take a moment to congratulate you on successfully obtaining ethics approval for your research project, titled ""Exploring the Impact of Social Media on Mental Health."" This is a significant milestone, and I am so proud of your hard work and dedication.
+
+As you prepare to move forward, remember to keep the ethical guidelines in mind, especially during your data collection phase starting next week in Room 204 of the Psychology Building. If you have any questions or need further assistance, please don’t hesitate to reach out. I’m here to support you every step of the way!
+
+Best regards,
+
+Jenny Nguyen
+Tutor, Monash University",Tutor <j.nguyen@monash.edu>,,scenario=research ethics approval; tone=warm and encouraging
+generated-86a6a427239c,generated,synthetic,generation_prompt,strong,Studies,Urgent: Change in Assignment Deadline for Unit ENG101,"Dear Student,
+
+We are writing to inform you of an important change regarding the assignment deadline for ENG101: Introduction to Engineering. The new submission date is now set for Friday, October 27, 2023, at 5:00 PM. This adjustment has been made to accommodate unforeseen circumstances affecting several students.
+
+Please ensure that your assignment is submitted via the online portal by the revised deadline. If you have any questions or require further assistance, do not hesitate to reach out to your unit coordinator, Dr. Sarah Thompson, at sarah.thompson@monash.edu.
+
+Thank you for your attention to this matter.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,"scenario=assignment deadline change; tone=urgent, with a deadline in the next few days"
+generated-54a3c645249c,generated,synthetic,generation_prompt,strong,Studies,Urgent: Practical Class Swap Request Needed by October 5th,"Dear Student,
+
+We have received your request to swap your practical class for the unit BIO1010, currently scheduled for Wednesdays at 2 PM in Room 204. Due to high demand and limited availability, we need you to confirm your preferred alternative class by October 5th to ensure we can accommodate your request. Please reply with your choice as soon as possible.
+
+If we do not hear from you by the deadline, we will assume you wish to remain in your current class. Thank you for your prompt attention to this matter.
+
+Best regards,
+Examinations Office
+Monash University",Examinations Office <exams@monash.edu>,,"scenario=practical class swap request; tone=urgent, with a deadline in the next few days"
+generated-6f756a1e5a15,generated,synthetic,generation_prompt,strong,Studies,Change in Lab Safety Induction Schedule,"Dear Alex,
+
+I hope this message finds you well. I apologize for the last-minute change, but the lab safety induction originally scheduled for October 5th in Room 204 has been moved to October 12th at 10 AM. It’s crucial that you attend this session to ensure your safety while working in the lab. Please let me know if you have any conflicts with the new date.
+
+Best regards,
+Ravi Patel",Thesis Supervisor <r.patel@monash.edu>,,scenario=lab safety induction; tone=apologetic about a change
+generated-03ddea97bdf0,generated,synthetic,generation_prompt,strong,Studies,Update on Placement Application Status,"Hi [Student's Name],
+
+I hope this message finds you well. I wanted to inform you that there has been a change regarding our placement application for the unit PSY2010. Unfortunately, the deadline has been moved to March 15th, which means we need to adjust our submission timeline. I apologize for any inconvenience this may cause and appreciate your understanding as we navigate this change.
+
+Best regards,
+K. Silva",Group Member <k.silva@student.monash.edu>,,scenario=placement application update; tone=apologetic about a change
+generated-fdb6a7ed199b,generated,synthetic,generation_prompt,strong,Studies,Urgent: Academic Integrity Module Completion Required,"Dear Student,
+
+This is a reminder from the Examinations Office regarding the mandatory Academic Integrity Module that must be completed by this Friday, October 27, 2023. As part of your enrollment in unit ENG1010, it is crucial that you finish this module to ensure compliance with university policies. 
+
+Please log in to your student portal and navigate to the ‘Academic Integrity’ section to complete the module. Failure to do so by the deadline will result in a hold on your exam registration for the upcoming semester. If you have any questions or require assistance, do not hesitate to reach out.
+
+Thank you for your immediate attention to this matter.
+
+Best regards,
+Examinations Office
+Monash University",Examinations Office <exams@monash.edu>,,"scenario=academic integrity module reminder; tone=urgent, with a deadline in the next few days"
+generated-c3518a7b6103,generated,synthetic,generation_prompt,strong,Studies,Urgent: Textbook List Submission for Next Semester,"Dear Student,
+
+This is a reminder that the deadline for submitting your textbook list for the upcoming semester is fast approaching. Please ensure that you send your required texts for units SCIE2001 and SCIE3002 by this Friday, October 27th, to avoid any delays in your course preparations. You can submit your list directly to this email or drop it off at the Faculty Admin office in Room 204, Building 12.
+
+If you have any questions or need assistance, do not hesitate to reach out. It’s crucial that we receive your list on time to facilitate the ordering process for the library and the bookstore. Thank you for your prompt attention to this matter.
+
+Best regards,
+Faculty Admin",Faculty Admin <science.admin@monash.edu>,,"scenario=textbook list for next semester; tone=urgent, with a deadline in the next few days"
+generated-778258d50277,generated,synthetic,generation_prompt,strong,Studies,Urgent: Special Consideration Outcome,"Dear Alex,
+
+I wanted to inform you that the outcome of your special consideration request has been finalized. Please check your student portal by this Friday, October 27, to review the details, as you will need to respond by Monday, October 30, to ensure your thesis submission is not affected. If you have any questions or need further assistance, feel free to reach out.
+
+Best regards,
+Ravi Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,"scenario=special consideration outcome; tone=urgent, with a deadline in the next few days"
+generated-76aa6514988f,generated,synthetic,generation_prompt,strong,Studies,Reminder: Student Society AGM Scheduled for March 15,"Dear Student,
+
+We would like to remind you of the upcoming Annual General Meeting (AGM) for the Monash Student Society, which will take place on March 15, 2024, at 5:00 PM in Room 204, Building A. Please note the following important details:
+
+1. All members are encouraged to attend and participate in the discussions.
+2. Nominations for the executive committee will be accepted until March 10, 2024.
+3. Refreshments will be provided.
+
+We look forward to seeing you there!
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,"scenario=student society AGM; tone=detailed, listing several numbered points"
+generated-7273fcfd7eb6,generated,synthetic,generation_prompt,strong,Studies,Request for Practical Class Swap,"Dear Student,
+
+We have received your request to swap your practical class for the unit BIO1010, currently scheduled for Wednesdays at 2:00 PM in Room 305. Please note that swaps are subject to availability and must be completed by the end of the week, specifically by Friday, October 6th. You will be notified of the outcome by Monday, October 9th.
+
+Thank you for your understanding.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,scenario=practical class swap request; tone=formal and procedural
+generated-fc84fdc62fd7,generated,synthetic,generation_prompt,strong,Studies,Reminder: Completion of Academic Integrity Module,"Dear [Student's Name],
+
+I hope this message finds you well. I would like to remind you that the Academic Integrity Module must be completed by October 15, 2023, as part of your requirements for the Thesis unit (THS5001). Please ensure that you allocate sufficient time to review the materials and complete the assessment in Room 204, Building A, during the designated hours.
+
+Best regards,
+R. Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,scenario=academic integrity module reminder; tone=formal and procedural
+generated-1308bb55599c,generated,synthetic,generation_prompt,strong,Studies,Release of Exam Timetable for Semester 2,"Dear Student,
+
+I hope this message finds you well. I am writing to inform you that the exam timetable for Semester 2 has been officially released and is now available for viewing on the university portal. Please ensure you check the schedule carefully, as it includes important details regarding the dates, times, and locations of your examinations. For your reference, the exams will take place from November 15 to November 29, 2023, in various venues across campus.
+
+Should you have any questions or require further clarification regarding your exam schedule, do not hesitate to reach out. It is crucial to be well-prepared, so please make sure to review your timetable and plan accordingly.
+
+Best regards,
+
+J. Nguyen
+Tutor, Monash University",Tutor <j.nguyen@monash.edu>,,scenario=exam timetable release; tone=formal and procedural
+generated-4d9075744f9b,generated,synthetic,generation_prompt,strong,Studies,Correction Required for Unit Guide - Unit Code ABC123,"Dear [Student's Name],
+
+I hope this message finds you well. I am writing to bring to your attention a necessary correction in the unit guide for ABC123, which is scheduled for distribution on October 15, 2023. It has come to my notice that the assessment criteria listed on page 4 do not accurately reflect the updated requirements discussed in our last meeting on October 5, 2023.
+
+Please ensure that the correct criteria, which include the revised weightings for the group project and individual assignments, are incorporated before the final version is published. If you require any further details or clarification, feel free to reach out to me.
+
+Thank you for your attention to this matter.
+
+Best regards,
+
+K. Silva
+Group Member
+k.silva@student.monash.edu",Group Member <k.silva@student.monash.edu>,,scenario=unit guide correction; tone=formal and procedural
+generated-45bcec05939c,generated,synthetic,generation_prompt,strong,Studies,Urgent: Fee Due Date Reminder,"Dear Student,
+
+This is a reminder that your tuition fees for the current semester are due by Friday, October 27, 2023. Please ensure that your payment is processed by this date to avoid any late fees or holds on your account. You can make your payment through the student portal or visit us in person at the Examinations Office, Room 204, Building 12.
+
+If you have any questions or need assistance, do not hesitate to reach out. It is crucial to address this matter promptly to ensure your continued enrollment and access to course materials.
+
+Best regards,
+Examinations Office
+Monash University",Examinations Office <exams@monash.edu>,,"scenario=fee due date reminder; tone=urgent, with a deadline in the next few days"
+generated-28fe54141bce,generated,synthetic,generation_prompt,strong,Studies,Urgent: Change in Assignment Deadline for LIB101,"Dear Student,
+
+We need to inform you that the deadline for your LIB101 assignment has been moved to Friday, October 27, 2023, at 5 PM. This change is due to unforeseen circumstances affecting library resources. Please ensure that you submit your work by the new deadline to avoid any penalties.
+
+Best regards,
+Library Services",Library Services <library@monash.edu>,,"scenario=assignment deadline change; tone=urgent, with a deadline in the next few days"
+generated-a3e99f30eed7,generated,synthetic,generation_prompt,strong,Studies,Scholarship Application Outcome,"Dear Student,
+
+I hope this message finds you well. I am writing to inform you about the outcome of your scholarship application for the 2023 academic year. After careful consideration, the selection committee has decided to award you the scholarship based on your outstanding academic performance and commitment to your field of study.
+
+You will receive further details regarding the disbursement process and any required documentation by the end of this week. If you have any questions, please do not hesitate to reach out.
+
+Best regards,
+
+A. Chen
+Unit Coordinator
+Monash University",Unit Coordinator <a.chen@monash.edu>,,scenario=scholarship application outcome; tone=brief and administrative
+generated-930311569ead,generated,synthetic,generation_prompt,strong,Studies,Urgent: Library Loan Recall Notice,"Dear Student,
+
+This is to inform you that the item you currently have on loan, titled ""Advanced Data Analysis"" (ISBN: 978-1234567890), has been recalled by another user and must be returned by Friday, October 27, 2023. Please ensure that you bring the book to the library's main desk in Building 10, Room 204, before the deadline to avoid any late fees. 
+
+Thank you for your prompt attention to this matter.",Student Services <no-reply@monash.edu>,,"scenario=library loan recall; tone=urgent, with a deadline in the next few days"
+generated-c2e27ebff570,generated,synthetic,generation_prompt,strong,Studies,Urgent: Conference Travel Funding Application Deadline Approaching,"Dear Alex,
+
+I hope this message finds you well. I wanted to remind you that the deadline for applying for conference travel funding is this Friday, October 27th, at 5 PM. Please ensure that you submit your application along with the required documentation to my office in Room 204, Building A. If you have any questions or need assistance, don’t hesitate to reach out.
+
+Best regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,"scenario=conference travel funding; tone=urgent, with a deadline in the next few days"
+generated-c757e9ad7b3d,generated,synthetic,generation_prompt,strong,Studies,Correction to Unit Guide for SCI101,"Dear Student,
+
+I hope this message finds you well. I am writing to inform you of a correction that has been made to the unit guide for SCI101: Introduction to Biological Sciences. The updated information regarding the assessment criteria has been revised to reflect the correct weightings for the mid-semester exam and the final project.
+
+Please refer to the updated unit guide, which is now available on the Moodle platform. If you have any questions or require further clarification, do not hesitate to reach out. 
+
+Thank you for your attention to this matter.
+
+Best regards,
+
+Faculty Administration
+Monash University
+Email: science.admin@monash.edu",Faculty Admin <science.admin@monash.edu>,,scenario=unit guide correction; tone=formal and procedural
+generated-5bbd7f10d7f2,generated,synthetic,generation_prompt,strong,Studies,Thesis Supervision Meeting Reminder,"Hi there! I hope you’re doing well. I just wanted to remind you about our thesis supervision meeting scheduled for this Thursday, October 12th, at 2 PM in Room 305 of the Arts Building. I’m really looking forward to discussing your progress and any challenges you might be facing. Keep up the great work!",Group Member <k.silva@student.monash.edu>,,scenario=thesis supervision meeting; tone=warm and encouraging
+generated-0442968be243,generated,synthetic,generation_prompt,strong,Studies,Congratulations on Your Upcoming Graduation!,"Dear Student,
+
+We are thrilled to hear that you are preparing to apply for graduation this semester! As you finalize your application, remember that the deadline is approaching on November 15th. If you have any questions or need assistance, feel free to reach out to us at the library or visit us in Room 204. We’re here to support you every step of the way!
+
+Best wishes,
+Library Services",Library Services <library@monash.edu>,,scenario=graduation application; tone=warm and encouraging
+generated-50b581858165,generated,synthetic,generation_prompt,strong,Studies,Urgent: WAM and Results Release Notification,"Dear Student,
+
+We would like to remind you that your Weighted Average Mark (WAM) and final results for the semester will be released on Friday, November 3rd, 2023, at 5 PM. It is crucial that you check your results promptly, as any discrepancies must be reported to Student Services by Monday, November 6th, 2023. Please ensure you have access to your student portal to view your results.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,"scenario=WAM and results release; tone=urgent, with a deadline in the next few days"
+generated-8ab2d7412ed8,generated,synthetic,generation_prompt,strong,Studies,Graduation Application Reminder,"Dear Student,
+
+This is a reminder to submit your graduation application by the deadline of November 15, 2023. Please ensure that all required documents are completed and submitted to the Student Services Office in Room 204, Building A. If you have any questions regarding the process, feel free to reach out.
+
+Best regards,
+R. Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,scenario=graduation application; tone=brief and administrative
+generated-4778236720ef,generated,synthetic,generation_prompt,strong,Studies,Change in Assignment Deadline for Unit XYZ101,"Dear Team, 
+
+I wanted to inform you that the deadline for our assignment in XYZ101 has been moved from October 15 to October 22, 2023. Please adjust your schedules accordingly and ensure that we submit our work by the new date. If you have any questions, feel free to reach out. 
+
+Best, 
+K. Silva",Group Member <k.silva@student.monash.edu>,,scenario=assignment deadline change; tone=brief and administrative
+generated-c5f7b11c5445,generated,synthetic,generation_prompt,strong,Studies,Lab Safety Induction Reminder,"Dear [Student's Name],
+
+This is a reminder that the lab safety induction for our unit, BMS1010, will take place on Tuesday, October 10th, at 2:00 PM in Room 204, Building A. Attendance is mandatory for all group members. Please ensure you arrive on time and bring your student ID.
+
+Best regards,
+K. Silva",Group Member <k.silva@student.monash.edu>,,scenario=lab safety induction; tone=brief and administrative
+generated-7bc16f1ca99e,generated,synthetic,generation_prompt,strong,Studies,Research Ethics Approval Notification,"Dear [Student's Name],
+
+We are writing to inform you that your application for research ethics approval for the project titled ""Exploring Behavioral Patterns in Urban Environments"" has been reviewed and approved by the Ethics Committee. Please ensure that you adhere to the guidelines outlined in the approval letter dated October 15, 2023, as you proceed with your research. Should you have any questions or require further clarification, do not hesitate to contact our office.
+
+Best regards,
+Examinations Office
+Monash University",Examinations Office <exams@monash.edu>,,scenario=research ethics approval; tone=formal and procedural
+generated-c8c84a1d6861,generated,synthetic,generation_prompt,strong,Studies,Update on Exam Timetable Release,"Dear Student,
+
+We sincerely apologize for the delay in releasing the exam timetable for the upcoming semester. Due to unforeseen circumstances, the timetable will now be available on our website by October 15th instead of the previously announced date. We appreciate your understanding and patience during this time.
+
+Best regards,
+Examinations Office
+Monash University",Examinations Office <exams@monash.edu>,,scenario=exam timetable release; tone=apologetic about a change
+generated-d35d0951668a,generated,synthetic,generation_prompt,strong,Studies,Correction Needed for Unit Guide,"Hi Alex,
+
+I noticed a discrepancy in the unit guide for MTH101 regarding the assessment deadlines. The guide currently lists the final project due date as April 15, but it should be April 22. Please update this in the shared document by the end of the week.
+
+Thanks,
+K. Silva",Group Member <k.silva@student.monash.edu>,,scenario=unit guide correction; tone=brief and administrative
+generated-0f65b635803f,generated,synthetic,generation_prompt,strong,Studies,Urgent: Change of Tutorial Room for Unit XYZ101,"Dear Student,
+
+I need to inform you that the tutorial room for Unit XYZ101 has been changed to Room 204 in the Social Sciences Building, effective from next week. Please make sure to attend the tutorial on Tuesday, October 10th, at 2 PM in the new location. It is crucial that you are aware of this change as it will affect your participation in the upcoming sessions.
+
+Best regards,
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,"scenario=tutorial room change; tone=urgent, with a deadline in the next few days"
+generated-11d612b3d367,generated,synthetic,generation_prompt,strong,Studies,Exam Timetable Release Notification,"Dear Student,
+
+I hope this message finds you well. The exam timetable for the upcoming semester has been released and is now available on the university portal. Please ensure you check your specific exam dates and times for unit codes ENG101 and MTH202, as they may differ from your expectations. 
+
+If you have any conflicts or concerns regarding your schedule, please reach out to me by the end of this week, specifically by Friday, October 6th. It is important to address any issues promptly to ensure a smooth examination period.
+
+Best regards,
+R. Patel
+Thesis Supervisor",Thesis Supervisor <r.patel@monash.edu>,,scenario=exam timetable release; tone=brief and administrative
+generated-deaf207af30e,generated,synthetic,generation_prompt,strong,Studies,Upcoming Lab Safety Induction,"Dear Student,
+
+I hope this message finds you well! I wanted to remind you about the lab safety induction scheduled for Tuesday, October 10th, at 2 PM in Room 305 of the Science Building. This session is crucial for ensuring a safe and productive environment in our labs, and I encourage you to attend. It will be a great opportunity to familiarize yourself with the safety protocols and ask any questions you might have.
+
+Please let me know if you have any conflicts with this time, and I’ll do my best to accommodate you. I’m looking forward to seeing you there and helping you get started on your research journey!
+
+Best regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,scenario=lab safety induction; tone=warm and encouraging
+generated-b11ed0f1c933,generated,synthetic,generation_prompt,strong,Studies,Assistance with Your Unit Enrolment,"Dear Alex,
+
+I hope this message finds you well! I wanted to follow up regarding your recent concerns about enrolling in the Advanced Research Methods unit (PSY4002) for the upcoming semester. I understand that the enrolment system has been a bit tricky lately, especially with the deadline approaching on March 15th. 
+
+Please don’t hesitate to reach out to the administration office; they are usually very helpful in resolving these issues. If you need any support or if you’d like to discuss alternative options, I’m here for you. Let’s make sure you’re on track for your thesis!
+
+Best regards,
+
+Dr. R. Patel
+Thesis Supervisor
+Monash University",Thesis Supervisor <r.patel@monash.edu>,,scenario=unit enrolment problem; tone=warm and encouraging
+generated-486cb9e49869,generated,synthetic,generation_prompt,strong,Studies,Update on Supervisor Feedback for Your Draft,"Dear Student,
+
+We regret to inform you that there has been a change regarding the feedback on your draft submitted for the unit ENG2002. Your supervisor, Dr. Emily Carter, has requested additional time to provide a thorough review. We understand that this may cause some inconvenience, and we sincerely apologize for any disruption this may bring to your schedule. You can expect to receive her feedback by the end of next week, specifically by October 15th.
+
+Thank you for your understanding and patience in this matter. If you have any questions or concerns, please do not hesitate to reach out.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,scenario=supervisor feedback on a draft; tone=apologetic about a change
+generated-350281a02042,generated,synthetic,generation_prompt,strong,Studies,Urgent: Coordination Needed for Group Project Submission,"Dear Alex,
+
+I hope this message finds you well. I am writing to remind you that the deadline for your group project submission for SCI2010 is rapidly approaching on October 15th. It is crucial that you coordinate with your team members to finalize your presentation and ensure all components are completed by this date. Please confirm that you have scheduled a meeting in Room 204 of the Science Building this week to discuss your progress. 
+
+If you encounter any issues or need assistance, do not hesitate to reach out. Time is of the essence, and I appreciate your prompt attention to this matter.
+
+Best regards,
+
+Faculty Admin
+Monash University",Faculty Admin <science.admin@monash.edu>,,"scenario=group project coordination; tone=urgent, with a deadline in the next few days"
+generated-93dceb44c7f5,generated,synthetic,generation_prompt,strong,Studies,Urgent: Correction Needed for Unit Guide,"Dear Student,
+
+I hope this message finds you well. I am writing to inform you of an important correction that needs to be made to the unit guide for MTH101, specifically regarding the assessment criteria outlined in section 3.2. It has come to my attention that the weightings for the mid-semester exam were incorrectly stated. 
+
+Please review the updated document attached and ensure that you adjust your study plans accordingly. I need your confirmation of receipt and understanding by this Friday, October 6th, as we will be distributing the final version to all students next week. 
+
+Thank you for your prompt attention to this matter.
+
+Best regards,
+
+A. Chen
+Unit Coordinator, MTH101
+Monash University",Unit Coordinator <a.chen@monash.edu>,,"scenario=unit guide correction; tone=urgent, with a deadline in the next few days"
+generated-0c7e527b7167,generated,synthetic,generation_prompt,strong,Studies,Feedback on Your Draft,"Dear [Student's Name],
+
+I hope this message finds you well. I wanted to apologize for the delay in providing feedback on your draft; I had to attend to some unexpected commitments. I have attached my comments and suggestions for improvement, and I hope they will be helpful as you revise your work. Please let me know if you have any questions or need further clarification.
+
+Best regards,
+R. Patel
+Thesis Supervisor
+Monash University",Thesis Supervisor <r.patel@monash.edu>,,scenario=supervisor feedback on a draft; tone=apologetic about a change
+generated-40273a023e99,generated,synthetic,generation_prompt,strong,Studies,Update on Textbook List for Next Semester,"Dear Student,
+
+I hope this message finds you well. I wanted to inform you that there has been a change to the textbook list for the upcoming semester for unit ENG101, which will be held in Room 204 starting on February 15, 2024. I apologize for any inconvenience this may cause, as I understand that many of you may have already begun to prepare for the course.
+
+The new required texts will be available at the campus bookstore by the end of this week. Please let me know if you have any questions or need further assistance regarding this update. Thank you for your understanding.
+
+Best regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,scenario=textbook list for next semester; tone=apologetic about a change
+generated-35990c176e3d,generated,synthetic,generation_prompt,strong,Studies,Group Project Coordination for Unit XYZ123,"Dear Student,
+
+We hope this message finds you well. As you prepare for your group project in Unit XYZ123, please take note of the following important points to ensure smooth coordination among your team members:
+
+1. Schedule a group meeting by the end of this week to discuss your project outline. 
+2. Assign specific roles to each member to streamline the workflow. 
+3. Utilize the shared Google Drive folder (link provided in the unit portal) for document collaboration. 
+4. Set deadlines for each section of the project to keep everyone accountable. 
+5. Remember to communicate regularly via your group chat to address any questions or concerns.
+
+If you have any questions or need further assistance, feel free to reach out to your unit coordinator, Dr. Smith, at dr.smith@monash.edu. Best of luck with your project!
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,"scenario=group project coordination; tone=detailed, listing several numbered points"
+generated-4f99b5fb43e8,generated,synthetic,generation_prompt,strong,Studies,Library Loan Recall Notice,"Dear Alex,
+
+I hope this message finds you well! I wanted to inform you that the book you currently have on loan, ""Introduction to Quantum Mechanics,"" will need to be returned by next Friday, October 20th, due to a recall request from another student. I understand that this might be inconvenient, but I encourage you to check if there are additional copies available in the library or consider placing a hold on it for your future use.
+
+If you need any assistance with this process or have questions about other resources, please don’t hesitate to reach out. Your studies are important to us, and we’re here to help!
+
+Best regards,
+
+Faculty Admin
+Monash University",Faculty Admin <science.admin@monash.edu>,,scenario=library loan recall; tone=warm and encouraging
+generated-71beaacd09b6,generated,synthetic,generation_prompt,strong,Studies,Update on Exam Timetable for Unit XYZ101,"Dear Student,
+
+I hope this message finds you well. I want to sincerely apologize for the recent changes to the exam timetable for Unit XYZ101. The updated schedule will now be released on November 5th instead of the previously communicated date of October 30th. I understand that this may cause some inconvenience, and I appreciate your understanding as we finalize the arrangements.
+
+Please keep an eye on your student portal for the new timetable, which will include the updated exam dates and locations. If you have any questions or concerns, feel free to reach out to me directly.
+
+Best regards,
+
+A. Chen
+Unit Coordinator",Unit Coordinator <a.chen@monash.edu>,,scenario=exam timetable release; tone=apologetic about a change
+generated-047ed0a4a54b,generated,synthetic,generation_prompt,strong,Studies,Urgent: Complete Your Academic Integrity Module by October 15,"Dear Student,
+
+This is a reminder that you must complete the Academic Integrity Module by October 15, 2023, to avoid any penalties on your record. The module is essential for maintaining the standards of our academic community and can be accessed through your student portal. Please ensure you allocate time to finish it before the deadline.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,"scenario=academic integrity module reminder; tone=urgent, with a deadline in the next few days"
+generated-37eabc7497c3,generated,synthetic,generation_prompt,strong,Studies,Conference Travel Funding Opportunity,"Dear Alex,
+
+I hope this message finds you well! I wanted to remind you about the upcoming deadline for the conference travel funding applications, which is on March 15th. I believe your presentation on the impact of renewable energy sources would be a fantastic addition to the conference in Melbourne this April. If you need any assistance with your application or would like to discuss your travel plans, please feel free to drop by my office in Room 204, or we can set up a time to chat.
+
+I’m really excited about the progress you’ve made in your research, and I think attending this conference will be a great opportunity for you to network and gain valuable feedback. Don’t hesitate to reach out if you have any questions or need support with your submission. 
+
+Best regards,
+Ravi Patel",Thesis Supervisor <r.patel@monash.edu>,,scenario=conference travel funding; tone=warm and encouraging
+generated-492fed2b2c60,generated,synthetic,generation_prompt,strong,Studies,Change of Tutorial Room for Unit ENG101,"Dear Student,
+
+We would like to inform you of a change regarding your tutorial for the unit ENG101: Introduction to Engineering. Please note the following details:
+
+1. The tutorial originally scheduled for Room 204 in the Engineering Building will now take place in Room 305.
+2. This change is effective starting from the tutorial on Wednesday, October 18, 2023, at 2:00 PM.
+3. The reason for this adjustment is to accommodate a larger group of students due to increased enrollment.
+4. Please ensure you arrive on time, as the tutorial will cover important material for the upcoming assessment.
+
+If you have any questions or concerns, feel free to reach out to us at exams@monash.edu.
+
+Best regards,
+Examinations Office
+Monash University",Examinations Office <exams@monash.edu>,,"scenario=tutorial room change; tone=detailed, listing several numbered points"
+generated-d3cfda3d56b7,generated,synthetic,generation_prompt,strong,Studies,Conference Travel Funding Application Update,"Dear Student,
+
+We are writing to inform you about the status of your application for conference travel funding for the upcoming International Research Conference in Melbourne, scheduled for March 15-17, 2024. Your application has been reviewed, and we are pleased to inform you that you have been awarded a funding amount of $500 to assist with your travel expenses.
+
+Please ensure that you submit your receipts and a brief report on your conference experience by April 1, 2024, to finalize the funding process. If you have any questions or require further assistance, do not hesitate to reach out to our office.
+
+Best regards,
+Student Services
+Monash University",Student Services <no-reply@monash.edu>,,scenario=conference travel funding; tone=brief and administrative
+generated-5bf180a952f3,generated,synthetic,generation_prompt,strong,Studies,Request for Practical Class Swap - URGENT,"Dear Student,
+
+We have received your request to swap your practical class for the unit BIO1010. Please note the following points regarding your request:
+
+1. The current practical class you are enrolled in is scheduled for Wednesdays at 2 PM in Room 204, Building A.
+2. The class you wish to switch to is on Thursdays at 10 AM in Room 305, Building B.
+3. Ensure that you have no timetable conflicts with other units before the swap is finalized.
+4. Please confirm your request by replying to this email by Friday, October 6, 2023.
+5. If approved, the change will take effect from the following week, starting October 9, 2023.
+
+Thank you for your attention to this matter. We look forward to your prompt response.
+
+Best regards,
+Student Services",Student Services <no-reply@monash.edu>,,"scenario=practical class swap request; tone=detailed, listing several numbered points"
+generated-27851cb15950,generated,synthetic,generation_prompt,strong,Studies,Feedback on Your Draft Submission,"Dear [Student's Name],
+
+I hope this message finds you well. I am writing to inform you that your draft titled ""Exploring Digital Archives"" has been reviewed by your supervisor, Dr. Emily Carter. She has provided detailed feedback, which is available for your review in the Monash University Library system. Please log in to your account and navigate to the 'My Submissions' section to access the comments by Friday, October 20, 2023.
+
+It is essential that you address the points raised in her feedback before your final submission, which is due on November 3, 2023. Should you have any questions or require further clarification, do not hesitate to reach out.
+
+Best regards,
+
+Library Services
+Monash University
+library@monash.edu",Library Services <library@monash.edu>,,scenario=supervisor feedback on a draft; tone=formal and procedural
+generated-8d0c43eb7d6e,generated,synthetic,generation_prompt,strong,Studies,Reminder: Complete Your Academic Integrity Module,"Dear Student,
+
+This is a friendly reminder from Library Services regarding the Academic Integrity Module that is due on November 15, 2023. Please ensure you complete the module by following these steps: 1) Log in to your student portal; 2) Navigate to the ‘Academic Integrity’ section; 3) Review the provided materials; 4) Complete the quiz at the end of the module. Remember, this module is essential for understanding the principles of academic honesty and avoiding plagiarism in your work.
+
+Additionally, please note that failure to complete this module may result in restrictions on your ability to submit assignments for your courses, including ENG101 and HIS202. If you have any questions or need assistance, feel free to reach out to us at library@monash.edu or visit us in person at the Library Help Desk in Building 5, Room 204. Thank you for your attention to this important matter.
+
+Best regards,
+Library Services",Library Services <library@monash.edu>,,"scenario=academic integrity module reminder; tone=detailed, listing several numbered points"

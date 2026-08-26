@@ -19,7 +19,13 @@ from backend.adapters.email_source import get_email_source
 from backend.orchestrator.classify import classify_emails
 from backend.orchestrator.preprocess import preprocess, snippet
 from backend.orchestrator.schemas import CATEGORIES, REVIEW_CATEGORY
-from backend.routes.support import config, current_user, handle_errors, session_key
+from backend.routes.support import (
+    EmailNotFound,
+    config,
+    current_user,
+    handle_errors,
+    session_key,
+)
 
 bp = Blueprint("inbox", __name__, url_prefix="/api")
 
@@ -82,3 +88,41 @@ def inbox():
         })
 
     return jsonify({"groups": groups}), 200
+
+
+@bp.get("/inbox/<path:email_id>")
+@handle_errors
+def inbox_message(email_id):
+    """One message, with its body, for the reading pane.
+
+    GET /api/inbox returns snippets only, so without this route the reader has
+    nothing to render. The body is fetched fresh from the adapter on every
+    request and is never cached or written anywhere (NFR-03): "no body data
+    between calls" means the server holds it only for the life of the response.
+
+    The body returned is the *preprocessed* text -- quoted reply chains,
+    signatures and HTML stripped -- so the reader shows the same message the
+    orchestrator summarises, not a different one.
+    """
+    settings = config()
+    message = get_email_source(settings).get_email(email_id)
+    if message is None:
+        raise EmailNotFound(f"No email with id {email_id}.")
+
+    cleaned = preprocess(
+        message.raw_body,
+        settings.token_budget_chars,
+        is_html=message.is_html,
+        label=f"read {message.id[:12]}",
+    )
+
+    return jsonify({
+        "id": message.id,
+        "thread_id": message.thread_id,
+        "sender": message.sender,
+        "sender_name": message.sender_name,
+        "subject": message.subject,
+        "received_at": message.received_at,
+        "unread": message.unread,
+        "body": cleaned.text,
+    }), 200
