@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  Check, Loader2, MessageSquareReply, Sparkles, Square, Volume2, X,
+  Check, Loader2, MessageSquareReply, RefreshCw, Sparkles, Square, Volume2, X,
 } from "lucide-react";
 
 import * as api from "../api/client.js";
@@ -119,6 +119,50 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
 
   return (
     <div className="reader" key={email.id}>
+
+      {/* --------------------------------------------------------- the email */}
+      <div className="reader-head">
+        <h2 className="reader-subject">{email.subject}</h2>
+        <div className="reader-meta">
+          <span className="mail-avatar lg" style={{ background: cat ? cat.color : "#64748B" }}>{initials}</span>
+          <div className="reader-sender">
+            <span className="reader-from">{email.sender_name || email.sender}</span>
+            <span className="reader-addr">{email.sender}</span>
+          </div>
+          <div className="reader-right">
+            <span className="cat-tag" style={{ "--c": cat ? cat.color : "#64748B" }}>
+              <span className="cat-dot" /> {email.category}
+            </span>
+            <span className="reader-time">{email.received_at_display}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="reader-body">
+        {bodyLoading && <div className="ai-skel"><span /><span /><span /><span /><span /></div>}
+        {!bodyLoading && body && (() => {
+          const entry = tracedSentence == null || !summary || !summary.provenance
+            ? null
+            : summary.provenance.find((pv) => pv.sentence === tracedSentence);
+          const paragraphs = toParagraphs(segment(body, entry ? entry.spans : []));
+          return paragraphs.map((pieces, i) =>
+            pieces.length === 0 ? <br key={i} /> : (
+              <p key={i}>
+                {pieces.map((piece, j) =>
+                  piece.highlighted
+                    ? <mark className="trace-mark" key={j}>{piece.text}</mark>
+                    : <span key={j}>{piece.text}</span>
+                )}
+              </p>
+            )
+          );
+        })()}
+        {!bodyLoading && !body && <p className="ai-error">Could not load this message.</p>}
+      </div>
+
+      {/* AI tools sit BELOW the message: you read first, then act on what
+          you read, and the results appear next to the text they came from
+          rather than pushing it off screen. */}
       <div className="reader-toolbar">
         <span className="reader-toolbar-label">
           <Sparkles size={14} strokeWidth={2.2} /> AI tools
@@ -249,8 +293,17 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
                   value={instruction}
                   onChange={(e) => setInstruction(e.target.value)}
                 />
+                {/* Regenerate lives here, next to the draft it regenerates.
+                    It is also in the toolbar above the message, but that is a
+                    long scroll away once a draft is on screen. */}
+                <button className="ai-regen" onClick={runDraft} disabled={draftState === "loading"}>
+                  {draftState === "loading"
+                    ? <Loader2 size={15} strokeWidth={2.2} className="spin" />
+                    : <RefreshCw size={15} strokeWidth={2.2} />}
+                  Regenerate
+                </button>
                 <button
-                  className="ai-approve"
+                  className={`ai-approve ${approved ? "done" : ""}`}
                   onClick={() => setApproved(true)}
                   disabled={approved || !draftText.trim()}
                 >
@@ -262,7 +315,7 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
                   stops there, which is what FR-03 asks for. */}
               <p className="ai-note">
                 {approved
-                  ? "Approved. Nothing has been sent — this build has no send capability."
+                  ? "Approved. Nothing has been sent - this build has no send capability."
                   : "Review and edit before approving. Nothing is sent automatically."}
               </p>
             </>
@@ -270,45 +323,6 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
         </section>
       )}
 
-      {/* --------------------------------------------------------- the email */}
-      <div className="reader-head">
-        <h2 className="reader-subject">{email.subject}</h2>
-        <div className="reader-meta">
-          <span className="mail-avatar lg" style={{ background: cat ? cat.color : "#64748B" }}>{initials}</span>
-          <div className="reader-sender">
-            <span className="reader-from">{email.sender_name || email.sender}</span>
-            <span className="reader-addr">{email.sender}</span>
-          </div>
-          <div className="reader-right">
-            <span className="cat-tag" style={{ "--c": cat ? cat.color : "#64748B" }}>
-              <span className="cat-dot" /> {email.category}
-            </span>
-            <span className="reader-time">{email.received_at_display}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="reader-body">
-        {bodyLoading && <div className="ai-skel"><span /><span /><span /><span /><span /></div>}
-        {!bodyLoading && body && (() => {
-          const entry = tracedSentence == null || !summary || !summary.provenance
-            ? null
-            : summary.provenance.find((pv) => pv.sentence === tracedSentence);
-          const paragraphs = toParagraphs(segment(body, entry ? entry.spans : []));
-          return paragraphs.map((pieces, i) =>
-            pieces.length === 0 ? <br key={i} /> : (
-              <p key={i}>
-                {pieces.map((piece, j) =>
-                  piece.highlighted
-                    ? <mark className="trace-mark" key={j}>{piece.text}</mark>
-                    : <span key={j}>{piece.text}</span>
-                )}
-              </p>
-            )
-          );
-        })()}
-        {!bodyLoading && !body && <p className="ai-error">Could not load this message.</p>}
-      </div>
     </div>
   );
 }

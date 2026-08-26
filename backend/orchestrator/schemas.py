@@ -72,7 +72,14 @@ SUMMARY_SCHEMA = {
     "properties": {
         "summary": {
             "type": "array",
-            "description": "Exactly 2 or 3 complete sentences.",
+            # minItems/maxItems are the enforcement; the description is only a
+            # hint. Section 3 is explicit that the count is enforced
+            # programmatically rather than requested politely, and a schema
+            # without these bounds lets a compliant model return one sentence
+            # and still satisfy the contract.
+            "minItems": SUMMARY_MIN_SENTENCES,
+            "maxItems": SUMMARY_MAX_SENTENCES,
+            "description": "Exactly 2 or 3 complete sentences, one per array element.",
             "items": {"type": "string"},
         },
         "action_items": {

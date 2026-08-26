@@ -17,7 +17,7 @@ export default function EmailPicker({ emails, selected, onSelect, label = "Email
         <option value="">Select an email…</option>
         {emails.map((e) => (
           <option key={e.id} value={e.id}>
-            {e.from} — {e.subject}
+            {e.from} - {e.subject}
           </option>
         ))}
       </select>

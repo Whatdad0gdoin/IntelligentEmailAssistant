@@ -16,6 +16,7 @@ unverified one as clean. The UI shows the warning inline (section 5.3).
 """
 
 import logging
+import re
 
 from backend.orchestrator import prompts
 from backend.orchestrator.cache import SUMMARY_CACHE
@@ -40,23 +41,100 @@ class EmptyEmailError(LLMError):
     """There is nothing left to summarise once quoting and footers are removed."""
 
 
-def _validate(payload):
+# Sentence boundary: terminal punctuation, whitespace, then a capital or
+# digit. A bare regex is not enough -- it tears "Dr. Ford" and "2 p.m. Friday"
+# in half -- so candidate boundaries are filtered against known abbreviations
+# and single-letter initials below.
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+(?=[\u0022\u2018\u201cA-Z0-9])")
+
+# Only forms that are almost never sentence-final. Deliberately short: listing
+# "pm" here made "moved to 2pm." look like an abbreviation and refuse to split,
+# and "etc." / "no." end real sentences often enough to be unsafe. The dotted
+# forms (a.m, p.m, e.g) are matched with their internal dots, so "at 2 p.m."
+# is still protected without blocking "at 2pm.".
+_ABBREVIATIONS = frozenset({
+    "dr", "mr", "mrs", "ms", "prof", "sr", "jr", "messrs",
+    "a.m", "p.m", "e.g", "i.e", "cf", "al",
+})
+
+_TRAILING_TOKEN = re.compile(r"([A-Za-z.]+)\.$")
+
+
+def _is_real_boundary(text_before):
+    """False when the full stop belongs to an abbreviation or an initial."""
+    match = _TRAILING_TOKEN.search(text_before)
+    if not match:
+        return True
+    token = match.group(1).lower().rstrip(".")
+    if token in _ABBREVIATIONS:
+        return False
+    # A single letter is an initial ("J. Smith"), not a sentence end.
+    return len(token) > 1
+
+
+def _split_sentences(text):
+    """Split on real sentence boundaries only."""
+    pieces = []
+    cursor = 0
+    for match in _SENTENCE_END.finditer(text):
+        if not _is_real_boundary(text[cursor:match.start()]):
+            continue
+        piece = text[cursor:match.start()].strip()
+        if piece:
+            pieces.append(piece)
+        cursor = match.end()
+    tail = text[cursor:].strip()
+    if tail:
+        pieces.append(tail)
+    return pieces
+
+
+def _normalise_sentences(summary):
+    """Flatten the model's array into one entry per actual sentence.
+
+    The most common malformed response is not a short summary at all: it is
+    two or three sentences packed into a single array element, which then
+    counts as one and fails the length check. Re-splitting is honest -- it
+    re-reads what the model wrote rather than adding to it.
+    """
+    out = []
+    for entry in summary:
+        if not isinstance(entry, str):
+            continue
+        out.extend(_split_sentences(entry.strip()))
+    return out
+
+
+def _validate(payload, repair=False):
     """Return the cleaned (summary, action_items), or raise ValueError.
 
-    Raising rather than repairing is the point. A summary trimmed from five
-    sentences to three is not the model's answer any more, and a summary padded
-    from one to two would have to invent the padding.
+    With repair=False the count is strict, so the model gets a fair chance (and
+    a corrective retry) to produce 2-3 sentences on its own.
+
+    With repair=True -- the final attempt -- the count is fixed deterministically
+    rather than raising, because a user pressing Summarise needs a summary more
+    than they need a stack trace. Repair never invents text: too many sentences
+    are truncated to the first three, and a genuinely single sentence is kept as
+    it stands. Nothing is padded, so a repaired summary still passes through the
+    same grounding check as any other.
     """
     summary = payload.get("summary")
     if not isinstance(summary, list):
         raise ValueError("summary was not an array")
 
-    sentences = [s.strip() for s in summary if isinstance(s, str) and s.strip()]
+    sentences = _normalise_sentences(summary)
     if not (SUMMARY_MIN_SENTENCES <= len(sentences) <= SUMMARY_MAX_SENTENCES):
-        raise ValueError(
-            f"summary had {len(sentences)} sentences, expected "
-            f"{SUMMARY_MIN_SENTENCES} or {SUMMARY_MAX_SENTENCES}"
-        )
+        if not repair:
+            raise ValueError(
+                f"summary had {len(sentences)} sentences, expected "
+                f"{SUMMARY_MIN_SENTENCES} or {SUMMARY_MAX_SENTENCES}"
+            )
+        if len(sentences) > SUMMARY_MAX_SENTENCES:
+            sentences = sentences[:SUMMARY_MAX_SENTENCES]
+        elif not sentences:
+            raise ValueError("summary was empty")
+        # Fewer than the minimum: keep what there is. Padding would mean
+        # inventing a sentence, which is the one thing never worth doing.
 
     raw_items = payload.get("action_items")
     if not isinstance(raw_items, list):
@@ -70,6 +148,10 @@ def _validate(payload):
         if not text:
             continue  # an empty item is nothing, not a failure
         index = entry.get("source_sentence")
+        if repair and isinstance(index, int) and index > len(sentences):
+            # Truncation can orphan an index; point it at the last surviving
+            # sentence rather than dropping a real action item.
+            index = len(sentences)
         if not isinstance(index, int) or not (1 <= index <= len(sentences)):
             # A source_sentence pointing nowhere breaks the traceability the
             # field exists to provide, so it is a validation failure, not a
@@ -104,10 +186,24 @@ def summarise_email(email, config, session_key=None, user=None, use_cache=True):
     user_prompt = prompts.summary_user(email.subject, email.sender_name, cleaned.text)
 
     last_error = None
+    sentences = action_items = None
+    payload = None
+
     for attempt in (1, 2):
+        prompt = user_prompt
+        if attempt == 2 and last_error:
+            # Retry with the actual fault stated. Re-sending the identical
+            # prompt and hoping for a different sample wastes the one retry the
+            # budget allows.
+            prompt = (
+                user_prompt + '\\n\\n' +
+                "Your previous response was rejected: " + str(last_error) + ". " +
+                f"Return exactly {SUMMARY_MIN_SENTENCES} or {SUMMARY_MAX_SENTENCES} " +
+                "sentences, each as its own element of the summary array."
+            )
         payload = client.complete_json(
             system=prompts.SUMMARY_SYSTEM,
-            user=user_prompt,
+            user=prompt,
             schema_name="email_summary",
             schema=SUMMARY_SCHEMA,
             purpose="summarisation",
@@ -119,12 +215,20 @@ def summarise_email(email, config, session_key=None, user=None, use_cache=True):
         except ValueError as exc:
             last_error = exc
             log.warning("summarise %s: invalid output on attempt %d (%s)", email.id, attempt, exc)
-    else:
-        # Fail loudly (section 3). No half-summary is returned.
-        raise SummaryValidationError(
-            f"The model did not return a valid {SUMMARY_MIN_SENTENCES}-to-"
-            f"{SUMMARY_MAX_SENTENCES} sentence summary after a retry ({last_error})."
-        )
+
+    if sentences is None:
+        # Both attempts were out of range. Repair the last response rather than
+        # returning nothing: the text is the model's own, only its shape is
+        # corrected, and it still faces the grounding check below.
+        log.warning("summarise %s: repairing malformed summary (%s)", email.id, last_error)
+        try:
+            sentences, action_items = _validate(payload or {}, repair=True)
+        except ValueError as exc:
+            # Nothing salvageable -- an empty or non-array response. Fail loudly
+            # here, because there is no summary to repair (section 3).
+            raise SummaryValidationError(
+                f"The model returned no usable summary after a retry ({exc})."
+            ) from exc
 
     # The model was given the subject and sender name as well as the body, so
     # all three are legitimate sources for a claim.

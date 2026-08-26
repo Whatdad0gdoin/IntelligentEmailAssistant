@@ -48,18 +48,27 @@ def test_three_sentences_are_accepted(config, stub_llm):
     assert len(summarise_email(_email(config), config)["summary"]) == 3
 
 
-def test_one_sentence_is_retried_once_then_fails(config, stub_llm):
+def test_one_sentence_is_retried_then_returned_rather_than_failing(config, stub_llm):
+    """Behaviour change, requested deliberately: a summary is always produced.
+
+    The spec (section 3) said fail loudly after one retry. In use that turned a
+    routine model wobble into a dead Summarise button. The model still gets its
+    strict attempt and a corrective retry; only after both does the last
+    response get returned as-is. Nothing is invented -- one sentence stays one
+    sentence -- and it still goes through the grounding check.
+    """
     stub_llm.queue(_payload(["Only one sentence here."]), _payload(["Still only one."]))
-    with pytest.raises(SummaryValidationError):
-        summarise_email(_email(config), config)
+    result = summarise_email(_email(config), config)
+    assert result["summary"] == ["Still only one."]
     assert stub_llm.call_count == 2, "expected exactly one retry"
 
 
-def test_four_sentences_are_retried_once_then_fail(config, stub_llm):
+def test_four_sentences_are_retried_then_truncated(config, stub_llm):
     four = TWO_SENTENCES + ["Third sentence.", "Fourth sentence."]
     stub_llm.queue(_payload(four), _payload(four))
-    with pytest.raises(SummaryValidationError):
-        summarise_email(_email(config), config)
+    result = summarise_email(_email(config), config)
+    assert len(result["summary"]) == 3
+    assert result["summary"] == four[:3], "truncation must keep the leading sentences"
     assert stub_llm.call_count == 2
 
 
@@ -70,16 +79,17 @@ def test_a_valid_retry_succeeds(config, stub_llm):
     assert stub_llm.call_count == 2
 
 
-def test_a_bad_count_is_never_padded_or_trimmed_into_shape(config, stub_llm):
-    """Trimming 5 sentences to 3 would silently discard content.
+def test_a_short_summary_is_never_padded(config, stub_llm):
+    """Truncating is acceptable; padding is not.
 
-    Padding 1 to 2 would mean inventing the second sentence. Neither is an
-    acceptable way to satisfy the rule, so failure is the only outcome left.
+    Dropping a fourth sentence discards the model's content. Padding one
+    sentence to two would mean *writing* the second, which is fabrication --
+    exactly what the grounding layer exists to prevent. So repair only ever
+    removes.
     """
-    five = [f"Sentence number {n}." for n in range(5)]
-    stub_llm.queue(_payload(five), _payload(five))
-    with pytest.raises(SummaryValidationError):
-        summarise_email(_email(config), config)
+    stub_llm.queue(_payload(["Only one."]), _payload(["Only one."]))
+    result = summarise_email(_email(config), config)
+    assert result["summary"] == ["Only one."], "a short summary must not be padded"
 
 
 def test_failure_is_loud_not_an_empty_summary(config, stub_llm):
@@ -89,10 +99,12 @@ def test_failure_is_loud_not_an_empty_summary(config, stub_llm):
 
 
 def test_blank_strings_do_not_count_as_sentences(config, stub_llm):
+    """Whitespace entries are dropped, so this really is a one-sentence summary
+    and must not be inflated to two by counting the blank."""
     stub_llm.queue(_payload(["A real sentence.", "   ", ""]),
                    _payload(["A real sentence.", "  "]))
-    with pytest.raises(SummaryValidationError):
-        summarise_email(_email(config), config)
+    result = summarise_email(_email(config), config)
+    assert result["summary"] == ["A real sentence."]
 
 
 # --- Action items (section 4.4) --------------------------------------------
@@ -110,12 +122,15 @@ def test_an_empty_action_item_list_is_valid(config, stub_llm):
     assert summarise_email(_email(config), config)["action_items"] == []
 
 
-def test_source_sentence_out_of_range_is_rejected(config, stub_llm):
-    """An index pointing nowhere breaks the traceability the field is for."""
+def test_source_sentence_out_of_range_is_retried_then_clamped(config, stub_llm):
+    """An index pointing nowhere breaks traceability, so it gets a strict
+    attempt and a corrective retry first. On the final pass it is clamped to
+    the last real sentence rather than dropping a genuine action item."""
     bad = _payload(action_items=[{"text": "Do something", "source_sentence": 7}])
     stub_llm.queue(bad, bad)
-    with pytest.raises(SummaryValidationError):
-        summarise_email(_email(config), config)
+    result = summarise_email(_email(config), config)
+    assert result["action_items"][0]["source_sentence"] == len(result["summary"])
+    assert stub_llm.call_count == 2
 
 
 def test_source_sentence_zero_is_rejected(config, stub_llm):
@@ -214,3 +229,47 @@ def test_an_email_with_no_readable_text_fails_clearly(config, stub_llm):
     with pytest.raises(EmptyEmailError):
         summarise_email(Empty(), config)
     assert stub_llm.call_count == 0, "no point paying for a call with nothing to summarise"
+
+
+# --- The failure that prompted the change ----------------------------------
+
+
+def test_multiple_sentences_in_one_array_element_are_re_split(config, stub_llm):
+    """The real-world fault behind "summary had 1 sentences".
+
+    The model returned a correct two-sentence summary packed into a single
+    array element. Counting elements called that one sentence and failed the
+    request. Re-splitting reads what the model actually wrote, so this now
+    succeeds on the FIRST attempt with no retry.
+    """
+    stub_llm.queue(_payload(["The meeting moved to Friday at 2pm. The report is attached."]))
+    result = summarise_email(_email(config), config)
+    assert result["summary"] == [
+        "The meeting moved to Friday at 2pm.",
+        "The report is attached.",
+    ]
+    assert stub_llm.call_count == 1, "re-splitting should not need a retry"
+
+
+def test_an_abbreviation_is_not_split_mid_sentence(config, stub_llm):
+    """Splitting must not tear "Dr. Ford" or "2 p.m." in half."""
+    stub_llm.queue(_payload(["Dr. Ford replied. The meeting is at 2 p.m. on Friday."]))
+    result = summarise_email(_email(config), config)
+    assert result["summary"][0] == "Dr. Ford replied."
+    assert result["summary"][1] == "The meeting is at 2 p.m. on Friday."
+
+
+def test_the_retry_prompt_states_the_fault(config, stub_llm):
+    """A retry that re-sends the identical prompt wastes the only retry there
+    is; the second attempt must say what was wrong."""
+    stub_llm.queue(_payload(["Only one."]), _payload())
+    summarise_email(_email(config), config)
+    second_prompt = stub_llm.calls[1]["user"]
+    assert "rejected" in second_prompt.lower()
+
+
+def test_an_unusable_response_still_fails_loudly(config, stub_llm):
+    """Repair fixes shape, not absence. With nothing to repair, it must fail."""
+    stub_llm.queue({"summary": [], "action_items": []}, {"summary": [], "action_items": []})
+    with pytest.raises(SummaryValidationError):
+        summarise_email(_email(config), config)

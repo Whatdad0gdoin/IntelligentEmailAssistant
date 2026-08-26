@@ -62,10 +62,29 @@ def test_summarise_with_an_unknown_email_id_is_a_404(client, auth_headers, stub_
     assert response.status_code == 404
 
 
-def test_summarise_fails_loudly_when_the_model_will_not_comply(client, auth_headers, stub_llm):
-    """Section 3: fail loudly. Not a 200 with a one-sentence summary."""
+def test_summarise_returns_a_short_summary_rather_than_failing(client, auth_headers, stub_llm):
+    """Deliberate deviation from section 3, requested by the project owner.
+
+    The spec said fail loudly after one retry. In practice that turned an
+    occasional model wobble into a dead Summarise button, so a summary is now
+    always returned. The model still gets a strict attempt and a corrective
+    retry; only then is its own text returned as-is.
+
+    Repair only ever REMOVES (truncating 4+ to 3). It never pads a short
+    summary, because writing the missing sentence would be fabrication.
+    """
     one = {"summary": ["Only one sentence."], "action_items": []}
     stub_llm.queue(one, one)
+    response = client.post("/api/summarise", json={"email_id": WORK_EMAIL_ID},
+                           headers=auth_headers)
+    assert response.status_code == 200
+    assert response.get_json()["summary"] == ["Only one sentence."]
+
+
+def test_summarise_still_fails_loudly_with_nothing_to_repair(client, auth_headers, stub_llm):
+    """Repair fixes shape, not absence. An empty summary has no shape to fix."""
+    empty = {"summary": [], "action_items": []}
+    stub_llm.queue(empty, empty)
     response = client.post("/api/summarise", json={"email_id": WORK_EMAIL_ID},
                            headers=auth_headers)
     assert response.status_code == 502

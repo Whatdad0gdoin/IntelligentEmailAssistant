@@ -149,10 +149,10 @@ export async function draft(emailId, instruction, { signal } = {}) {
  * `emails` is optional context ({ id, sender_name, subject }) that lets the
  * backend resolve "the one from Sarah" onto a real id deterministically.
  */
-export async function voiceIntent(transcript, emails = [], { signal } = {}) {
+export async function voiceIntent(transcript, emails = [], alternatives = [], { signal } = {}) {
   return request("/api/voice/intent", {
     method: "POST",
-    body: { transcript, emails },
+    body: { transcript, emails, alternatives },
     signal,
   });
 }

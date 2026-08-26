@@ -10,8 +10,8 @@
  * FR-06/FR-07 and out of scope for this build.
  */
 
-import { useEffect, useRef, useState } from "react";
-import { Hammer, LogOut, PenLine, Settings as SettingsIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { LogOut, PenLine, Settings as SettingsIcon } from "lucide-react";
 
 import ComingSoon from "./ComingSoon.jsx";
 import SideItem from "./SideItem.jsx";
@@ -22,50 +22,27 @@ import { useInbox } from "../hooks/useInbox.jsx";
 import { FEATURES } from "../lib/constants.js";
 import { voiceLimitation } from "../lib/capabilities.js";
 
-// Features that now live inside the reading pane rather than on their own screen.
-// Features that now run inside the reading pane rather than on their own
-// screen. Voice is NOT here: FR-05 acts on the inbox as a whole, so it keeps a
-// screen of its own and dispatches its result into the reader.
-const IN_PLACE = new Set(["summarise", "speak", "reply", "categorise"]);
+// Voice Commands is the only AI feature with a screen of its own: FR-05 acts
+// on the inbox as a whole rather than on one message, and it dispatches its
+// recognised intent into the reading pane. Everything else lives on the email.
+const VOICE_FEATURE = FEATURES.find((f) => f.id === "voice");
 
 export default function Dashboard({ user, onLogout }) {
   const [active, setActive] = useState("inbox");
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState(null);
-  const [toast, setToast] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
-  const toastTimer = useRef(null);
 
   const inbox = useInbox(true);
   const voiceNotice = voiceLimitation();
 
-  useEffect(() => () => clearTimeout(toastTimer.current), []);
-
-  const showToast = (label) => {
-    setToast(label);
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3200);
-  };
 
   // Opening an email pulls its body on demand; the list only carries snippets.
   useEffect(() => {
     if (selected) inbox.loadBody(selected);
   }, [selected, inbox]);
 
-  const handleNav = (id) => {
-    if (IN_PLACE.has(id)) {
-      // These act on an open message, so send the user to the inbox and say
-      // where to find them instead of opening an empty feature screen.
-      setActive("inbox");
-      showToast(
-        id === "categorise"
-          ? "Your inbox is already grouped by category below."
-          : "Open an email — this runs in the reading pane."
-      );
-      return;
-    }
-    setActive(id);
-  };
+  const handleNav = (id) => setActive(id);
 
   const allEmails = Object.values(inbox.groups).flat();
   const voiceEmails = allEmails.map((e) => ({
@@ -75,12 +52,18 @@ export default function Dashboard({ user, onLogout }) {
   }));
 
   // A recognised intent selects its target and hands the action to the reader.
+  // Returns true when the action was dispatched, false when the target could
+  // not be determined. Section 6.3 is explicit: on an unresolved reference the
+  // app asks rather than guesses. Falling back to the first email in the inbox
+  // is exactly the "confidently wrong action" the spec warns about - it is how
+  // "summarise the email from Sarah" ends up summarising someone else's mail.
   const runVoiceAction = (intent, targetEmailId) => {
-    const target = targetEmailId || selected || allEmails[0]?.id;
-    if (!target) return;
+    const target = targetEmailId || selected;
+    if (!target) return false;
     setSelected(target);
     setActive("inbox");
     setPendingAction({ intent, emailId: target });
+    return true;
   };
 
   const openEmail = selected ? inbox.findEmail(selected) : null;
@@ -125,15 +108,17 @@ export default function Dashboard({ user, onLogout }) {
         </div>
         <button className="compose-btn"><PenLine size={16} strokeWidth={2.4} /> <span>Compose</span></button>
         <nav className="side-nav">
+          {/* The AI Tools group is gone. Summarise, Read Aloud and Draft Reply
+              act on an open message, so they belong on that message, not in a
+              global nav that could only ever say "open an email first".
+              What remains is genuinely navigable: places, not verbs. */}
           <SideItem f={FEATURES[0]} active={active} onClick={handleNav} badge={unreadCount} />
-          <div className="nav-group-label">AI Tools</div>
-          {FEATURES.filter((f) => f.group === "ai").map((f) => (
-            <SideItem key={f.id} f={f} active={active} onClick={handleNav} soon={!IN_PLACE.has(f.id)} />
-          ))}
-          <div className="nav-group-label">Voice</div>
-          {FEATURES.filter((f) => f.group === "voice").map((f) => (
-            <SideItem key={f.id} f={f} active={active} onClick={handleNav} soon={!IN_PLACE.has(f.id)} />
-          ))}
+          {VOICE_FEATURE && (
+            <>
+              <div className="nav-group-label">Hands-free</div>
+              <SideItem f={VOICE_FEATURE} active={active} onClick={handleNav} />
+            </>
+          )}
         </nav>
         <div className="side-foot">
           <button className={`side-mini ${active === "settings" ? "active" : ""}`} onClick={() => setActive("settings")}>
@@ -156,12 +141,6 @@ export default function Dashboard({ user, onLogout }) {
         {main}
       </main>
 
-      {toast && (
-        <div className="toast" key={toast}>
-          <span className="toast-icon"><Hammer size={15} strokeWidth={2.4} /></span>
-          <div className="toast-text"><b>{toast}</b></div>
-        </div>
-      )}
     </div>
   );
 }

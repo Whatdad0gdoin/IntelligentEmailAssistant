@@ -18,6 +18,7 @@ message. Here, an unresolvable reference returns null and the UI asks.
 Ambiguity resolves to null, never to a guess.
 """
 
+import difflib
 import logging
 import re
 
@@ -52,6 +53,36 @@ _RECENCY = re.compile(
 _MIN_NAME_TOKEN = 3
 _MIN_SUBJECT_TOKEN = 4
 
+# Speech recognition mis-hears names constantly: "sarah" comes back as "sara",
+# "sarra", "sahara". An exact-match-only resolver then finds nothing and the UI
+# has to ask, which makes the feature feel broken even though the user spoke
+# clearly. A near match on a name is accepted at a lower score than an exact
+# one, so an exact match on a different email still wins.
+# 0.78 is measured, not guessed. Against the inbox's sender names:
+#   sara -> sarah    0.89     tara    -> sarah  0.67
+#   sarra -> sarah   0.80     gitlab  -> github 0.67
+#   robins -> robinson 0.86   sarcasm -> sarah  0.67
+#   amelie -> amelia 0.83
+# Genuine mis-hearings land at 0.80+, unrelated words at 0.67, so the threshold
+# sits in the gap with room on both sides. Raising it to 0.82 loses "sarra";
+# lowering it to 0.70 starts accepting "tara" as "Sarah", which is precisely
+# the confidently-wrong dispatch this resolver exists to avoid.
+_FUZZY_NAME_RATIO = 0.78
+
+
+def _fuzzy_hit(haystack_words, token):
+    """True when some spoken word is a near miss for `token`."""
+    if len(token) < 4:
+        # Short names cannot be fuzzy-matched safely: "ann" and "and" are one
+        # edit apart and mean entirely different things.
+        return False
+    for word in haystack_words:
+        if abs(len(word) - len(token)) > 3:
+            continue
+        if difflib.SequenceMatcher(None, word, token).ratio() >= _FUZZY_NAME_RATIO:
+            return True
+    return False
+
 
 def _words(text):
     return [w for w in re.split(r"[^a-z0-9]+", normalise(text)) if w]
@@ -61,17 +92,23 @@ def _contains_word(haystack_words, word):
     return word in haystack_words
 
 
-def resolve_target(reference, transcript, candidates):
+def resolve_target(reference, transcript, candidates, alternatives=None):
     """Pick which email the user meant, or None. No model involved.
 
     Sender names outrank subject words: people refer to mail by who sent it far
     more often than by what it says, and a name is a much less ambiguous token
     than a subject word.
+
+    `alternatives` are the recogniser's other hypotheses for the same utterance.
+    They are pooled into the search text: if the top hypothesis dropped the name
+    but the third one caught it, that is still the user's own speech, and using
+    it beats asking them to repeat themselves.
     """
     if not candidates:
         return None
 
-    haystack = _words(f"{reference or ''} {transcript or ''}")
+    spoken = " ".join([transcript or ""] + list(alternatives or []))
+    haystack = _words(f"{reference or ''} {spoken}")
     if not haystack:
         return None
     haystack_set = set(haystack)
@@ -87,6 +124,10 @@ def resolve_target(reference, transcript, candidates):
             if len(token) >= _MIN_NAME_TOKEN and token not in _TITLES:
                 if _contains_word(haystack_set, token):
                     score += 3
+                elif _fuzzy_hit(haystack_set, token):
+                    # Worth less than an exact match, so a clean hit on another
+                    # email still beats a near miss on this one.
+                    score += 2
 
         for token in set(_words(candidate.get("subject") or "")):
             if len(token) >= _MIN_SUBJECT_TOKEN and token not in _SUBJECT_STOPWORDS:
@@ -106,14 +147,14 @@ def resolve_target(reference, transcript, candidates):
         log.info("voice: reference matched %d emails equally, returning null", len(winners))
         return None
 
-    if _RECENCY.search(f"{reference or ''} {transcript or ''}"):
+    if _RECENCY.search(f"{reference or ''} {spoken}"):
         # Candidates arrive newest first (the adapter sorts them).
         return candidates[0].get("id")
 
     return None
 
 
-def classify_intent(transcript, config, session_key=None, candidates=None):
+def classify_intent(transcript, config, session_key=None, candidates=None, alternatives=None):
     """Map a transcript onto an action. Returns the /api/voice/intent body."""
     transcript = (transcript or "").strip()
     if not transcript:
@@ -142,7 +183,9 @@ def classify_intent(transcript, config, session_key=None, candidates=None):
 
     target = None
     if intent != UNKNOWN:
-        target = resolve_target(payload.get("target_reference"), transcript, candidates or [])
+        target = resolve_target(
+            payload.get("target_reference"), transcript, candidates or [], alternatives
+        )
 
     log.info("voice: intent=%s confidence=%.2f target=%s", intent, confidence, bool(target))
     return {

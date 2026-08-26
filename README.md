@@ -9,14 +9,14 @@ orchestrator → OpenAI API.
 ## Build status
 
 Implemented against the build spec, in order. **The backend for steps 3–6 and 9
-is complete. No frontend work has been done since step 1 — the UI still renders
+is complete. No frontend work has been done since step 1 - the UI still renders
 placeholder fixtures and is not yet wired to any of these endpoints.**
 
 | Step | Scope | Backend | Frontend |
 |---|---|---|---|
-| 1 | Frontend audit and gap table | — | Done |
+| 1 | Frontend audit and gap table | - | Done |
 | 2 | JWT middleware + login end to end (NFR-04) | Done | Done |
-| 3 | Orchestrator skeleton | Done | — |
+| 3 | Orchestrator skeleton | Done | - |
 | 4 | `/classify`, grouped inbox, Review bucket (FR-02, FR-08) | Done | **Not wired** |
 | 5 | `/summarise` + grounding flags (FR-01) | Done | **Not wired** |
 | 6 | `/draft` + Approve control (FR-03) | Done | **Not built** |
@@ -31,8 +31,8 @@ Two things this means in practice:
   the AI buttons still show a "not functional yet" toast. `GET /api/inbox`
   returns the real grouped inbox, but nothing calls it yet.
 - The **Approve control (FR-03) does not exist**. The backend has no send path
-  and cannot acquire one — there is no send route and no mail-sending library
-  anywhere in it, both asserted in `tests/test_draft.py` — but the deliberate
+  and cannot acquire one - there is no send route and no mail-sending library
+  anywhere in it, both asserted in `tests/test_draft.py` - but the deliberate
   user action that gates sending is a frontend control and has not been built.
 
 Out of scope for this build: FR-06 (tone adjustment), FR-07 (translation). The
@@ -78,60 +78,52 @@ Both are additive; neither changes a documented field.
 
 ## Setup
 
-Requires Python 3.12+ and Node 20+.
+### Quick start
 
-### Backend
+Double-click **`start.bat`**, or from a terminal:
 
-```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install -r backend/requirements.txt   # Windows
-python -m spacy download en_core_web_sm                           # see note below
-cp backend/.env.example backend/.env
+```powershell
+.\start.ps1
 ```
 
-Fill in `backend/.env`:
+That one command checks Python and Node are present, creates `backend/.env`
+from the example if it is missing, installs any missing Python and Node
+packages, downloads the spaCy model, frees ports 5000 and 5173, starts both
+servers in their own windows, waits until they answer, and opens the browser.
+
+Stop everything with `.\start.ps1 -Stop`, double-click `stop.bat`, or close the two
+server windows. `-SkipInstall` skips the dependency check on a restart.
+
+Run it from a terminal you own. A server started inside an agent or IDE task
+session is a child of that shell and dies when the session ends, which shows up
+in the browser as "Cannot reach the API server".
+
+### First run
+
+`start.ps1` creates `backend/.env` for you but cannot fill it in. Set:
 
 ```bash
 # a long random string
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 
-# then add an account (prints a JSON fragment for AUTH_USERS)
+# an account (prints a JSON fragment for AUTH_USERS)
 python -m backend.scripts.hash_password
 ```
 
-Run it:
+and add your `OPENAI_API_KEY`. Without it the app runs and login works, but
+summarise, classify and draft return 503.
+
+### Manual start
 
 ```bash
-python -m backend.run          # http://localhost:5000
+python -m pip install -r backend/requirements.txt
+python -m spacy download en_core_web_sm
+python -m backend.run              # http://localhost:5000
+
+cd frontend && npm install
+npm run dev                        # http://localhost:5173
 ```
 
-**On the spaCy model.** Entity grounding (spec section 4.4) uses spaCy NER. The
-model is a separate download and pip will not fetch it. Without it the system
-still runs: `orchestrator/grounding.py` falls back to a capitalisation
-heuristic, records which backend ran in `ENTITY_BACKEND`, and reports it in
-`groundedness_rate()`. The fallback is genuinely weaker on lowercase and
-unusual names, so any groundedness figure quoted in the report must say which
-backend produced it.
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev                    # http://localhost:5173
-```
-
-The Vite dev server proxies `/api` to Flask, so the browser sees one origin and
-no API base URL is hardcoded.
-
-### Email source
-
-The adapter is fixture-backed for this build: it reads RFC-822 `.eml` files
-from `backend/adapters/fixtures/`. That directory occupies the position a mail
-server occupies — a source the app reads, never a place it writes — so it does
-not conflict with NFR-03. A real IMAP or Gmail source is one class in
-`backend/adapters/email_source.py` returning `SourceEmail` objects; no route,
-orchestrator module or view changes.
 
 ## Tests
 
@@ -166,17 +158,17 @@ What the suite covers, and what it does not:
 
 ## Evaluation
 
-- `eval/data/voice_intents.csv` — the 30 graded transcripts for FR-05.
-- `eval/data/voice_intents_unknown.csv` — out-of-scope probes that must return
+- `eval/data/voice_intents.csv` - the 30 graded transcripts for FR-05.
+- `eval/data/voice_intents_unknown.csv` - out-of-scope probes that must return
   `unknown`. Not part of the graded 30.
-- `eval/intent_harness.py` — runs the classifier over both and prints accuracy
+- `eval/intent_harness.py` - runs the classifier over both and prints accuracy
   and a confusion table.
-- `grounding.groundedness_rate(outputs)` — section 4.6. Takes any batch of
+- `grounding.groundedness_rate(outputs)` - section 4.6. Takes any batch of
   recorded `/api/summarise` or `/api/draft` responses and returns the percentage
   with zero ungrounded flags, plus which entity backend produced them.
 
 **For the report:** ROUGE measures n-gram overlap with a reference summary. It
-cannot detect hallucination — a fluent, fully fabricated summary can score well.
+cannot detect hallucination - a fluent, fully fabricated summary can score well.
 If ROUGE is reported for FR-01 it must appear alongside the groundedness rate
 and be explicitly caveated. Note also that the groundedness check is a string
 check, not a semantic one: no flags means "nothing detectable is missing from
@@ -216,7 +208,7 @@ tests/
 - **NFR-04.** Auth is a single fail-closed `before_request` guard, not per-route
   decorators. Everything under `/api` requires a token unless it is on an
   explicit two-entry allowlist. Forgetting to allowlist a new route makes it
-  return 401 — visible and safe — rather than shipping it unauthenticated.
+  return 401 - visible and safe - rather than shipping it unauthenticated.
   `tests/test_auth.py` enumerates the URL map, so a route added later is
   covered automatically; it currently checks five protected routes.
 - **No user enumeration.** Unknown email and wrong password return an identical

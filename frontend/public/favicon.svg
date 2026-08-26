@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MailKit">
+  <!-- Matches .brand-glyph in styles.css: the same rounded square and the same
+       blue gradient the sidebar and login hero use, so the tab icon reads as
+       the same product as the page. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1D4FD8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#g)"/>
+  <!-- Envelope: readable at 16px, where letterforms turn to mush. -->
+  <path d="M16 23.5h32a2.5 2.5 0 0 1 2.5 2.5v12a2.5 2.5 0 0 1-2.5 2.5H16a2.5 2.5 0 0 1-2.5-2.5V26a2.5 2.5 0 0 1 2.5-2.5Z"
+        fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M14.5 26.5 32 36l17.5-9.5" fill="none" stroke="#fff" stroke-width="3.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- The AI spark, offset so it survives the icon being scaled down. -->
+  <circle cx="47" cy="20" r="7" fill="#60A5FA" stroke="#fff" stroke-width="2.5"/>
+</svg>

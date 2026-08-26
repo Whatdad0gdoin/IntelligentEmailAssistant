@@ -96,7 +96,7 @@ export default function Categorise({ emails, onBack }) {
                 <span className="chip-count">{byBucket[bucket.key].length}</span>
               </h3>
               {bucket.key === REVIEW_CATEGORY.key && byBucket[bucket.key].length > 0 && (
-                <p className="bucket-note">{REVIEW_CATEGORY.explanation} — confirm these yourself.</p>
+                <p className="bucket-note">{REVIEW_CATEGORY.explanation} - confirm these yourself.</p>
               )}
               {byBucket[bucket.key].length === 0 ? (
                 <p className="bucket-empty">Nothing here.</p>

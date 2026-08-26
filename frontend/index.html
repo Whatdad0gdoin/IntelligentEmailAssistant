@@ -1,9 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-AU">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Intelligent Email Assistant</title>
+
+    <!-- The tab title now matches the brand shown in the app itself. The
+         sidebar and login hero both say "MailKit", so a tab reading only
+         "Intelligent Email Assistant" looked like a different product. -->
+    <title>MailKit · Intelligent Email Assistant</title>
+    <meta name="description"
+          content="Summarise, categorise and draft replies to email, by chat or by voice, with every AI claim checked against the source message." />
+
+    <!-- SVG scales cleanly from the 16px tab to the 180px home-screen icon, so
+         one file covers every size. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- Tints the browser chrome on mobile and in some desktop contexts to the
+         same blue as .brand-glyph. -->
+    <meta name="theme-color" content="#2563EB" />
   </head>
   <body>
     <div id="root"></div>

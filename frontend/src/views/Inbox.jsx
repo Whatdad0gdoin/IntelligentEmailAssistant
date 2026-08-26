@@ -162,7 +162,7 @@ export default function Inbox({
             </h2>
             {name === "Review" && (
               <p className="mail-group-note">
-                Low confidence, unverified label — these were not filed automatically.
+                Low confidence, unverified label - these were not filed automatically.
               </p>
             )}
             <div className="mail-list">

@@ -25,6 +25,7 @@ bp = Blueprint("voice", __name__, url_prefix="/api/voice")
 
 MAX_TRANSCRIPT_CHARS = 500
 MAX_CANDIDATES = 100
+MAX_ALTERNATIVES = 5
 
 
 @bp.post("/intent")
@@ -58,11 +59,26 @@ def intent():
                 "subject": (entry.get("subject") or "")[:200],
             })
 
+    # Also optional. The browser's recogniser ranks several hypotheses for the
+    # same utterance, and the top one is often not the one that caught the
+    # name. Pooling them widens the deterministic match without widening what
+    # the model sees: intent is still classified from the primary transcript
+    # alone, and alternatives only feed target resolution.
+    alternatives = []
+    raw_alternatives = body.get("alternatives")
+    if raw_alternatives is not None:
+        if not isinstance(raw_alternatives, list):
+            raise BadRequest("'alternatives' must be an array if provided.")
+        for entry in raw_alternatives[:MAX_ALTERNATIVES]:
+            if isinstance(entry, str) and entry.strip():
+                alternatives.append(entry.strip()[:MAX_TRANSCRIPT_CHARS])
+
     return jsonify(
         classify_intent(
             transcript,
             config(),
             session_key=session_key(),
             candidates=candidates,
+            alternatives=alternatives,
         )
     ), 200

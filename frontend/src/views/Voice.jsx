@@ -46,7 +46,7 @@ export default function Voice({ emails, onRun, onBack }) {
 
   useEffect(() => () => recognitionRef.current?.abort(), []);
 
-  const send = async (text) => {
+  const send = async (text, alternatives = []) => {
     setBusy(true);
     setError(null);
     setResult(null);
@@ -56,7 +56,8 @@ export default function Voice({ emails, onRun, onBack }) {
       // parsed data and never go near the model.
       const payload = await api.voiceIntent(
         text,
-        emails.map((e) => ({ id: e.apiId, sender_name: e.from, subject: e.subject }))
+        emails.map((e) => ({ id: e.apiId, sender_name: e.from, subject: e.subject })),
+        alternatives
       );
       setResult(payload);
     } catch (err) {
@@ -69,14 +70,26 @@ export default function Voice({ emails, onRun, onBack }) {
   const start = () => {
     if (!supported || listening) return;
     const recognition = new Recognition();
-    recognition.lang = "en-AU";
+    // Locale matters more than anything else here: the default is the browser
+    // UI language, and a US model mis-hears Australian vowels constantly.
+    recognition.lang = navigator.language || "en-AU";
     recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    // The engine ranks its guesses, and the top one is often not the one that
+    // contains the name. Asking for several lets the backend pick whichever
+    // alternative actually resolves to an email in this inbox, which is a far
+    // stronger signal than the engine's own confidence.
+    recognition.maxAlternatives = 5;
 
     recognition.onresult = (event) => {
-      const heard = event.results[0][0].transcript;
+      const results = event.results[0];
+      const alternatives = [];
+      for (let i = 0; i < results.length; i += 1) {
+        const text = results[i].transcript.trim();
+        if (text) alternatives.push(text);
+      }
+      const heard = alternatives[0] || "";
       setTranscript(heard);
-      send(heard);
+      send(heard, alternatives);
     };
     recognition.onerror = (event) => {
       setError(
@@ -121,7 +134,7 @@ export default function Voice({ emails, onRun, onBack }) {
           <h1 className="main-title">Voice Commands</h1>
           <p className="main-sub">
             Say something like “summarise the email from Sarah”. Your voice is processed
-            in the browser — only the text is sent.
+            in the browser - only the text is sent.
           </p>
         </div>
       </header>
@@ -129,7 +142,7 @@ export default function Voice({ emails, onRun, onBack }) {
       {!supported ? (
         <div className="feature-error">
           <b>This browser has no speech recognition.</b>
-          <span>Voice commands need the Web Speech API — Chrome or Edge support it today.</span>
+          <span>Voice commands need the Web Speech API - Chrome or Edge support it today.</span>
         </div>
       ) : (
         <button
@@ -158,12 +171,16 @@ export default function Voice({ emails, onRun, onBack }) {
           <div className="feature-card">
             <p className="intent-line">
               <b>{ACTION_LABEL[result.intent] ?? result.intent}</b>
-              {target ? <> — “{target.subject}”</> : <> — no specific email matched</>}
+              {target ? <> - “{target.subject}”</> : <> - no specific email matched</>}
               <span className="intent-conf">{Math.round(result.confidence * 100)}% confidence</span>
             </p>
             <button
               className="primary-btn"
-              onClick={() => onRun(result.intent, target?.id ?? null)}
+              onClick={() => {
+                if (!onRun(result.intent, result.target_email_id ?? null)) {
+                  setError("I could not tell which email you meant. Open one first, then try again.");
+                }
+              }}
             >
               Do it
             </button>
@@ -179,7 +196,15 @@ export default function Voice({ emails, onRun, onBack }) {
             </p>
             <div className="reader-actions">
               {Object.entries(ACTION_LABEL).map(([intent, label]) => (
-                <button key={intent} className="action-btn" onClick={() => onRun(intent, target?.id ?? null)}>
+                <button
+                  key={intent}
+                  className="action-btn"
+                  onClick={() => {
+                    if (!onRun(intent, result?.target_email_id ?? null)) {
+                      setError("I could not tell which email you meant. Open one first, then try again.");
+                    }
+                  }}
+                >
                   {label}
                 </button>
               ))}

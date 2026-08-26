@@ -7,8 +7,8 @@
 :root {
   --ink:#1A2233;--ink-2:#2B3648;--ink-3:#3D4A5C;--paper:#F7F9FC;--paper-2:#EDF1F7;--white:#FFFFFF;
   --blue:#2563EB;--blue-deep:#1D4FD8;--blue-dark:#1E3A8A;--blue-glow:#60A5FA;--blue-wash:#EFF4FF;
-  --amber:#D97706;--coral:#DC2626;--violet:#7C3AED;--green:#16A34A;
-  --grey:#64748B;--grey-2:#94A3B8;--line:#E2E8F0;--line-2:#EDF1F7;
+  --amber:#B45309;--amber-bright:#D97706;--coral:#DC2626;--violet:#7C3AED;--green:#15803D;
+  --grey:#64748B;--grey-2:#5B6B80;--grey-soft:#94A3B8;--line:#E2E8F0;--line-2:#EDF1F7;
   --shadow-md:0 4px 16px rgba(30,58,138,0.07),0 2px 6px rgba(30,58,138,0.04);
   --shadow-lg:0 18px 50px rgba(30,41,59,0.14),0 6px 18px rgba(30,41,59,0.08);
   --shadow-blue:0 6px 20px rgba(37,99,235,0.22);
@@ -443,3 +443,338 @@ body { background:var(--paper); overflow:hidden; }
 .trace.unsupported .trace-hint { color:var(--amber); }
 .trace-mark { background:rgba(37,99,235,0.16); color:inherit; border-radius:3px; padding:1px 2px; box-shadow:0 0 0 1px rgba(37,99,235,0.22); animation:traceIn 0.28s ease-out; }
 @keyframes traceIn { from{background:rgba(37,99,235,0.42);} to{background:rgba(37,99,235,0.16);} }
+
+/* ===== TOOLBAR REPOSITIONED BELOW THE MESSAGE =====
+   It used to sit above the email as a header. Now it follows the text, so it
+   reads as "here is the message, here is what you can do with it" and the
+   results appear directly under the button that produced them. Restyled from a
+   header bar (bottom border, tinted background) into a grouped action bar. */
+.reader-toolbar {
+  border-bottom:none;
+  border-top:1px solid var(--line-2);
+  background:transparent;
+  margin-top:8px;
+  padding:16px 0 14px;
+  align-items:center;
+}
+.reader-toolbar-label { color:var(--grey); }
+.reader-actions { gap:9px; }
+.action-btn { padding:9px 15px; font-size:13.5px; }
+
+/* Panels are now beneath the toolbar, in reading order after the message. */
+.ai-panel { margin-top:2px; }
+
+/* The reader scrolls as one column: message, then tools, then results. */
+.reader { display:flex; flex-direction:column; }
+.reader-body { flex:0 0 auto; }
+
+/* ===== PALETTE: CONTRAST CORRECTIONS =====
+   The blue scale was already the industry-standard one (#2563EB / #1E3A8A /
+   #60A5FA are the exact values recommended for SaaS interfaces), so the hues
+   are unchanged. What failed was contrast, measured against WCAG AA 4.5:1 for
+   body-sized text:
+
+     --grey-2  #94A3B8  2.56:1 on white   ->  #5B6B80  5.44:1
+     --amber   #D97706  3.19:1 on white   ->  #B45309  5.02:1
+     --green   #16A34A  3.30:1 on white   ->  #15803D  5.02:1
+
+   The originals are kept as --grey-soft and --amber-bright for places where
+   the colour is decoration rather than information (icon fills, dot
+   indicators, borders), which the 4.5:1 rule does not govern. */
+.mail-avatar, .chip-dot, .cat-dot, .unread-dot, .brand-glyph { /* decorative fills keep the brighter tones */ }
+.ic-star { color:var(--amber-bright); }
+.field-icon, .search-icon { color:var(--grey-soft); }
+.hero-orbit { border-color:rgba(96,165,250,0.18); }
+
+/* ===== SPACING: THE READER COLUMN =====
+   The action bar sat flush against the message, so "Re-summarise / Read Aloud /
+   Draft Reply" read as part of the email rather than as controls acting on it.
+   Separation now comes from space rather than from the border alone. */
+.reader-body {
+  padding-bottom: 28px;
+}
+.reader-toolbar {
+  margin-top: 26px;
+  padding: 20px 0 4px;
+  gap: 16px;
+}
+.reader-toolbar-label {
+  margin-bottom: 2px;
+}
+.reader-actions {
+  gap: 10px;
+}
+
+/* The result panels are cards, so they need interior room and a clear gap from
+   the bar that produced them. */
+.ai-panel {
+  margin-top: 18px;
+  margin-bottom: 18px;
+  padding: 20px 22px 22px;
+}
+.ai-panel-head {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-2);
+}
+.ai-summary {
+  padding-left: 22px;
+  gap: 10px;
+}
+.ai-summary li {
+  padding-left: 2px;
+}
+.ai-actions-list {
+  margin-top: 18px;
+  padding-top: 16px;
+}
+.ai-draft {
+  padding: 15px 16px;
+}
+.ai-draft-foot {
+  margin-top: 14px;
+  gap: 12px;
+}
+.ai-note {
+  margin-top: 12px;
+}
+.ground-note {
+  margin-bottom: 14px;
+}
+
+/* The reader itself needs breathing room at the bottom so the last panel is
+   not glued to the viewport edge when it is the final thing on screen. */
+.reader {
+  padding-bottom: 32px;
+}
+
+/* ===== CORRECTIONS TO THE REPOSITIONED READER =====
+   Moving the toolbar below the message introduced four faults, fixed here.
+
+   1. The toolbar was given `padding: 20px 0` when it moved, so its contents sat
+      flush against the card edge while .reader-head and .reader-body keep 24px.
+      Everything in this column now shares one gutter.
+   2. The buttons kept `background:#fff` from when they sat on the tinted
+      toolbar strip. With that strip removed they became white on white.
+   3. The result panels had no horizontal margin, so they ran edge to edge
+      while the text they describe was inset.
+   4. .reader had `overflow:hidden` with a fixed height, which was fine when the
+      toolbar was pinned at the top but clips it now that it follows a long
+      message. The column scrolls as one instead. */
+
+.reader {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.reader-body {
+  flex: 0 0 auto;
+  overflow: visible;
+  padding: 24px 24px 26px;
+}
+
+/* One shared gutter down the whole reader column. */
+.reader-toolbar {
+  padding: 20px 24px 6px;
+  margin-top: 22px;
+  gap: 14px;
+}
+.ai-panel {
+  margin-left: 24px;
+  margin-right: 24px;
+}
+
+/* Visible buttons: a tinted surface and a real border, not white on white.
+   They are controls acting on the message, so they should read as controls. */
+.action-btn {
+  /* Border colour is measured, not eyeballed. WCAG 2.1 wants 3:1 for the
+     boundary of an interactive control, and the greys fail badly on a white
+     card: #E2E8F0 is 1.23:1 and #CBD5E1 is 1.48:1, which is why these looked
+     like plain text. #3B82F6 is 3.68:1 and reads as interactive rather than
+     merely present. The blue-tinted fill separates them from the message. */
+  background: var(--blue-wash);
+  border: 1.5px solid #3B82F6;
+  color: var(--blue-deep);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(30, 41, 59, 0.06);
+}
+.action-btn:hover:not(:disabled) {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+  color: var(--blue-deep);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.16);
+}
+.action-btn.on {
+  background: var(--blue);
+  border-color: var(--blue-deep);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28);
+}
+.action-btn.on:hover:not(:disabled) {
+  background: var(--blue-deep);
+  color: #fff;
+}
+/* The label is a heading for the row, not a button, so it stays quiet. */
+.reader-toolbar-label {
+  color: var(--grey);
+  margin-bottom: 0;
+}
+
+/* ===== UNREAD DOT NO LONGER COLLIDES WITH THE TIMESTAMP =====
+   The dot is absolutely positioned at the row's top-right, which is exactly
+   where .mail-time renders, so "Yesterday" and "Mon" were being overprinted.
+   Reserving the gutter is better than moving the dot: the dot belongs at the
+   top-right, the text just has to stop before it. */
+.mail-row .mail-line1 {
+  padding-right: 16px;
+}
+.unread-dot {
+  top: 20px;
+  right: 16px;
+}
+
+/* ===== SPECIFICITY: BEATING THE GLOBAL BUTTON RESET =====
+   `.iq button { background:transparent; border:none }` is specificity (0,1,1).
+   A rule written as `.action-btn { background:... }` is (0,1,0) and therefore
+   LOSES, so those buttons rendered with no fill and no border regardless of
+   what their own rule said. That is why the AI tools looked like plain text and
+   the Approve button was an invisible white rectangle.
+
+   Kevin's own buttons already work around this by qualifying every rule as
+   `.iq button.login-btn` etc. The rules below do the same, which is why they
+   look redundant and are not. */
+
+.iq button.action-btn {
+  background: var(--blue-wash);
+  border: 1.5px solid #3B82F6;
+  color: var(--blue-deep);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(30, 41, 59, 0.06);
+}
+.iq button.action-btn:hover:not(:disabled) {
+  background: #DCE8FF;
+  border-color: var(--blue);
+  color: var(--blue-dark);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+}
+.iq button.action-btn.on {
+  background: var(--blue);
+  border-color: var(--blue-deep);
+  color: #fff;
+}
+.iq button.action-btn:disabled {
+  background: var(--paper-2);
+  border-color: var(--line);
+  color: var(--grey);
+}
+
+/* Approve is the one control in the app with real consequence attached, so it
+   is the most prominent thing in the draft panel. */
+.iq button.ai-approve {
+  background: linear-gradient(135deg, #16A34A, #15803D);
+  border: 1.5px solid #15803D;
+  color: #fff;
+}
+.iq button.ai-approve:hover:not(:disabled) {
+  background: linear-gradient(135deg, #15803D, #116B31);
+}
+.iq button.ai-approve:disabled {
+  background: var(--paper-2);
+  border: 1.5px solid var(--line);
+  color: var(--grey);
+  box-shadow: none;
+}
+/* Approved: state is carried by more than colour, since colour alone is not
+   accessible. The tick and the label change too. */
+.iq button.ai-approve.done {
+  background: #DCFCE7;
+  border-color: #15803D;
+  color: #14532D;
+  box-shadow: none;
+}
+
+/* Regenerate sits beside Approve, so a bad draft can be redone without
+   scrolling back to the toolbar above the message. */
+.iq button.ai-regen {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #fff;
+  border: 1.5px solid #3B82F6;
+  color: var(--blue-deep);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.iq button.ai-regen:hover:not(:disabled) {
+  background: var(--blue-wash);
+  border-color: var(--blue);
+  transform: translateY(-1px);
+}
+.iq button.ai-regen:disabled {
+  background: var(--paper-2);
+  border-color: var(--line);
+  color: var(--grey);
+  cursor: not-allowed;
+}
+
+/* The same reset was stripping the filter chips and the icon buttons. */
+.iq button.chip {
+  background: #fff;
+  border: 1.5px solid var(--line);
+}
+.iq button.chip:hover {
+  border-color: var(--grey-soft);
+}
+.iq button.chip.on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+.iq button.icon-btn {
+  background: #fff;
+  border: 1.5px solid var(--line);
+}
+.iq button.icon-btn:hover {
+  border-color: var(--blue);
+}
+
+/* The draft footer holds the instruction field plus two actions. On a narrow
+   pane it wraps, so the actions stay together rather than splitting apart. */
+.ai-draft-foot {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ai-instruction {
+  flex: 1 1 260px;
+}
+.ai-draft-foot .ai-regen,
+.ai-draft-foot .ai-approve {
+  flex: 0 0 auto;
+}
+
+/* Two more casualties of the reset, found by styles.test.js rather than by eye.
+
+   .mail-row is a <button>, so `background:#fff; border:1.5px solid` in its own
+   rule was being discarded: every row in the inbox was drawing the page
+   background instead of a white card, and the selected-row outline had no
+   border-width to colour. .soon-back lost its outline the same way. */
+.iq button.mail-row {
+  background: #fff;
+  border: 1.5px solid var(--line-2);
+}
+.iq button.mail-row:hover {
+  border-color: var(--line);
+}
+.iq button.mail-row.sel {
+  border-color: var(--blue);
+}
+.iq button.soon-back {
+  background: #fff;
+  border: 1.5px solid var(--line);
+}
+.iq button.soon-back:hover {
+  border-color: var(--blue);
+  color: var(--blue-deep);
+}

@@ -36,9 +36,9 @@ reader of the report needs to see. Always report accuracy **broken down by
 
 | Provenance | Source | Licence | Status |
 |---|---|---|---|
-| `enron` | [CMU Enron corpus](https://www.cs.cmu.edu/~enron/), 517k messages | Public, research use | **Built** — 240 rows |
-| `huggingface` | [jason23322/high-accuracy-email-classifier](https://huggingface.co/datasets/jason23322/high-accuracy-email-classifier) | Apache-2.0 | **Built** — 120 rows (Promotions only) |
-| `generated` | Produced by the project's own orchestrator | n/a | **Built** — 120 rows (Studies only) |
+| `enron` | [CMU Enron corpus](https://www.cs.cmu.edu/~enron/), 517k messages | Public, research use | **Built** - 240 rows |
+| `huggingface` | [jason23322/high-accuracy-email-classifier](https://huggingface.co/datasets/jason23322/high-accuracy-email-classifier) | Apache-2.0 | **Built** - 120 rows (Promotions only) |
+| `generated` | Produced by the project's own orchestrator | n/a | **Built** - 120 rows (Studies only) |
 
 Current merged set: **480 rows across all four classes**, 120 per class:
 
@@ -90,7 +90,7 @@ personal correspondence.
 
 **Consequence: these labels must not be used as DR-02 ground truth as they
 stand.** An accuracy figure computed against them would mostly measure the
-noise in the folder names, and would understate the classifier — it would be
+noise in the folder names, and would understate the classifier - it would be
 penalised for correctly calling a payroll notice "Work".
 
 ### What to do instead
@@ -125,7 +125,7 @@ It is templated text. That is why every row from it carries
 described as real email in the report, the "not AI testing AI" claim is wrong,
 because a synthetic corpus is being used to grade a model.
 
-Its labels are still good — they are consistent and the source asserts them
+Its labels are still good - they are consistent and the source asserts them
 directly, so `label_source = dataset_label` and `label_confidence = strong`.
 Synthetic text with a trustworthy label is the mirror image of Enron: real text
 with an untrustworthy one.
@@ -133,7 +133,7 @@ with an untrustworthy one.
 ### Only one of its six classes was imported
 
 Its taxonomy is `forum`, `promotions`, `social_media`, `spam`, `updates`,
-`verify_code` — six classes that are not the project's four. Only `promotions`
+`verify_code` - six classes that are not the project's four. Only `promotions`
 maps cleanly, so only `promotions` was taken (2,245 available, capped at 120 to
 keep the merged set balanced).
 
@@ -149,11 +149,11 @@ that class.
 
 Two project documents disagree, and they imply different datasets:
 
-- **The RTM (Week 11, slide 6)** — DR-01 is *"AI-generated test dataset of 400
+- **The RTM (Week 11, slide 6)** - DR-01 is *"AI-generated test dataset of 400
   emails (100 per category)"*.
-- **The dataset slide (Week 11, slide 12)** — *"Real emails. Not AI testing AI."*
-  Enron + HuggingFace, with AI generation used only for *"Studies/Academic only —
-  not in either real dataset — fills a gap, not the test."*
+- **The dataset slide (Week 11, slide 12)** - *"Real emails. Not AI testing AI."*
+  Enron + HuggingFace, with AI generation used only for *"Studies/Academic only -
+  not in either real dataset - fills a gap, not the test."*
 
 The evidence above supports the **slide**: real corpora genuinely do not cover
 Studies, so generating that class fills a real hole, whereas generating all 400
@@ -162,7 +162,7 @@ family.
 
 ### Resolved: the slide's strategy was adopted
 
-Generation fills **Studies only** — the one class no real corpus covers. The
+Generation fills **Studies only** - the one class no real corpus covers. The
 other three come from real or third-party data.
 
 The generator draws from 24 scenarios x 8 sender roles x 6 tones with a fixed
@@ -178,7 +178,7 @@ the same standard the HuggingFace corpus failed:
 `build_dataset.py` prints these figures on every run and warns if subject reuse
 exceeds 10%, so templating would be caught here rather than by a marker.
 
-**Budget note.** A first run stopped at 77 rows on `BudgetExceeded` — the
+**Budget note.** A first run stopped at 77 rows on `BudgetExceeded` - the
 per-session request cap in `backend/.env` (`MAX_REQUESTS_PER_SESSION`, default
 100) working as designed. The full run used a raised cap for the one-off build:
 

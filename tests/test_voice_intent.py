@@ -201,3 +201,62 @@ def test_thirty_transcripts_dispatch_at_or_above_ninety_percent():
     )
     rate = correct / len(rows)
     assert rate >= 0.90, f"{correct}/{len(rows)} = {rate:.1%}, below the 90% criterion"
+
+
+# --- Mis-heard names (recognition accuracy) --------------------------------
+
+def _inbox_candidates():
+    return [
+        {"id": "e1", "sender_name": "Sarah Chen", "subject": "Dinner this weekend?"},
+        {"id": "e2", "sender_name": "David Robinson", "subject": "Project deadline moved to Friday"},
+        {"id": "e3", "sender_name": "Dr Amelia Ford", "subject": "Feedback on your research proposal"},
+        {"id": "e4", "sender_name": "GitHub", "subject": "Security alert on ds-25"},
+    ]
+
+
+def test_a_mis_heard_name_still_resolves():
+    """Recognition routinely returns "sara" for "Sarah". An exact-only match
+    would make the feature look broken for clearly spoken commands."""
+    from backend.orchestrator.intent import resolve_target
+    assert resolve_target(None, "summarise the email from sara", _inbox_candidates()) == "e1"
+
+
+def test_a_surname_only_reference_resolves():
+    from backend.orchestrator.intent import resolve_target
+    assert resolve_target(None, "read the one from robinson", _inbox_candidates()) == "e2"
+
+
+def test_an_unrelated_name_does_not_fuzzy_match():
+    """"tara" scores 0.67 against "sarah" and must not be accepted: dispatching
+    to the wrong email is worse than asking."""
+    from backend.orchestrator.intent import resolve_target
+    assert resolve_target(None, "summarise the email from tara", _inbox_candidates()) is None
+
+
+def test_a_short_name_is_not_fuzzy_matched():
+    """Short tokens are one edit from unrelated words, so they need exact hits."""
+    from backend.orchestrator.intent import resolve_target
+    assert resolve_target(None, "summarise the email from bob", _inbox_candidates()) is None
+
+
+def test_alternatives_rescue_a_bad_primary_transcript():
+    """The recogniser's top guess often drops the name while a lower-ranked
+    alternative catches it. Pooling them is still the user's own speech."""
+    from backend.orchestrator.intent import resolve_target
+    target = resolve_target(
+        None,
+        "summarise the email from tara",
+        _inbox_candidates(),
+        alternatives=["summarise the email from sarah"],
+    )
+    assert target == "e1"
+
+
+def test_an_exact_match_outranks_a_fuzzy_one():
+    """A near miss must never beat a clean hit on a different email."""
+    from backend.orchestrator.intent import resolve_target
+    candidates = [
+        {"id": "fuzzy", "sender_name": "Sarah Chen", "subject": "Lunch"},
+        {"id": "exact", "sender_name": "Sara Nguyen", "subject": "Timetable"},
+    ]
+    assert resolve_target(None, "the email from sara", candidates) == "exact"
