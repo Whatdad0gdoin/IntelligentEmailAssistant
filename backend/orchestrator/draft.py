@@ -24,7 +24,7 @@ from backend.orchestrator import prompts
 from backend.orchestrator.client import LLMError, get_client
 from backend.orchestrator.grounding import check_grounding
 from backend.orchestrator.preprocess import preprocess
-from backend.orchestrator.schemas import DRAFT_SCHEMA
+from backend.orchestrator.schemas import DEFAULT_TONE, DRAFT_SCHEMA, TONES
 
 log = logging.getLogger(__name__)
 
@@ -41,9 +41,16 @@ class EmptyEmailError(LLMError):
     """There is nothing left to reply to once quoting and footers are removed."""
 
 
-def draft_reply(email, instruction, config, session_key=None, user_email=None):
-    """Draft a reply to one SourceEmail. Returns the /api/draft response body."""
+def draft_reply(email, instruction, config, session_key=None, user_email=None,
+                tone=DEFAULT_TONE):
+    """Draft a reply to one SourceEmail. Returns the /api/draft response body.
+
+    `tone` (FR-06) changes register only. It is validated against the TONES
+    enum rather than passed through, so an unexpected value falls back to
+    neutral instead of being interpolated into the prompt as free text.
+    """
     instruction = (instruction or "").strip()[:MAX_INSTRUCTION_CHARS]
+    tone = tone if tone in TONES else DEFAULT_TONE
 
     cleaned = preprocess(
         email.raw_body,
@@ -59,7 +66,7 @@ def draft_reply(email, instruction, config, session_key=None, user_email=None):
 
     client = get_client(config)
     user_prompt = prompts.draft_user(
-        email.subject, email.sender_name, cleaned.text, instruction
+        email.subject, email.sender_name, cleaned.text, instruction, tone
     )
 
     text = ""
@@ -103,4 +110,8 @@ def draft_reply(email, instruction, config, session_key=None, user_email=None):
         "draft": text,
         "grounded": result.grounded,
         "ungrounded_flags": result.as_api_flags(),
+        # Echoed back so the UI cannot display a tone the draft was not
+        # written in, which is what happens if an invalid value falls back
+        # to neutral and nothing says so.
+        "tone": tone,
     }

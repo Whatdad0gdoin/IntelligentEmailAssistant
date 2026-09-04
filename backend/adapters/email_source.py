@@ -20,7 +20,7 @@ import threading
 from email import policy
 from email.parser import BytesParser
 
-from backend.adapters.headers import parse_message
+from backend.adapters.headers import message_id_of, parse_message
 
 log = logging.getLogger(__name__)
 
@@ -80,9 +80,32 @@ class FixtureEmailSource(EmailSource):
         return self._read_all()
 
     def get_email(self, email_id):
-        for message in self._read_all():
-            if message.id == email_id:
-                return message
+        """Locate one message by id, parsing bodies for at most one file.
+
+        A first pass reads headers only, which is enough to compute the id
+        (see headers.message_id_of). Only the matching file is then parsed in
+        full. This is still stateless: nothing is retained between calls, and
+        no body is decoded except the one being returned.
+        """
+        if not os.path.isdir(self.directory):
+            raise EmailSourceError(
+                f"Email fixture directory not found: {self.directory}. "
+                f"Set EMAIL_FIXTURE_DIR or create the directory."
+            )
+        parser = BytesParser(policy=policy.default)
+        for name in sorted(os.listdir(self.directory)):
+            if not name.lower().endswith(".eml"):
+                continue
+            path = os.path.join(self.directory, name)
+            try:
+                with open(path, "rb") as handle:
+                    headers = parser.parse(handle, headersonly=True)
+                if message_id_of(headers) != email_id:
+                    continue
+                with open(path, "rb") as handle:
+                    return parse_message(parser.parse(handle))
+            except OSError as exc:
+                log.warning("Skipping unreadable message file %s: %s", name, exc.strerror)
         return None
 
 

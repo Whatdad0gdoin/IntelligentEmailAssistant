@@ -110,20 +110,56 @@ Hard constraints:
   needs a detail you do not have, write a placeholder in square brackets, for
   example [confirm a time], and let the user fill it in.
 - Do not agree or decline on the user's behalf unless the instruction says to.
-- Keep the tone of the original email. Plain text, greeting and sign-off, no
-  markdown.
+- Plain text, greeting and sign-off, no markdown.
+- Follow the requested tone. Tone changes the wording, never the facts: a
+  casual reply says the same things a formal one does.
 
 Every number, amount, date, time and name in your draft is checked against the
 source. Anything that is not there is flagged to the user before they send."""
 
 
-def draft_user(subject, sender_name, body, instruction):
+# FR-06. Each tone describes register and structure only. None of them
+# licences a new fact, which is the real risk in tone rewriting: 'make it
+# friendlier' is an easy way to talk a model into warmth that reads as a
+# commitment ('happy to meet whenever suits!'). The grounding check in
+# draft.py runs identically whatever the tone, so an invented availability
+# is still flagged.
+TONE_GUIDANCE = {
+    "neutral": (
+        "Match the register of the original email. Do not make it noticeably "
+        "warmer or more formal than what you were sent."
+    ),
+    "formal": (
+        "Formal register. Full sentences, no contractions, no exclamation "
+        "marks. Address the sender by title and surname if the email gives "
+        "them, otherwise by full name. Sign off with 'Yours sincerely'."
+    ),
+    "casual": (
+        "Casual register. Contractions are fine, sentences can be short, a "
+        "warm opening line is welcome. Still a work email, so no slang and "
+        "no emoji. First name only in the greeting."
+    ),
+    "professional": (
+        "Professional register: courteous and efficient. Contractions are "
+        "fine. Lead with the point rather than pleasantries, keep it to a "
+        "few short paragraphs, and sign off with 'Best regards'."
+    ),
+}
+
+
+def draft_user(subject, sender_name, body, instruction, tone="neutral"):
     parts = [f"Reply to this email.\n\nSubject: {subject}\nFrom: {sender_name}\n\nBody:\n{body}"]
+
+    guidance = TONE_GUIDANCE.get(tone) or TONE_GUIDANCE["neutral"]
+    parts.append(f"\nTone: {guidance}")
+
     if instruction:
+        # The instruction comes after the tone so that where the two
+        # disagree, the user's own words are the last thing the model reads.
         parts.append(f"\nThe user asks that the reply: {instruction}")
     else:
         parts.append(
-            "\nThe user gave no specific instruction. Write a brief, neutral "
+            "\nThe user gave no specific instruction. Write a brief "
             "acknowledgement that does not commit to anything."
         )
     return "\n".join(parts)

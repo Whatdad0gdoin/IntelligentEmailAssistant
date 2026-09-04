@@ -15,6 +15,7 @@ from flask import Blueprint, jsonify
 from backend.adapters.email_source import get_email_source
 from backend.orchestrator.classify import classify_emails
 from backend.orchestrator.draft import draft_reply
+from backend.orchestrator.schemas import DEFAULT_TONE, TONES
 from backend.orchestrator.summarise import summarise_email
 from backend.routes.support import (
     BadRequest,
@@ -124,6 +125,17 @@ def draft():
     if instruction is not None and not isinstance(instruction, str):
         raise BadRequest("'instruction' must be a string if provided.")
 
+    # FR-06. Optional and additive to the documented contract; omitting it
+    # gives the neutral tone, which is what every existing caller gets.
+    # Rejected rather than coerced: a typo should be a visible 400, not a
+    # draft silently written in a tone nobody asked for.
+    tone = body.get("tone")
+    if tone is not None:
+        if not isinstance(tone, str) or tone not in TONES:
+            raise BadRequest(
+                "'tone' must be one of: " + ", ".join(TONES) + "."
+            )
+
     message = _load_email(email_id)
 
     return jsonify(
@@ -133,5 +145,6 @@ def draft():
             config(),
             session_key=session_key(),
             user_email=current_user(),
+            tone=tone or DEFAULT_TONE,
         )
     ), 200

@@ -152,6 +152,18 @@ def _bodies(message):
     return "\n".join(text_parts), "\n".join(html_parts)
 
 
+def message_id_of(message: Message) -> str:
+    """The stable id for a message, from headers alone.
+
+    Split out of parse_message so a source can locate one message by parsing
+    only headers, without decoding every body in the mailbox to find it.
+    """
+    subject = _decode(message.get("Subject", ""))
+    from_header = _decode(message.get("From", ""))
+    seed = f"{from_header}|{subject}|{message.get('Date', '')}"
+    return _message_id(message, seed)
+
+
 def parse_message(message: Message) -> SourceEmail:
     """Turn a parsed MIME message into a SourceEmail. No model involved."""
     subject = _decode(message.get("Subject", ""))
@@ -161,8 +173,7 @@ def parse_message(message: Message) -> SourceEmail:
         # Fall back to the local part rather than inventing a display name.
         sender_name = sender_address.split("@")[0] if sender_address else ""
 
-    seed = f"{from_header}|{subject}|{message.get('Date', '')}"
-    message_id = _message_id(message, seed)
+    message_id = message_id_of(message)
     text, html = _bodies(message)
 
     return SourceEmail(

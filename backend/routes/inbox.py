@@ -43,16 +43,30 @@ def inbox():
 
     messages = get_email_source(settings).list_emails()
 
+    # Preprocess each body exactly once. Both the classifier and the snippet
+    # need the cleaned text, and an earlier version computed it twice per
+    # email per page load, with is_html passed to one call and not the other.
+    cleaned_by_id = {
+        m.id: preprocess(
+            m.raw_body,
+            settings.token_budget_chars,
+            is_html=m.is_html,
+            label=f"inbox {m.id[:12]}",
+        )
+        for m in messages
+    }
+
     labels = {
         result["id"]: result
         for result in classify_emails(
             [
-                {"id": m.id, "subject": m.subject, "body": m.raw_body}
+                {"id": m.id, "subject": m.subject, "body": cleaned_by_id[m.id].text}
                 for m in messages
             ],
             settings,
             session_key=session_key(),
             user=user,
+            preprocessed=True,
         )
     }
 
@@ -67,12 +81,7 @@ def inbox():
 
         # The preview is cut from the cleaned body, so the list does not show a
         # quoted reply chain or an unsubscribe footer as the "content".
-        cleaned = preprocess(
-            message.raw_body,
-            settings.token_budget_chars,
-            is_html=message.is_html,
-            label=f"snippet {message.id[:12]}",
-        )
+        cleaned = cleaned_by_id[message.id]
 
         groups[category].append({
             "id": message.id,

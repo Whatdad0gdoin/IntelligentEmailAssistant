@@ -143,3 +143,34 @@ def test_confidence_is_reported_per_email(client, auth_headers, config, stub_llm
     groups = client.get("/api/inbox", headers=auth_headers).get_json()["groups"]
     email = next(e for e in groups["Work"] if e["id"] == WORK_EMAIL_ID)
     assert email["category_confidence"] == 0.93
+
+
+# --- Efficiency regressions --------------------------------------------------
+
+
+def test_inbox_preprocesses_each_email_exactly_once(app, config, client, auth_headers, stub_llm, monkeypatch):
+    """/api/inbox used to clean every body twice: once inside classify_emails
+    and once for the snippet, with is_html passed to one call and not the
+    other. Now it is cleaned once and shared. This pins the count so a future
+    refactor cannot quietly double the work again."""
+    import backend.routes.inbox as inbox_module
+    from backend.adapters.email_source import get_email_source
+    from backend.orchestrator import classify as classify_module
+
+    calls = []
+    real = inbox_module.preprocess
+
+    def counting(*args, **kwargs):
+        calls.append(kwargs.get("label", ""))
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(inbox_module, "preprocess", counting)
+    monkeypatch.setattr(classify_module, "preprocess", counting)
+
+    stub_llm.queue(_classification(config))
+    response = client.get("/api/inbox", headers=auth_headers)
+    assert response.status_code == 200
+
+    total = len(get_email_source(app.config["APP_CONFIG"]).list_emails())
+    assert total > 0
+    assert len(calls) == total, f"expected {total} preprocess calls, saw {len(calls)}: {calls}"

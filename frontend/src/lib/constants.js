@@ -6,10 +6,7 @@
  * unverified labels (spec section 4.3), never a value the model can produce.
  */
 
-import {
-  Inbox, Languages, ListChecks, MessageSquareReply, Mic, Sparkles,
-  SlidersHorizontal, Volume2,
-} from "lucide-react";
+import { Inbox, Languages, ListChecks, Mic, Sparkles } from "lucide-react";
 
 export const ROTATING = [
   { icon: Sparkles, text: "Summarise unread emails in seconds" },
@@ -35,13 +32,11 @@ export const ROTATING = [
  *   speak             -> browser speechSynthesis, no backend needed
  *   FR-06/07 tone     -> nothing. Out of scope for this build, stays `soon`.
  */
+// Sidebar destinations. Summarise, Read Aloud and Draft Reply are not here:
+// they act on an open message and live on the reading pane. Tone is on the
+// draft. Translation (FR-07) is out of scope.
 export const FEATURES = [
   { id: "inbox", label: "Inbox", icon: Inbox, group: "main" },
-  { id: "summarise", label: "Summarise", icon: Sparkles, group: "ai", desc: "Condense unread emails into a 2–3 sentence brief." },
-  { id: "categorise", label: "Auto-Categorise", icon: ListChecks, group: "ai", desc: "Sort every email into Work, Personal, Promotions & Studies." },
-  { id: "reply", label: "Draft Reply", icon: MessageSquareReply, group: "ai", desc: "Generate a reply you review and approve before sending." },
-  { id: "tone", label: "Tone & Translate", icon: SlidersHorizontal, group: "ai", soon: true, desc: "Rewrite replies in any tone, or translate to any language." },
-  { id: "speak", label: "Read Aloud", icon: Volume2, group: "voice", desc: "Listen to summaries with built-in text-to-speech." },
   { id: "voice", label: "Voice Commands", icon: Mic, group: "voice", desc: "Control your inbox hands-free with your voice." },
 ];
 
@@ -64,8 +59,6 @@ export const REVIEW_CATEGORY = {
   explanation: "Low confidence, unverified label",
 };
 
-/** The four categories the classifier may return, in API casing. */
-export const CLASSIFIER_CATEGORIES = ["Work", "Personal", "Promotions", "Studies"];
 
 /** Maps an API category value onto the UI category key. */
 export const API_TO_KEY = {
@@ -75,3 +68,17 @@ export const API_TO_KEY = {
   Studies: "studies",
   Review: "review",
 };
+
+/**
+ * Reply tones (FR-06). Mirrors TONES in backend/orchestrator/schemas.py.
+ *
+ * "Default" is the neutral option and is not the same as Professional: it
+ * means no tone instruction at all, so the reply matches the register of the
+ * email being answered.
+ */
+export const TONES = [
+  { key: "neutral", label: "Default", hint: "Match the original email" },
+  { key: "professional", label: "Professional", hint: "Courteous and efficient" },
+  { key: "formal", label: "Formal", hint: "No contractions, Yours sincerely" },
+  { key: "casual", label: "Casual", hint: "Warmer and more relaxed" },
+];

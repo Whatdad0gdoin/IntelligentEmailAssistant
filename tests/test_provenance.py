@@ -91,3 +91,35 @@ def test_summarise_response_includes_provenance():
 
     source = inspect.getsource(module)
     assert '"provenance": locate(' in source, "summarise no longer returns provenance"
+
+
+# --- Email source lookup cost -------------------------------------------------
+
+
+def test_get_email_parses_at_most_one_body(config, monkeypatch):
+    """Finding one message used to fully parse every file in the mailbox. Now a
+    headers-only pass locates it and only the match is parsed in full."""
+    from backend.adapters import email_source as source_module
+    from backend.adapters.email_source import get_email_source
+
+    source = get_email_source(config)
+    target = source.list_emails()[-1]        # the last one, so a linear scan would
+                                             # have parsed everything before it
+    parsed = []
+    real = source_module.parse_message
+
+    def counting(message):
+        parsed.append(1)
+        return real(message)
+
+    monkeypatch.setattr(source_module, "parse_message", counting)
+    found = source.get_email(target.id)
+
+    assert found is not None and found.id == target.id
+    assert found.subject == target.subject
+    assert len(parsed) == 1, f"parse_message ran {len(parsed)} times for a single lookup"
+
+
+def test_get_email_returns_none_for_an_unknown_id(config):
+    from backend.adapters.email_source import get_email_source
+    assert get_email_source(config).get_email("no-such-id@nowhere") is None

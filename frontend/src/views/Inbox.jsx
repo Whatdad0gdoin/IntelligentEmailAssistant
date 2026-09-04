@@ -84,14 +84,11 @@ export default function Inbox({
   onRetry,
   pendingAction,
   onActionConsumed,
+  voiceEnabled,
 }) {
   const [query, setQuery] = useState("");
 
   const total = GROUP_ORDER.reduce((n, g) => n + (groups[g]?.length || 0), 0);
-  const unreadCount = GROUP_ORDER.reduce(
-    (n, g) => n + (groups[g] || []).filter((e) => e.unread).length,
-    0
-  );
 
   const visibleGroups = GROUP_ORDER.filter((name) => {
     if ((groups[name] || []).length === 0) return false;
@@ -238,6 +235,8 @@ export default function Inbox({
             bodyLoading={bodyLoading}
             pendingAction={pendingAction}
             onActionConsumed={onActionConsumed}
+            onBack={() => setSelected(null)}
+            voiceEnabled={voiceEnabled}
           />
         ) : (
           <div className="reader-empty">

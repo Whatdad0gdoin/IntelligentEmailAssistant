@@ -28,7 +28,7 @@ export const capabilities = {
   ),
 };
 
-export const voiceFullySupported = capabilities.tts && capabilities.stt;
+const voiceFullySupported = capabilities.tts && capabilities.stt;
 
 /** Human-readable reason for the persistent notice, or null when all is well. */
 export function voiceLimitation() {

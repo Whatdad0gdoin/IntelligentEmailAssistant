@@ -52,8 +52,8 @@ const VOICE_PREFERENCE = [
   "Zira",           // last resort local Windows voice, still better than David
 ];
 
-export const SPEECH_RATE = 0.95;
-export const SPEECH_PITCH = 1.0;
+const SPEECH_RATE = 0.95;
+const SPEECH_PITCH = 1.0;
 
 /** Resolves once the browser has actually populated its voice list. */
 function loadVoices() {
@@ -82,7 +82,7 @@ function loadVoices() {
 }
 
 /** Best available English voice, or null to accept the platform default. */
-export function pickVoice(voices) {
+function pickVoice(voices) {
   const english = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith("en"));
   const pool = english.length > 0 ? english : voices;
   if (pool.length === 0) return null;

@@ -134,9 +134,12 @@ export async function classify(emails, { signal } = {}) {
  * this client deliberately does not invent one: approving a draft is a separate
  * user action, never a side effect of generating it.
  */
-export async function draft(emailId, instruction, { signal } = {}) {
+export async function draft(emailId, instruction, tone, { signal } = {}) {
   const body = { email_id: emailId };
   if (instruction && instruction.trim()) body.instruction = instruction.trim();
+  // Omitted rather than sent as "neutral" when unset, so the request stays
+  // identical to what callers sent before tone existed.
+  if (tone && tone !== "neutral") body.tone = tone;
   return request("/api/draft", { method: "POST", body, signal });
 }
 

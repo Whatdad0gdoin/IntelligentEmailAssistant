@@ -12,18 +12,19 @@
  *    does not belong on a per-message toolbar.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Check, Loader2, MessageSquareReply, RefreshCw, Sparkles, Square, Volume2, X,
+  ArrowLeft, Check, Loader2, MessageSquareReply, RefreshCw, Sparkles, Square, Volume2, X,
 } from "lucide-react";
 
 import * as api from "../api/client.js";
 import { useSpeech } from "../hooks/useSpeech.jsx";
 import GroundingNotice from "./GroundingNotice.jsx";
-import { CATEGORIES } from "../lib/constants.js";
+import { CATEGORIES, TONES } from "../lib/constants.js";
 import { segment, toParagraphs } from "../lib/highlight.js";
+import { formatReceivedLong } from "../lib/format.js";
 
-export default function ReadingPane({ email, body, bodyLoading, pendingAction, onActionConsumed }) {
+export default function ReadingPane({ email, body, bodyLoading, pendingAction, onActionConsumed, onBack, voiceEnabled = true }) {
   const [summary, setSummary] = useState(null);
   const [summaryState, setSummaryState] = useState("idle");
   const [summaryError, setSummaryError] = useState(null);
@@ -33,6 +34,7 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
   const [draftState, setDraftState] = useState("idle");
   const [draftError, setDraftError] = useState(null);
   const [instruction, setInstruction] = useState("");
+  const [tone, setTone] = useState("neutral");
   const [approved, setApproved] = useState(false);
   // Which summary sentence the reader is tracing back to the source.
   const [tracedSentence, setTracedSentence] = useState(null);
@@ -50,6 +52,7 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
     setDraftState("idle");
     setDraftError(null);
     setInstruction("");
+    setTone("neutral");
     setApproved(false);
     setTracedSentence(null);
     speech.stop();
@@ -72,13 +75,14 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
     }
   }
 
-  async function runDraft() {
+  async function runDraft(nextTone) {
     if (draftState === "loading") return;
+    const useTone = nextTone || tone;
     setDraftState("loading");
     setDraftError(null);
     setApproved(false);
     try {
-      const result = await api.draft(email.id, instruction.trim() || undefined);
+      const result = await api.draft(email.id, instruction.trim() || undefined, useTone);
       setDraft(result);
       setDraftText(result.draft);
       setDraftState("idle");
@@ -108,11 +112,25 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
     if (!pendingAction) return;
     if (pendingAction.emailId && pendingAction.emailId !== email.id) return;
     if (pendingAction.intent === "summarise") runSummarise();
-    else if (pendingAction.intent === "read") readAloud();
+    else if (pendingAction.intent === "read") {
+      if (voiceEnabled && speech.supported) readAloud();
+      else runSummarise();
+    }
     else if (pendingAction.intent === "draft") runDraft();
     onActionConsumed?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingAction, email.id]);
+
+  // Segmenting and splitting the body is pure string work that only changes
+  // when the body or the traced sentence does. It used to run inline in the
+  // render, so every keystroke in the instruction field re-split the email.
+  const bodyParagraphs = useMemo(() => {
+    if (!body) return [];
+    const entry = tracedSentence == null || !summary || !summary.provenance
+      ? null
+      : summary.provenance.find((pv) => pv.sentence === tracedSentence);
+    return toParagraphs(segment(body, entry ? entry.spans : []));
+  }, [body, tracedSentence, summary]);
 
   const speaking = speech.speakingId === email.id;
   const initials = (email.sender_name || email.sender || "?").slice(0, 2).toUpperCase();
@@ -122,6 +140,11 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
 
       {/* --------------------------------------------------------- the email */}
       <div className="reader-head">
+        {onBack && (
+          <button className="reader-back" onClick={onBack} aria-label="Back to inbox">
+            <ArrowLeft size={16} strokeWidth={2.4} /> Inbox
+          </button>
+        )}
         <h2 className="reader-subject">{email.subject}</h2>
         <div className="reader-meta">
           <span className="mail-avatar lg" style={{ background: cat ? cat.color : "#64748B" }}>{initials}</span>
@@ -133,30 +156,24 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
             <span className="cat-tag" style={{ "--c": cat ? cat.color : "#64748B" }}>
               <span className="cat-dot" /> {email.category}
             </span>
-            <span className="reader-time">{email.received_at_display}</span>
+            <span className="reader-time">{formatReceivedLong(email.received_at)}</span>
           </div>
         </div>
       </div>
 
       <div className="reader-body">
         {bodyLoading && <div className="ai-skel"><span /><span /><span /><span /><span /></div>}
-        {!bodyLoading && body && (() => {
-          const entry = tracedSentence == null || !summary || !summary.provenance
-            ? null
-            : summary.provenance.find((pv) => pv.sentence === tracedSentence);
-          const paragraphs = toParagraphs(segment(body, entry ? entry.spans : []));
-          return paragraphs.map((pieces, i) =>
-            pieces.length === 0 ? <br key={i} /> : (
-              <p key={i}>
-                {pieces.map((piece, j) =>
-                  piece.highlighted
-                    ? <mark className="trace-mark" key={j}>{piece.text}</mark>
-                    : <span key={j}>{piece.text}</span>
-                )}
-              </p>
-            )
-          );
-        })()}
+        {!bodyLoading && body && bodyParagraphs.map((pieces, i) =>
+          pieces.length === 0 ? <br key={i} /> : (
+            <p key={i}>
+              {pieces.map((piece, j) =>
+                piece.highlighted
+                  ? <mark className="trace-mark" key={j}>{piece.text}</mark>
+                  : <span key={j}>{piece.text}</span>
+              )}
+            </p>
+          )
+        )}
         {!bodyLoading && !body && <p className="ai-error">Could not load this message.</p>}
       </div>
 
@@ -175,15 +192,16 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
             <span>{summary ? "Re-summarise" : "Summarise"}</span>
           </button>
 
-          <button
-            className={`action-btn ${speaking ? "on" : ""}`}
-            onClick={readAloud}
-            disabled={!speech.supported}
-            title={speech.supported ? "Reads the summary aloud" : "Not supported in this browser"}
-          >
-            {speaking ? <Square size={15} strokeWidth={2.4} /> : <Volume2 size={15} strokeWidth={2.2} />}
-            <span>{speaking ? "Stop" : "Read Aloud"}</span>
-          </button>
+          {voiceEnabled && speech.supported && (
+            <button
+              className={`action-btn ${speaking ? "on" : ""}`}
+              onClick={readAloud}
+              title="Reads the summary aloud, never the raw email"
+            >
+              {speaking ? <Square size={15} strokeWidth={2.4} /> : <Volume2 size={15} strokeWidth={2.2} />}
+              <span>{speaking ? "Stop" : "Read Aloud"}</span>
+            </button>
+          )}
 
           <button className="action-btn" onClick={runDraft} disabled={draftState === "loading"}>
             {draftState === "loading"
@@ -286,6 +304,29 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
                 rows={10}
                 aria-label="Draft reply, editable"
               />
+              {/* FR-06. Choosing a tone regenerates immediately: a selector
+                  that only takes effect on the next manual Regenerate looks
+                  broken, because the draft on screen still reads the old way. */}
+              <div className="ai-tone-row" role="group" aria-label="Reply tone">
+                <span className="ai-tone-label">Tone</span>
+                {TONES.map((t) => (
+                  <button
+                    key={t.key}
+                    className={`ai-tone ${tone === t.key ? "on" : ""}`}
+                    title={t.hint}
+                    aria-pressed={tone === t.key}
+                    disabled={draftState === "loading"}
+                    onClick={() => {
+                      if (tone === t.key) return;
+                      setTone(t.key);
+                      setApproved(false);
+                      runDraft(t.key);
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
               <div className="ai-draft-foot">
                 <input
                   className="ai-instruction"

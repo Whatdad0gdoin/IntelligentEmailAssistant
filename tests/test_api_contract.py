@@ -153,7 +153,12 @@ def test_draft_returns_the_documented_shape(client, auth_headers, stub_llm):
     response = client.post("/api/draft", json={"email_id": WORK_EMAIL_ID},
                            headers=auth_headers)
     assert response.status_code == 200
-    assert set(response.get_json()) == {"draft", "grounded", "ungrounded_flags"}
+    # `tone` is an approved FR-06 addition to the documented shape. The
+    # important half of this test is unchanged: whatever fields exist, none
+    # of them may be a recipient, a send token or a postable URL.
+    assert set(response.get_json()) == {
+        "draft", "grounded", "ungrounded_flags", "tone",
+    }
 
 
 def test_draft_accepts_an_optional_instruction(client, auth_headers, stub_llm):
@@ -317,3 +322,39 @@ def test_no_route_module_builds_a_prompt():
         if re.search(r"^\s*(?:from|import).*\bprompts\b", content, re.M):
             offenders.append(os.path.relpath(path, PROJECT_ROOT))
     assert not offenders, f"a route imports prompts directly: {offenders}"
+
+
+# --- Reply tone (FR-06) -----------------------------------------------------
+
+
+def test_draft_accepts_a_valid_tone(client, auth_headers, stub_llm):
+    stub_llm.queue({"draft": "Hi David, noted. Best regards, A"})
+    response = client.post(
+        "/api/draft",
+        json={"email_id": WORK_EMAIL_ID, "tone": "formal"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    assert response.get_json()["tone"] == "formal"
+
+
+def test_draft_rejects_an_unknown_tone(client, auth_headers, stub_llm):
+    """A typo should be a visible 400, not a draft quietly written in a tone
+    nobody chose."""
+    response = client.post(
+        "/api/draft",
+        json={"email_id": WORK_EMAIL_ID, "tone": "shouty"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 400
+    assert "tone" in response.get_json()["error"].lower()
+
+
+def test_draft_without_a_tone_still_works(client, auth_headers, stub_llm):
+    """Tone is additive: every caller written before it must be unaffected."""
+    stub_llm.queue({"draft": "Hi David, noted. Best regards, A"})
+    response = client.post(
+        "/api/draft", json={"email_id": WORK_EMAIL_ID}, headers=auth_headers
+    )
+    assert response.status_code == 200
+    assert response.get_json()["tone"] == "neutral"

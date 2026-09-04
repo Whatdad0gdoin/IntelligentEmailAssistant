@@ -1,30 +1,28 @@
 /**
  * Authenticated app shell.
  *
- * The AI features are no longer separate destinations: Summarise, Read Aloud
- * and Draft Reply all act on the open email inside the reading pane. The
- * sidebar entries for them now select the inbox and say so, rather than
- * navigating to a screen that repeats what the reader already offers.
+ * Three destinations: Inbox, Voice Commands, Settings. The AI actions are not
+ * destinations; Summarise, Read Aloud and Draft Reply act on the open message
+ * inside the reading pane, and tone lives on the draft.
  *
- * Tone and Translate stay as honest "not built" placeholders -- they are
- * FR-06/FR-07 and out of scope for this build.
+ * Voice can be switched off in Settings. That hides the microphone and speaker
+ * controls and nothing else: every voice action already has a click equivalent
+ * (SR-01), so the app loses no capability, only two buttons.
  */
 
 import { useEffect, useState } from "react";
-import { LogOut, PenLine, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, Settings as SettingsIcon } from "lucide-react";
 
-import ComingSoon from "./ComingSoon.jsx";
 import SideItem from "./SideItem.jsx";
 import InboxView from "../views/Inbox.jsx";
 import SettingsView from "../views/Settings.jsx";
 import VoiceView from "../views/Voice.jsx";
 import { useInbox } from "../hooks/useInbox.jsx";
+import { usePreference } from "../hooks/usePreference.jsx";
 import { FEATURES } from "../lib/constants.js";
-import { voiceLimitation } from "../lib/capabilities.js";
+import { capabilities, voiceLimitation } from "../lib/capabilities.js";
 
-// Voice Commands is the only AI feature with a screen of its own: FR-05 acts
-// on the inbox as a whole rather than on one message, and it dispatches its
-// recognised intent into the reading pane. Everything else lives on the email.
+const INBOX_FEATURE = FEATURES.find((f) => f.id === "inbox");
 const VOICE_FEATURE = FEATURES.find((f) => f.id === "voice");
 
 export default function Dashboard({ user, onLogout }) {
@@ -32,17 +30,28 @@ export default function Dashboard({ user, onLogout }) {
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
+  const [voiceEnabled, setVoiceEnabled] = usePreference("voiceEnabled", true);
 
   const inbox = useInbox(true);
-  const voiceNotice = voiceLimitation();
+  const { loadBody } = inbox;
 
+  // Only worth showing while voice is on: if the user turned it off, telling
+  // them their browser cannot do it anyway is noise.
+  const voiceNotice = voiceEnabled ? voiceLimitation() : null;
 
   // Opening an email pulls its body on demand; the list only carries snippets.
+  // Keyed on the stable loadBody, not the inbox object, so this runs when the
+  // selection changes and not on every render.
   useEffect(() => {
-    if (selected) inbox.loadBody(selected);
-  }, [selected, inbox]);
+    if (selected) loadBody(selected);
+  }, [selected, loadBody]);
 
-  const handleNav = (id) => setActive(id);
+  // Voice Commands needs speech recognition. Without it, or with voice turned
+  // off, the destination is removed rather than shown as a dead end.
+  const voiceAvailable = voiceEnabled && capabilities.stt;
+  useEffect(() => {
+    if (active === "voice" && !voiceAvailable) setActive("inbox");
+  }, [active, voiceAvailable]);
 
   const allEmails = Object.values(inbox.groups).flat();
   const voiceEmails = allEmails.map((e) => ({
@@ -52,11 +61,8 @@ export default function Dashboard({ user, onLogout }) {
   }));
 
   // A recognised intent selects its target and hands the action to the reader.
-  // Returns true when the action was dispatched, false when the target could
-  // not be determined. Section 6.3 is explicit: on an unresolved reference the
-  // app asks rather than guesses. Falling back to the first email in the inbox
-  // is exactly the "confidently wrong action" the spec warns about - it is how
-  // "summarise the email from Sarah" ends up summarising someone else's mail.
+  // Returns false when the target cannot be determined: section 6.3 says ask,
+  // never guess, so nothing falls back to "the first email".
   const runVoiceAction = (intent, targetEmailId) => {
     const target = targetEmailId || selected;
     if (!target) return false;
@@ -67,13 +73,22 @@ export default function Dashboard({ user, onLogout }) {
   };
 
   const openEmail = selected ? inbox.findEmail(selected) : null;
-  const unreadCount = Object.values(inbox.groups).reduce(
-    (n, list) => n + list.filter((e) => e.unread).length,
-    0
-  );
+  const unreadCount = allEmails.filter((e) => e.unread).length;
 
   let main;
-  if (active === "inbox") {
+  if (active === "voice") {
+    main = <VoiceView emails={voiceEmails} onRun={runVoiceAction} onBack={() => setActive("inbox")} />;
+  } else if (active === "settings") {
+    main = (
+      <SettingsView
+        voiceEnabled={voiceEnabled}
+        setVoiceEnabled={setVoiceEnabled}
+        onReloadInbox={inbox.reload}
+        reloading={inbox.loading}
+        onBack={() => setActive("inbox")}
+      />
+    );
+  } else {
     main = (
       <InboxView
         groups={inbox.groups}
@@ -89,14 +104,9 @@ export default function Dashboard({ user, onLogout }) {
         onRetry={inbox.reload}
         pendingAction={pendingAction}
         onActionConsumed={() => setPendingAction(null)}
+        voiceEnabled={voiceEnabled}
       />
     );
-  } else if (active === "voice") {
-    main = <VoiceView emails={voiceEmails} onRun={runVoiceAction} onBack={() => setActive("inbox")} />;
-  } else if (active === "settings") {
-    main = <SettingsView onBack={() => setActive("inbox")} />;
-  } else {
-    main = <ComingSoon feature={FEATURES.find((f) => f.id === active)} onBack={() => setActive("inbox")} />;
   }
 
   return (
@@ -106,17 +116,12 @@ export default function Dashboard({ user, onLogout }) {
           <div className="brand-glyph sm"><span className="glyph-mk sm">MK</span></div>
           <span className="brand-name sm">Mail<b>Kit</b></span>
         </div>
-        <button className="compose-btn"><PenLine size={16} strokeWidth={2.4} /> <span>Compose</span></button>
         <nav className="side-nav">
-          {/* The AI Tools group is gone. Summarise, Read Aloud and Draft Reply
-              act on an open message, so they belong on that message, not in a
-              global nav that could only ever say "open an email first".
-              What remains is genuinely navigable: places, not verbs. */}
-          <SideItem f={FEATURES[0]} active={active} onClick={handleNav} badge={unreadCount} />
-          {VOICE_FEATURE && (
+          <SideItem f={INBOX_FEATURE} active={active} onClick={setActive} badge={unreadCount} />
+          {voiceAvailable && (
             <>
               <div className="nav-group-label">Hands-free</div>
-              <SideItem f={VOICE_FEATURE} active={active} onClick={handleNav} />
+              <SideItem f={VOICE_FEATURE} active={active} onClick={setActive} />
             </>
           )}
         </nav>
@@ -140,7 +145,6 @@ export default function Dashboard({ user, onLogout }) {
         {voiceNotice && <div className="voice-notice" role="status">{voiceNotice}</div>}
         {main}
       </main>
-
     </div>
   );
 }

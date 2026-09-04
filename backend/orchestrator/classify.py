@@ -53,11 +53,16 @@ def _clamp(value):
         return 0.0
 
 
-def classify_emails(items, config, session_key=None, user=None, use_cache=True):
+def classify_emails(items, config, session_key=None, user=None, use_cache=True,
+                    preprocessed=False):
     """Classify a batch. Returns one result per input, in input order.
 
-    `items` are dicts of {id, subject, body} carrying raw body text. Bodies are
-    preprocessed here and never leave this call.
+    `items` are dicts of {id, subject, body}. By default `body` is raw text and
+    is preprocessed here. With preprocessed=True the caller has already run
+    preprocess() and `body` is the cleaned text; /api/inbox does this because
+    it needs the cleaned text for the snippet anyway, and running the HTML
+    strip and quote-chain regexes twice per email per page load was pure waste.
+    Either way, body text never leaves this call.
     """
     if not items:
         return []
@@ -70,12 +75,17 @@ def classify_emails(items, config, session_key=None, user=None, use_cache=True):
     for item in items:
         email_id = item["id"]
         subject = item.get("subject") or ""
-        cleaned = preprocess(
-            item.get("body") or "", config.token_budget_chars, label=f"classify {email_id[:12]}"
-        )
+        body = item.get("body") or ""
+        if preprocessed:
+            body_text = body
+            body_empty = not body.strip()
+        else:
+            cleaned = preprocess(body, config.token_budget_chars, label=f"classify {email_id[:12]}")
+            body_text = cleaned.text
+            body_empty = cleaned.is_empty
         # Evidence may legitimately be quoted from the subject line, so the
         # subject is part of the text the span is checked against.
-        sources[email_id] = f"{subject}\n{cleaned.text}"
+        sources[email_id] = subject + chr(10) + body_text
 
         if use_cache:
             cached = CLASSIFY_CACHE.get(user, email_id)
@@ -83,12 +93,12 @@ def classify_emails(items, config, session_key=None, user=None, use_cache=True):
                 results[email_id] = cached
                 continue
 
-        if not subject.strip() and cleaned.is_empty:
+        if not subject.strip() and body_empty:
             log.info("classify %s -> Review (%s)", email_id, REASON_EMPTY_EMAIL)
             results[email_id] = _review(email_id)
             continue
 
-        pending.append({"id": email_id, "subject": subject, "body": cleaned.text})
+        pending.append({"id": email_id, "subject": subject, "body": body_text})
 
     if pending:
         response = get_client(config).complete_json(

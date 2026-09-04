@@ -25,6 +25,13 @@ REVIEW_CATEGORY = "Review"
 # Voice intents (section 6.3). "unknown" is a required, valid outcome.
 INTENTS = ("summarise", "read", "draft", "unknown")
 
+# Reply tones (FR-06). The RTM names Formal / Casual / Professional; "neutral"
+# is the default and means "no tone instruction", which is not the same as
+# Professional. Kept as a tuple so the route can validate against it and reject
+# anything else rather than passing an arbitrary string into a prompt.
+TONES = ("neutral", "formal", "casual", "professional")
+DEFAULT_TONE = "neutral"
+
 # Section 3: summary must be 2 or 3 sentences. Enforced in summarise.py.
 SUMMARY_MIN_SENTENCES = 2
 SUMMARY_MAX_SENTENCES = 3

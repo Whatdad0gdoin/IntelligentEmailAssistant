@@ -18,7 +18,7 @@
 .iq * { margin:0; padding:0; box-sizing:border-box; }
 .iq { font-family:var(--font-body); color:var(--ink); height:100%; -webkit-font-smoothing:antialiased; }
 .iq button { font-family:inherit; cursor:pointer; border:none; background:transparent; }
-.iq button.login-btn, .iq button.compose-btn { background:linear-gradient(135deg,var(--blue),var(--blue-deep)); }
+.iq button.login-btn { background:linear-gradient(135deg,var(--blue),var(--blue-deep)); }
 .iq input { font-family:inherit; }
 .iq ::selection { background:var(--blue); color:#fff; }
 
@@ -26,7 +26,7 @@
 .login-root { display:grid; grid-template-columns:1.05fr 1fr; height:100%; overflow:hidden; }
 .login-hero { position:relative; background:linear-gradient(160deg,#1E3A8A 0%,#1E40AF 50%,#1D4ED8 100%); color:#fff; padding:44px 52px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; }
 .hero-noise { position:absolute; inset:0; background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,0.05) 1px,transparent 0); background-size:22px 22px; pointer-events:none; }
-.hero-orbit { position:absolute; border-radius:50%; border:1px solid rgba(96,165,250,0.16); pointer-events:none; }
+.hero-orbit { position:absolute; border-radius:50%; border:1px solid rgba(96,165,250,0.16); pointer-events:none; border-color:rgba(96,165,250,0.18); }
 .orbit-1 { width:480px; height:480px; right:-180px; top:-120px; animation:float 18s ease-in-out infinite; }
 .orbit-2 { width:320px; height:320px; right:-60px; top:40px; border-color:rgba(96,165,250,0.24); animation:float 14s ease-in-out infinite reverse; }
 .orbit-3 { width:200px; height:200px; left:-80px; bottom:80px; border-color:rgba(96,165,250,0.18); animation:float 20s ease-in-out infinite; }
@@ -51,7 +51,7 @@
 .hero-stat b { font-family:var(--font-display); font-size:26px; font-weight:700; letter-spacing:-0.02em; }
 .hero-stat span { font-size:12.5px; color:rgba(255,255,255,0.55); }
 .hero-divider { width:1px; height:38px; background:rgba(255,255,255,0.14); }
-.login-panel { background:var(--paper); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:44px; position:relative; }
+.login-panel { background:var(--paper); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:44px; position:relative; overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none; }
 .login-card { width:100%; max-width:400px; background:#fff; border:1px solid var(--line-2); border-radius:var(--r-xl); padding:40px 38px 30px; box-shadow:var(--shadow-lg); animation:cardUp 0.6s cubic-bezier(0.22,1,0.36,1); }
 @keyframes cardUp { from{opacity:0;transform:translateY(20px) scale(0.98);} to{opacity:1;transform:translateY(0) scale(1);} }
 .card-badge { display:inline-block; background:var(--blue-wash); color:var(--blue-deep); font-size:11.5px; font-weight:600; letter-spacing:0.05em; padding:5px 13px; border-radius:30px; }
@@ -88,17 +88,14 @@
 .brand-glyph.sm { width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,var(--blue),var(--blue-deep)); box-shadow:var(--shadow-blue); color:#fff; display:grid; place-items:center; }
 .brand-name.sm { font-family:var(--font-display); font-size:18px; font-weight:500; letter-spacing:-0.02em; }
 .brand-name.sm b { font-weight:700; color:var(--blue-glow); }
-.compose-btn { display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg,var(--blue),var(--blue-deep)); color:#fff; font-size:14px; font-weight:600; padding:12px; border-radius:var(--r-md); margin-bottom:18px; box-shadow:var(--shadow-blue); transition:transform 0.16s,box-shadow 0.16s; }
-.compose-btn:hover { transform:translateY(-1px); box-shadow:0 10px 28px rgba(37,99,235,0.34); }
 .side-nav { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
 .side-nav::-webkit-scrollbar { width:0; }
 .nav-group-label { font-size:10.5px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.34); padding:16px 12px 7px; }
 .nav-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:var(--r-md); color:rgba(255,255,255,0.72); font-size:14px; font-weight:450; width:100%; text-align:left; position:relative; transition:background 0.15s,color 0.15s; }
 .nav-item:hover { background:rgba(255,255,255,0.06); color:#fff; }
-.nav-item.active { background:rgba(96,165,250,0.16); color:#fff; }
-.nav-item.active::before { content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:20px; border-radius:3px; background:var(--blue-glow); }
+
 .nav-icon { display:grid; place-items:center; flex-shrink:0; }
-.nav-item.active .nav-icon { color:var(--blue-glow); }
+
 .nav-label { flex:1; }
 .nav-badge { background:var(--blue); color:#fff; font-size:11px; font-weight:600; min-width:20px; height:20px; border-radius:20px; display:grid; place-items:center; padding:0 6px; }
 .nav-soon { font-size:9.5px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--amber); background:rgba(240,168,30,0.14); padding:3px 7px; border-radius:20px; }
@@ -116,13 +113,10 @@
 .main-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:22px; }
 .main-title { font-family:var(--font-display); font-size:28px; font-weight:600; letter-spacing:-0.02em; color:var(--ink); }
 .main-sub { font-size:13.5px; color:var(--grey); margin-top:3px; }
-.head-actions { display:flex; align-items:center; gap:10px; }
-.search-box { display:flex; align-items:center; gap:9px; background:#fff; border:1.5px solid var(--line); border-radius:var(--r-md); padding:0 13px; width:260px; transition:border-color 0.16s,box-shadow 0.16s; }
+.search-box { display:flex; align-items:center; gap:9px; background:#fff; border:1.5px solid var(--line); border-radius:var(--r-md); padding:0 13px; width:260px; transition:border-color 0.16s,box-shadow 0.16s; position:relative; }
 .search-box:focus-within { border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,0.10); }
 .search-icon { color:var(--grey-2); flex-shrink:0; }
 .search-box input { flex:1; border:none; outline:none; background:transparent; padding:11px 0; font-size:14px; color:var(--ink); }
-.icon-btn { width:42px; height:42px; border-radius:var(--r-md); background:#fff; border:1.5px solid var(--line); display:grid; place-items:center; color:var(--grey); transition:color 0.15s,border-color 0.15s; }
-.icon-btn:hover { color:var(--blue-deep); border-color:var(--blue); }
 .filter-row { display:flex; gap:9px; margin-bottom:20px; flex-wrap:wrap; }
 .chip { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--line); padding:8px 14px; border-radius:30px; font-size:13px; font-weight:500; color:var(--grey); transition:all 0.16s; }
 .chip:hover { border-color:var(--grey-2); color:var(--ink); }
@@ -144,34 +138,16 @@
 .mail-time { font-size:12px; color:var(--grey-2); flex-shrink:0; margin-left:10px; }
 .mail-line2 { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
 .mail-subject { font-size:13.5px; font-weight:450; color:var(--ink-3); display:flex; align-items:center; gap:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.ic-star { flex-shrink:0; }
-.ic-attach { color:var(--grey-2); flex-shrink:0; }
 .mail-preview { font-size:13px; line-height:1.5; color:var(--grey); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.unread-dot { position:absolute; top:18px; right:18px; width:9px; height:9px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,0.16); }
-.mail-expand { display:flex; align-items:center; gap:14px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); animation:expandIn 0.3s ease; }
+.unread-dot { position:absolute; top:20px; right:16px; width:9px; height:9px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,0.16); }
 @keyframes expandIn { from{opacity:0;} to{opacity:1;} }
 .cat-tag { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--c); background:color-mix(in srgb,var(--c) 12%,transparent); padding:5px 11px; border-radius:20px; }
 .cat-dot { width:7px; height:7px; border-radius:50%; background:var(--c); }
-.expand-hint { font-size:12px; color:var(--grey-2); font-style:italic; }
-.soon-wrap { max-width:640px; margin:0 auto; padding-top:10px; }
 .soon-crumb { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--grey); margin-bottom:40px; }
 .soon-crumb button { color:var(--blue-deep); font-weight:500; font-size:13px; }
 .soon-crumb button:hover { text-decoration:underline; }
-.soon-card { position:relative; overflow:hidden; background:#fff; border:1.5px solid var(--line-2); border-radius:var(--r-xl); padding:52px 44px 40px; text-align:center; box-shadow:var(--shadow-lg); animation:cardUp 0.5s cubic-bezier(0.22,1,0.36,1); }
-.soon-glow { position:absolute; top:-80px; left:50%; transform:translateX(-50%); width:300px; height:300px; border-radius:50%; background:radial-gradient(circle,rgba(37,99,235,0.14),transparent 68%); pointer-events:none; }
-.soon-icon { width:82px; height:82px; border-radius:22px; margin:0 auto 22px; background:linear-gradient(135deg,var(--blue-wash),#D2F1F6); color:var(--blue-deep); display:grid; place-items:center; position:relative; box-shadow:inset 0 0 0 1px rgba(37,99,235,0.18); animation:iconFloat 3s ease-in-out infinite; }
 @keyframes iconFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-7px);} }
-.soon-tag { display:inline-flex; align-items:center; gap:6px; background:rgba(240,168,30,0.14); color:#9A6A00; font-size:11.5px; font-weight:600; letter-spacing:0.04em; padding:6px 13px; border-radius:30px; margin-bottom:16px; }
-.soon-title { font-family:var(--font-display); font-size:30px; font-weight:600; letter-spacing:-0.02em; color:var(--ink); margin-bottom:10px; }
-.soon-desc { font-size:15px; line-height:1.6; color:var(--grey); max-width:380px; margin:0 auto 30px; }
-.soon-banner { position:relative; overflow:hidden; background:linear-gradient(135deg,var(--ink),var(--ink-2)); color:#fff; font-family:var(--font-display); font-size:17px; font-weight:600; letter-spacing:0.16em; padding:18px; border-radius:var(--r-md); margin-bottom:28px; }
-.soon-banner-shine { position:absolute; top:0; left:-60%; width:45%; height:100%; background:linear-gradient(100deg,transparent,rgba(37,99,235,0.34),transparent); animation:shine 2.6s ease-in-out infinite; }
 @keyframes shine { 0%{left:-60%;} 60%,100%{left:130%;} }
-.soon-back { color:var(--blue-deep); font-size:14px; font-weight:600; padding:10px 20px; border-radius:var(--r-md); border:1.5px solid var(--line); transition:background 0.15s,border-color 0.15s; }
-.soon-back:hover { background:var(--blue-wash); border-color:var(--blue); }
-.soon-foot { text-align:center; font-size:12.5px; color:var(--grey-2); margin-top:22px; }
-
-
 
 /* Powered-by OpenAI lockup (hero) */
 .powered-lockup { display:inline-flex; align-items:center; gap:8px; margin-top:16px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); padding:7px 15px; border-radius:30px; }
@@ -184,7 +160,7 @@
 /* ===== SPLIT INBOX (list + reader) ===== */
 .inbox-split { display:grid; grid-template-columns:400px 1fr; gap:20px; height:100%; }
 .inbox-left { display:flex; flex-direction:column; min-width:0; overflow:hidden; }
-.inbox-left .mail-list { overflow-y:auto; padding-right:4px; flex:1; }
+.inbox-left .mail-list { overflow-y:auto; padding-right:4px; flex:1; padding:4px 6px 6px 4px; }
 .inbox-left .main-head { margin-bottom:16px; }
 .search-box.wide { width:100%; margin-bottom:16px; }
 .inbox-right { min-width:0; }
@@ -196,11 +172,16 @@
 .reader-empty p { font-size:14px; color:var(--grey); max-width:280px; line-height:1.55; }
 
 /* Reader */
-.reader { height:100%; display:flex; flex-direction:column; background:#fff; border:1.5px solid var(--line-2); border-radius:var(--r-xl); overflow:hidden; box-shadow:var(--shadow-md); animation:cardUp 0.4s cubic-bezier(0.22,1,0.36,1); }
-.reader-toolbar { display:flex; align-items:center; gap:14px; padding:14px 20px; border-bottom:1px solid var(--line-2); background:var(--blue-wash); flex-wrap:wrap; }
-.reader-toolbar-label { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--blue-deep); text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0; }
-.reader-actions { display:flex; gap:8px; flex-wrap:wrap; }
-.action-btn { display:inline-flex; align-items:center; gap:7px; background:#fff; border:1.5px solid var(--line); color:var(--ink-2); font-size:13px; font-weight:500; padding:8px 13px; border-radius:20px; transition:all 0.15s; }
+.reader { height:100%; display:flex; flex-direction:column; background:#fff; border:1.5px solid var(--line-2); border-radius:var(--r-xl); overflow:hidden; box-shadow:var(--shadow-md); animation:cardUp 0.4s cubic-bezier(0.22,1,0.36,1); padding-bottom:32px; overflow-y:auto; overflow-x:hidden; }
+.reader-toolbar { display:flex; align-items:center; gap:14px; padding:20px 24px 6px; border-bottom:none; background:transparent; flex-wrap:wrap; border-top:1px solid var(--line-2); margin-top:22px; }
+.reader-toolbar-label { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--grey); text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0; margin-bottom:0; }
+.reader-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.action-btn { display:inline-flex; align-items:center; gap:7px; background:#fff; border:1.5px solid #3B82F6; color:var(--blue-deep); font-size:13.5px; font-weight:600; padding:9px 15px; border-radius:20px; transition:all 0.15s; /* Border colour is measured, not eyeballed. WCAG 2.1 wants 3:1 for the
+     boundary of an interactive control, and the greys fail badly on a white
+     card: #E2E8F0 is 1.23:1 and #CBD5E1 is 1.48:1, which is why these looked
+     like plain text. #3B82F6 is 3.68:1 and reads as interactive rather than
+     merely present. The blue-tinted fill separates them from the message. */
+  background: var(--blue-wash); box-shadow:0 1px 2px rgba(30, 41, 59, 0.06); }
 .action-btn:hover { border-color:var(--blue); color:var(--blue-deep); background:#fff; transform:translateY(-1px); box-shadow:0 3px 10px rgba(37,99,235,0.12); }
 .action-btn:active { transform:translateY(0); }
 
@@ -214,32 +195,14 @@
 .reader-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
 .reader-time { font-size:12.5px; color:var(--grey-2); }
 
-.reader-body { flex:1; overflow-y:auto; padding:24px; font-size:14.5px; line-height:1.7; color:var(--ink-3); }
+.reader-body { flex:0 0 auto; overflow-y:auto; padding:24px 24px 26px; font-size:14.5px; line-height:1.7; color:var(--ink-3); padding-bottom:28px; overflow:visible; }
 .reader-body p { margin-bottom:2px; }
-.reader-attach { display:inline-flex; align-items:center; gap:9px; margin-top:22px; padding:11px 15px; background:var(--paper); border:1px solid var(--line); border-radius:var(--r-md); font-size:13px; color:var(--grey); }
-.attach-chip { background:#fff; border:1px solid var(--line); padding:4px 10px; border-radius:6px; font-weight:500; color:var(--ink-3); font-size:12.5px; }
 
-.reader-foot { display:flex; gap:10px; padding:16px 24px; border-top:1px solid var(--line-2); background:var(--paper); }
-.reply-btn { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,var(--blue),var(--blue-deep)); color:#fff; font-size:14px; font-weight:600; padding:11px 20px; border-radius:var(--r-md); box-shadow:var(--shadow-blue); transition:transform 0.15s,box-shadow 0.15s; }
-.reply-btn:hover { transform:translateY(-1px); box-shadow:0 8px 22px rgba(37,99,235,0.3); }
-.reply-btn.ghost { background:#fff; color:var(--ink-2); border:1.5px solid var(--line); box-shadow:none; }
-.reply-btn.ghost:hover { border-color:var(--blue); color:var(--blue-deep); box-shadow:0 3px 10px rgba(37,99,235,0.1); }
-.iq button.reply-btn { background:linear-gradient(135deg,var(--blue),var(--blue-deep)); }
-.iq button.reply-btn.ghost { background:#fff; }
-
-/* Toast */
-.toast { position:fixed; bottom:26px; right:26px; z-index:100; display:flex; align-items:center; gap:13px; background:var(--ink); color:#fff; padding:14px 20px 14px 16px; border-radius:var(--r-lg); box-shadow:var(--shadow-lg); max-width:340px; animation:toastIn 0.35s cubic-bezier(0.22,1,0.36,1); }
 @keyframes toastIn { from{opacity:0;transform:translateY(16px) scale(0.96);} to{opacity:1;transform:translateY(0) scale(1);} }
-.toast-icon { width:34px; height:34px; border-radius:10px; background:rgba(96,165,250,0.2); color:var(--blue-glow); display:grid; place-items:center; flex-shrink:0; }
-.toast-text { display:flex; flex-direction:column; gap:2px; }
-.toast-text b { font-size:14px; font-weight:600; }
-.toast-text span { font-size:12.5px; color:rgba(255,255,255,0.7); line-height:1.4; }
-
 
 @media (max-width:900px) { .login-root { grid-template-columns:1fr; } .login-hero { display:none; } .login-panel { padding:28px 20px; } }
 @media (max-width:1080px) { .inbox-split { grid-template-columns:1fr; } .inbox-right { display:none; } .inbox-split.has-selection .inbox-left { display:none; } .inbox-split.has-selection .inbox-right { display:block; } }
-@media (max-width:820px) { .dash-root { grid-template-columns:72px 1fr; } .brand-name.sm,.nav-label,.nav-soon,.compose-btn span,.user-meta,.side-mini span,.nav-group-label { display:none; } .compose-btn { padding:12px 0; } .side-user { justify-content:center; } .search-box { width:150px; } .dash-main { padding:20px 18px 32px; } }
-
+@media (max-width:820px) { .dash-root { grid-template-columns:72px 1fr; } .brand-name.sm,.nav-label,.nav-soon,.user-meta,.side-mini span,.nav-group-label { display:none; } .side-user { justify-content:center; } .search-box { width:150px; } .dash-main { padding:20px 18px 32px; } }
 
 /* ===== DOCUMENT RESET =====
    The `.iq *` rule near the top only reaches elements INSIDE .iq, so it never
@@ -255,17 +218,13 @@ body { background:var(--paper); overflow:hidden; }
    The panes still scroll; they just don't paint a bar over the layout. This is
    the same treatment `.side-nav` already had, applied to the rest of the
    scroll containers so the right edge of the screen stays clean. */
-.dash-main, .side-nav, .mail-list, .reader-body, .soon-wrap,
-.inbox-left .mail-list, .summary-scroll {
+.dash-main, .side-nav, .mail-list, .reader-body, .inbox-left .mail-list {
   scrollbar-width:none;          /* Firefox */
   -ms-overflow-style:none;       /* old Edge/IE */
 }
-.dash-main::-webkit-scrollbar, .side-nav::-webkit-scrollbar,
-.mail-list::-webkit-scrollbar, .reader-body::-webkit-scrollbar,
-.soon-wrap::-webkit-scrollbar, .summary-scroll::-webkit-scrollbar {
+.dash-main::-webkit-scrollbar, .side-nav::-webkit-scrollbar, .mail-list::-webkit-scrollbar, .reader-body::-webkit-scrollbar {
   width:0; height:0; background:transparent;
 }
-
 
 /* ===== FEATURE VIEWS (FR-01, FR-02, FR-03, FR-05) =====
    Summarise / Auto-Categorise / Draft Reply / Read Aloud / Voice Commands.
@@ -275,68 +234,30 @@ body { background:var(--paper); overflow:hidden; }
 .feature-head { display:flex; align-items:flex-start; gap:14px; margin-bottom:22px; }
 .feature-icon { width:46px; height:46px; flex-shrink:0; border-radius:14px; background:linear-gradient(135deg,var(--blue-wash),#D2F1F6); color:var(--blue-deep); display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(37,99,235,0.18); }
 .feature-head .main-sub { max-width:520px; line-height:1.55; }
-.feature-controls { display:flex; align-items:flex-end; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
 .feature-hint { font-size:13px; color:var(--grey-2); font-style:italic; margin-top:12px; }
 .feature-hint.listening { color:var(--blue-deep); font-style:normal; font-weight:500; }
-
-.picker { flex:1; min-width:240px; display:flex; flex-direction:column; gap:8px; }
-.picker-label { font-size:12.5px; font-weight:600; color:var(--ink-3); }
-.picker-select { font-family:inherit; font-size:14px; color:var(--ink); background:#fff; border:1.6px solid var(--line); border-radius:var(--r-md); padding:12px 13px; outline:none; cursor:pointer; transition:border-color 0.16s,box-shadow 0.16s; }
-.picker-select:focus { border-color:var(--blue); box-shadow:0 0 0 4px rgba(37,99,235,0.12); }
 
 .iq button.primary-btn { display:inline-flex; align-items:center; justify-content:center; gap:9px; background:linear-gradient(135deg,var(--blue),var(--blue-deep)); color:#fff; font-size:14.5px; font-weight:600; padding:13px 22px; border-radius:var(--r-md); box-shadow:var(--shadow-blue); transition:transform 0.16s,box-shadow 0.16s; }
 .iq button.primary-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 10px 28px rgba(37,99,235,0.32); }
 .iq button.primary-btn:disabled { cursor:not-allowed; background:linear-gradient(135deg,#94A3B8,#7C8BA0); box-shadow:none; opacity:0.85; }
 .spinner.sm { width:15px; height:15px; border-width:2px; }
-.spinner.sm.dark { border-color:rgba(37,99,235,0.28); border-top-color:var(--blue-deep); }
-
-.instruction-field { max-width:100%; }
 
 .feature-card { background:#fff; border:1.5px solid var(--line-2); border-radius:var(--r-xl); padding:26px 28px; margin-top:20px; box-shadow:var(--shadow-md); animation:cardUp 0.4s cubic-bezier(0.22,1,0.36,1); }
-.feature-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:16px; }
-.feature-card-head h2 { font-family:var(--font-display); font-size:18px; font-weight:600; color:var(--ink); letter-spacing:-0.01em; line-height:1.35; }
-.summary-line { font-size:15px; line-height:1.68; color:var(--ink-3); margin-bottom:10px; }
 
 .feature-error { display:flex; flex-direction:column; gap:4px; margin-top:18px; background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:var(--r-md); padding:14px 16px; }
 .feature-error b { font-size:14px; font-weight:600; color:#991B1B; }
 .feature-error span { font-size:13px; line-height:1.5; color:#B91C1C; }
 
-.action-items { margin-top:22px; padding-top:18px; border-top:1px dashed var(--line); }
-.action-items h3 { display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-size:13px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-3); margin-bottom:12px; }
-.action-items ul { list-style:none; display:flex; flex-direction:column; gap:9px; }
-.action-items li { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; font-size:14px; line-height:1.55; color:var(--ink-2); background:var(--paper); border:1px solid var(--line-2); border-radius:var(--r-md); padding:11px 14px; }
-.item-src { font-size:11.5px; color:var(--grey-2); font-style:italic; }
-
 /* Grounding (sections 4.4/4.5) */
-.ground-note { display:flex; flex-direction:column; gap:8px; margin-top:22px; font-size:13px; line-height:1.55; border-radius:var(--r-md); padding:13px 15px; }
+.ground-note { display:flex; flex-direction:column; gap:8px; margin-top:22px; font-size:13px; line-height:1.55; border-radius:var(--r-md); padding:13px 15px; margin-bottom:14px; }
 .ground-note.ok { flex-direction:row; align-items:center; gap:9px; background:#F0FDF4; border:1px solid #BBF7D0; color:#15803D; }
 .ground-note.warn { background:#FFFBEB; border:1px solid #FDE68A; color:#92400E; }
-.ground-note.edit { background:var(--paper); border:1px solid var(--line); color:var(--grey); }
+
 .ground-note-head { display:flex; align-items:flex-start; gap:9px; font-weight:500; }
 .ground-flags { list-style:none; display:flex; flex-direction:column; gap:6px; padding-left:24px; }
 .ground-flags li { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
 .ground-flags code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; background:rgba(146,64,14,0.10); padding:2px 7px; border-radius:5px; }
 .ground-flags span { font-size:12.5px; opacity:0.85; }
-
-/* Draft */
-.draft-area { width:100%; font-family:var(--font-body); font-size:14.5px; line-height:1.68; color:var(--ink-3); background:var(--paper); border:1.5px solid var(--line); border-radius:var(--r-md); padding:16px; resize:vertical; outline:none; transition:border-color 0.16s,box-shadow 0.16s; }
-.draft-area:focus { border-color:var(--blue); background:#fff; box-shadow:0 0 0 4px rgba(37,99,235,0.10); }
-.draft-foot { display:flex; align-items:center; gap:14px; margin-top:14px; flex-wrap:wrap; }
-.draft-note { font-size:12.5px; color:var(--grey-2); line-height:1.5; flex:1; min-width:200px; }
-
-/* Auto-Categorise buckets */
-.bucket-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-top:22px; }
-.bucket { background:#fff; border:1.5px solid var(--line-2); border-left:3px solid var(--c); border-radius:var(--r-lg); padding:16px 18px; animation:cardUp 0.4s cubic-bezier(0.22,1,0.36,1); }
-.bucket-head { display:flex; align-items:center; gap:9px; font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--ink); margin-bottom:10px; }
-.bucket-head .cat-dot { background:var(--c); }
-.bucket-head .chip-count { margin-left:auto; }
-.bucket-note { font-size:12px; line-height:1.5; color:var(--grey); font-style:italic; margin-bottom:10px; }
-.bucket-empty { font-size:13px; color:var(--grey-2); font-style:italic; }
-.bucket-list { list-style:none; display:flex; flex-direction:column; gap:9px; }
-.bucket-list li { display:flex; flex-direction:column; gap:2px; padding:9px 11px; background:var(--paper); border-radius:var(--r-sm); }
-.bucket-subject { font-size:13px; font-weight:500; color:var(--ink-2); line-height:1.4; }
-.bucket-from { font-size:12px; color:var(--grey); }
-.bucket-conf { font-size:11px; color:var(--grey-2); }
 
 /* Voice */
 .iq button.mic-btn { display:inline-flex; align-items:center; gap:11px; background:linear-gradient(135deg,var(--blue),var(--blue-deep)); color:#fff; font-size:15px; font-weight:600; padding:15px 26px; border-radius:40px; box-shadow:var(--shadow-blue); transition:transform 0.16s,box-shadow 0.16s; }
@@ -350,24 +271,18 @@ body { background:var(--paper); overflow:hidden; }
 .intent-conf { display:inline-block; font-size:12px; color:var(--grey-2); margin-left:10px; }
 
 /* An action button for something not built yet reads as disabled, not broken. */
-.action-btn.is-soon { opacity:0.72; }
-.action-btn.is-soon .nav-soon { padding:2px 6px; }
 
-/* With `body { overflow:hidden }` the page itself can no longer scroll, so any
-   pane that might outgrow the viewport has to scroll on its own or its content
-   becomes unreachable. The login card is the one that can, on a short window. */
-.login-panel { overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none; }
 .login-panel::-webkit-scrollbar { width:0; height:0; }
 
 /* ===== INLINE AI PANELS (added for in-place Summarise / Draft / Read Aloud) =====
    Uses the existing tokens so these read as part of Kevin's original design
    rather than bolted on. */
 .spin { animation:spin 0.9s linear infinite; }
-.action-btn.on { background:var(--blue-wash); border-color:var(--blue); color:var(--blue-deep); }
+.action-btn.on { background:var(--blue); border-color:var(--blue-deep); color:#fff; box-shadow:0 3px 10px rgba(37, 99, 235, 0.28); }
 .action-btn:disabled { opacity:0.5; cursor:not-allowed; }
 
-.ai-panel { margin:0 0 14px; background:#fff; border:1.5px solid var(--line); border-radius:var(--r-lg); padding:16px 18px; box-shadow:var(--shadow-md); animation:cardUp 0.32s cubic-bezier(0.22,1,0.36,1); }
-.ai-panel-head { display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-2); margin-bottom:12px; }
+.ai-panel { margin:0 0 14px; background:#fff; border:1.5px solid var(--line); border-radius:var(--r-lg); padding:20px 22px 22px; box-shadow:var(--shadow-md); animation:cardUp 0.32s cubic-bezier(0.22,1,0.36,1); margin-top:18px; margin-bottom:18px; margin-left:24px; margin-right:24px; }
+.ai-panel-head { display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-2); margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--line-2); }
 .ai-panel-head b { font-family:var(--font-display); font-weight:600; }
 .ai-close { margin-left:auto; color:var(--grey-2); padding:4px; border-radius:6px; display:grid; place-items:center; }
 .ai-close:hover { background:var(--paper-2); color:var(--ink); }
@@ -376,29 +291,23 @@ body { background:var(--paper); overflow:hidden; }
 .ai-chip.ok { background:rgba(22,163,74,0.12); color:#15803D; }
 .ai-chip.warn { background:rgba(217,119,6,0.14); color:#B45309; }
 
-.ai-summary { margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px; }
-.ai-summary li { font-size:14.5px; line-height:1.6; color:var(--ink-2); }
+.ai-summary { margin:0; padding-left:22px; display:flex; flex-direction:column; gap:10px; }
+.ai-summary li { font-size:14.5px; line-height:1.6; color:var(--ink-2); list-style-position:outside; padding-left:2px; }
 
-.ai-actions-list { margin-top:14px; padding-top:12px; border-top:1px solid var(--line-2); }
+.ai-actions-list { margin-top:18px; padding-top:16px; border-top:1px solid var(--line-2); }
 .ai-actions-list b { font-size:12px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--grey); }
 .ai-actions-list ul { margin:8px 0 0; padding-left:18px; display:flex; flex-direction:column; gap:6px; }
 .ai-actions-list li { font-size:14px; line-height:1.55; color:var(--ink-2); }
 .ai-src { display:inline-block; margin-left:8px; font-size:11px; color:var(--grey-2); }
 
-.ai-warn { display:flex; gap:10px; background:rgba(217,119,6,0.08); border:1px solid rgba(217,119,6,0.28); border-radius:var(--r-md); padding:11px 13px; margin-bottom:13px; color:#92400E; }
-.ai-warn b { display:block; font-size:13px; margin-bottom:5px; }
-.ai-warn ul { margin:0; padding-left:16px; display:flex; flex-direction:column; gap:3px; }
-.ai-warn li { font-size:12.5px; line-height:1.5; }
-.ai-warn code { background:rgba(146,64,14,0.12); padding:1px 5px; border-radius:4px; font-size:12px; }
-
 .ai-error { font-size:13.5px; color:var(--coral); line-height:1.55; }
-.ai-note { margin-top:10px; font-size:12px; color:var(--grey); line-height:1.5; }
+.ai-note { margin-top:12px; font-size:12px; color:var(--grey); line-height:1.5; }
 
-.ai-draft { width:100%; border:1.6px solid var(--line); border-radius:var(--r-md); padding:13px 14px; font-family:var(--font-body); font-size:14.5px; line-height:1.65; color:var(--ink); background:var(--paper); resize:vertical; outline:none; transition:border-color 0.18s,box-shadow 0.18s,background 0.18s; }
+.ai-draft { width:100%; border:1.6px solid var(--line); border-radius:var(--r-md); padding:15px 16px; font-family:var(--font-body); font-size:14.5px; line-height:1.65; color:var(--ink); background:var(--paper); resize:vertical; outline:none; transition:border-color 0.18s,box-shadow 0.18s,background 0.18s; }
 .ai-draft:focus { border-color:var(--blue); background:#fff; box-shadow:0 0 0 4px rgba(37,99,235,0.12); }
 
-.ai-draft-foot { display:flex; gap:10px; margin-top:11px; align-items:center; flex-wrap:wrap; }
-.ai-instruction { flex:1; min-width:200px; border:1.5px solid var(--line); border-radius:var(--r-md); padding:10px 13px; font-size:13.5px; outline:none; background:var(--paper); }
+.ai-draft-foot { display:flex; gap:12px; margin-top:14px; align-items:center; flex-wrap:wrap; }
+.ai-instruction { flex:1 1 260px; min-width:200px; border:1.5px solid var(--line); border-radius:var(--r-md); padding:10px 13px; font-size:13.5px; outline:none; background:var(--paper); }
 .ai-instruction:focus { border-color:var(--blue); background:#fff; box-shadow:0 0 0 3px rgba(37,99,235,0.10); }
 .ai-approve { display:inline-flex; align-items:center; gap:7px; background:linear-gradient(135deg,var(--green),#15803D); color:#fff; font-size:14px; font-weight:600; padding:10px 18px; border-radius:var(--r-md); box-shadow:0 4px 14px rgba(22,163,74,0.26); transition:transform 0.16s,filter 0.16s; }
 .ai-approve:hover:not(:disabled) { transform:translateY(-1px); }
@@ -407,13 +316,13 @@ body { background:var(--paper); overflow:hidden; }
 /* Skeletons (NFR-01) */
 .ai-skel { display:flex; flex-direction:column; gap:9px; }
 .ai-skel span { height:12px; border-radius:6px; background:linear-gradient(90deg,var(--paper-2) 25%,#E8EDF5 50%,var(--paper-2) 75%); background-size:200% 100%; animation:shimmer 1.3s ease-in-out infinite; }
-.ai-skel span:nth-child(1){width:92%;} .ai-skel span:nth-child(2){width:78%;}
-.ai-skel span:nth-child(3){width:85%;} .ai-skel span:nth-child(4){width:64%;} .ai-skel span:nth-child(5){width:73%;}
+.ai-skel span:nth-child(1) {width:92%;} .ai-skel span:nth-child(2) {width:78%;}
+.ai-skel span:nth-child(3) {width:85%;} .ai-skel span:nth-child(4) {width:64%;} .ai-skel span:nth-child(5) {width:73%;}
 @keyframes shimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
 .mail-row.skel { pointer-events:none; }
 .skel-avatar { width:38px; height:38px; border-radius:11px; flex-shrink:0; background:linear-gradient(90deg,var(--paper-2) 25%,#E8EDF5 50%,var(--paper-2) 75%); background-size:200% 100%; animation:shimmer 1.3s ease-in-out infinite; }
 .skel-line { display:block; height:11px; border-radius:6px; margin-bottom:7px; background:linear-gradient(90deg,var(--paper-2) 25%,#E8EDF5 50%,var(--paper-2) 75%); background-size:200% 100%; animation:shimmer 1.3s ease-in-out infinite; }
-.skel-line.w40{width:40%;} .skel-line.w70{width:70%;} .skel-line.w90{width:90%;}
+.skel-line.w40 {width:40%;} .skel-line.w70 {width:70%;} .skel-line.w90 {width:90%;}
 
 /* Category groups (FR-08) */
 .mail-group { margin-bottom:22px; }
@@ -429,10 +338,6 @@ body { background:var(--paper); overflow:hidden; }
 /* SR-01 voice notice: visible, persistent, never blocking */
 .voice-notice { background:var(--blue-wash); border:1px solid rgba(37,99,235,0.22); color:var(--blue-dark); font-size:13px; line-height:1.5; padding:10px 14px; border-radius:var(--r-md); margin-bottom:16px; }
 
-/* ===== PROVENANCE HIGHLIGHTING =====
-   Click a summary sentence to see the passage it came from. The offsets are
-   computed server-side by the grounding layer, not re-matched in the browser. */
-.ai-summary li { list-style-position:outside; }
 .trace { display:block; width:100%; text-align:left; font:inherit; color:var(--ink-2); line-height:1.6; padding:7px 9px; margin:-7px -9px; border-radius:var(--r-sm); transition:background 0.15s; position:relative; }
 .trace:hover { background:var(--blue-wash); }
 .trace.on { background:var(--blue-wash); box-shadow:inset 3px 0 0 var(--blue); }
@@ -443,30 +348,6 @@ body { background:var(--paper); overflow:hidden; }
 .trace.unsupported .trace-hint { color:var(--amber); }
 .trace-mark { background:rgba(37,99,235,0.16); color:inherit; border-radius:3px; padding:1px 2px; box-shadow:0 0 0 1px rgba(37,99,235,0.22); animation:traceIn 0.28s ease-out; }
 @keyframes traceIn { from{background:rgba(37,99,235,0.42);} to{background:rgba(37,99,235,0.16);} }
-
-/* ===== TOOLBAR REPOSITIONED BELOW THE MESSAGE =====
-   It used to sit above the email as a header. Now it follows the text, so it
-   reads as "here is the message, here is what you can do with it" and the
-   results appear directly under the button that produced them. Restyled from a
-   header bar (bottom border, tinted background) into a grouped action bar. */
-.reader-toolbar {
-  border-bottom:none;
-  border-top:1px solid var(--line-2);
-  background:transparent;
-  margin-top:8px;
-  padding:16px 0 14px;
-  align-items:center;
-}
-.reader-toolbar-label { color:var(--grey); }
-.reader-actions { gap:9px; }
-.action-btn { padding:9px 15px; font-size:13.5px; }
-
-/* Panels are now beneath the toolbar, in reading order after the message. */
-.ai-panel { margin-top:2px; }
-
-/* The reader scrolls as one column: message, then tools, then results. */
-.reader { display:flex; flex-direction:column; }
-.reader-body { flex:0 0 auto; }
 
 /* ===== PALETTE: CONTRAST CORRECTIONS =====
    The blue scale was already the industry-standard one (#2563EB / #1E3A8A /
@@ -482,141 +363,18 @@ body { background:var(--paper); overflow:hidden; }
    the colour is decoration rather than information (icon fills, dot
    indicators, borders), which the 4.5:1 rule does not govern. */
 .mail-avatar, .chip-dot, .cat-dot, .unread-dot, .brand-glyph { /* decorative fills keep the brighter tones */ }
-.ic-star { color:var(--amber-bright); }
 .field-icon, .search-icon { color:var(--grey-soft); }
-.hero-orbit { border-color:rgba(96,165,250,0.18); }
 
-/* ===== SPACING: THE READER COLUMN =====
-   The action bar sat flush against the message, so "Re-summarise / Read Aloud /
-   Draft Reply" read as part of the email rather than as controls acting on it.
-   Separation now comes from space rather than from the border alone. */
-.reader-body {
-  padding-bottom: 28px;
-}
-.reader-toolbar {
-  margin-top: 26px;
-  padding: 20px 0 4px;
-  gap: 16px;
-}
-.reader-toolbar-label {
-  margin-bottom: 2px;
-}
-.reader-actions {
-  gap: 10px;
-}
-
-/* The result panels are cards, so they need interior room and a clear gap from
-   the bar that produced them. */
-.ai-panel {
-  margin-top: 18px;
-  margin-bottom: 18px;
-  padding: 20px 22px 22px;
-}
-.ai-panel-head {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line-2);
-}
-.ai-summary {
-  padding-left: 22px;
-  gap: 10px;
-}
-.ai-summary li {
-  padding-left: 2px;
-}
-.ai-actions-list {
-  margin-top: 18px;
-  padding-top: 16px;
-}
-.ai-draft {
-  padding: 15px 16px;
-}
-.ai-draft-foot {
-  margin-top: 14px;
-  gap: 12px;
-}
-.ai-note {
-  margin-top: 12px;
-}
-.ground-note {
-  margin-bottom: 14px;
-}
-
-/* The reader itself needs breathing room at the bottom so the last panel is
-   not glued to the viewport edge when it is the final thing on screen. */
-.reader {
-  padding-bottom: 32px;
-}
-
-/* ===== CORRECTIONS TO THE REPOSITIONED READER =====
-   Moving the toolbar below the message introduced four faults, fixed here.
-
-   1. The toolbar was given `padding: 20px 0` when it moved, so its contents sat
-      flush against the card edge while .reader-head and .reader-body keep 24px.
-      Everything in this column now shares one gutter.
-   2. The buttons kept `background:#fff` from when they sat on the tinted
-      toolbar strip. With that strip removed they became white on white.
-   3. The result panels had no horizontal margin, so they ran edge to edge
-      while the text they describe was inset.
-   4. .reader had `overflow:hidden` with a fixed height, which was fine when the
-      toolbar was pinned at the top but clips it now that it follows a long
-      message. The column scrolls as one instead. */
-
-.reader {
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-.reader-body {
-  flex: 0 0 auto;
-  overflow: visible;
-  padding: 24px 24px 26px;
-}
-
-/* One shared gutter down the whole reader column. */
-.reader-toolbar {
-  padding: 20px 24px 6px;
-  margin-top: 22px;
-  gap: 14px;
-}
-.ai-panel {
-  margin-left: 24px;
-  margin-right: 24px;
-}
-
-/* Visible buttons: a tinted surface and a real border, not white on white.
-   They are controls acting on the message, so they should read as controls. */
-.action-btn {
-  /* Border colour is measured, not eyeballed. WCAG 2.1 wants 3:1 for the
-     boundary of an interactive control, and the greys fail badly on a white
-     card: #E2E8F0 is 1.23:1 and #CBD5E1 is 1.48:1, which is why these looked
-     like plain text. #3B82F6 is 3.68:1 and reads as interactive rather than
-     merely present. The blue-tinted fill separates them from the message. */
-  background: var(--blue-wash);
-  border: 1.5px solid #3B82F6;
-  color: var(--blue-deep);
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgba(30, 41, 59, 0.06);
-}
 .action-btn:hover:not(:disabled) {
   background: var(--blue-wash);
   border-color: var(--blue);
   color: var(--blue-deep);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.16);
 }
-.action-btn.on {
-  background: var(--blue);
-  border-color: var(--blue-deep);
-  color: #fff;
-  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28);
-}
+
 .action-btn.on:hover:not(:disabled) {
   background: var(--blue-deep);
   color: #fff;
-}
-/* The label is a heading for the row, not a button, so it stays quiet. */
-.reader-toolbar-label {
-  color: var(--grey);
-  margin-bottom: 0;
 }
 
 /* ===== UNREAD DOT NO LONGER COLLIDES WITH THE TIMESTAMP =====
@@ -626,10 +384,6 @@ body { background:var(--paper); overflow:hidden; }
    top-right, the text just has to stop before it. */
 .mail-row .mail-line1 {
   padding-right: 16px;
-}
-.unread-dot {
-  top: 20px;
-  right: 16px;
 }
 
 /* ===== SPECIFICITY: BEATING THE GLOBAL BUTTON RESET =====
@@ -732,25 +486,8 @@ body { background:var(--paper); overflow:hidden; }
   border-color: var(--ink);
   color: #fff;
 }
-.iq button.icon-btn {
-  background: #fff;
-  border: 1.5px solid var(--line);
-}
-.iq button.icon-btn:hover {
-  border-color: var(--blue);
-}
 
-/* The draft footer holds the instruction field plus two actions. On a narrow
-   pane it wraps, so the actions stay together rather than splitting apart. */
-.ai-draft-foot {
-  flex-wrap: wrap;
-  align-items: center;
-}
-.ai-instruction {
-  flex: 1 1 260px;
-}
-.ai-draft-foot .ai-regen,
-.ai-draft-foot .ai-approve {
+.ai-draft-foot .ai-regen, .ai-draft-foot .ai-approve {
   flex: 0 0 auto;
 }
 
@@ -767,24 +504,8 @@ body { background:var(--paper); overflow:hidden; }
 .iq button.mail-row:hover {
   border-color: var(--line);
 }
-.iq button.mail-row.sel {
-  border-color: var(--blue);
-}
-.iq button.soon-back {
-  background: #fff;
-  border: 1.5px solid var(--line);
-}
-.iq button.soon-back:hover {
-  border-color: var(--blue);
-  color: var(--blue-deep);
-}
+.iq button.mail-row.sel { border-color:var(--blue); box-shadow:inset 0 0 0 2px rgba(37, 99, 235, 0.30); }
 
-/* ===== SEARCH =====
-   Filters the emails already loaded, so typing costs no request and no API
-   budget. The clear button matters: `type="search"` renders a native clear
-   affordance in some browsers and nothing in others, so the app supplies its
-   own rather than depending on the engine. */
-.search-box { position: relative; }
 .iq button.search-clear {
   display: grid;
   place-items: center;
@@ -814,26 +535,85 @@ body { background:var(--paper); overflow:hidden; }
 }
 .search-summary b { color: var(--ink-2); font-weight: 600; }
 
-/* ===== SELECTED-ROW RING NO LONGER CLIPPED =====
-   `.mail-row.sel` draws its ring with `box-shadow: 0 0 0 4px`, which extends
-   4px on every side. Its scroll container had `padding-right: 4px` and nothing
-   on the other three, and `.inbox-left` is `overflow: hidden`, so the left and
-   top of the ring were cut off - most visibly on the first row, which has no
-   row above it to hide the seam.
-
-   Two changes, because either alone leaves an edge case:
-
-   1. The ring is now drawn INSIDE the element with an inset shadow, so no
-      amount of clipping can remove it. This is what fixes the reported bug.
-   2. The list still gains symmetric padding, because the hover state uses an
-      outset shadow too and that was being clipped in the same way. */
-.inbox-left .mail-list {
-  padding: 4px 6px 6px 4px;
-}
-.iq button.mail-row.sel {
-  border-color: var(--blue);
-  box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.30);
-}
 .iq button.mail-row.sel:hover {
   box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.30), var(--shadow-md);
 }
+
+/* ===== REPLY TONE (FR-06) =====
+   Sits between the draft and the actions, because it changes the draft rather
+   than acting on it. Selecting a tone regenerates immediately: a control that
+   only applies on the next manual Regenerate leaves the old wording on screen
+   and reads as broken. */
+.ai-tone-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.ai-tone-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--grey);
+  margin-right: 2px;
+}
+.iq button.ai-tone {
+  background: #fff;
+  border: 1.5px solid var(--line);
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 550;
+  padding: 7px 14px;
+  border-radius: 20px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.iq button.ai-tone:hover:not(:disabled) {
+  border-color: #3B82F6;
+  color: var(--blue-deep);
+  background: var(--blue-wash);
+}
+.iq button.ai-tone.on {
+  background: var(--blue);
+  border-color: var(--blue-deep);
+  color: #fff;
+}
+.iq button.ai-tone:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ===== READER: BACK TO THE LIST ON NARROW SCREENS =====
+   Below 1080px the split collapses and opening a message hides the list. This
+   is the way back. Hidden on wide screens, where the list is always visible. */
+.iq button.reader-back { display:none; align-items:center; gap:6px; background:var(--paper); border:1.5px solid var(--line); color:var(--ink-3); font-size:13px; font-weight:600; padding:7px 12px; border-radius:var(--r-md); margin-bottom:14px; }
+.iq button.reader-back:hover { border-color:var(--blue); color:var(--blue-deep); background:var(--blue-wash); }
+@media (max-width:1080px) { .iq button.reader-back { display:inline-flex; } }
+
+/* ===== SETTINGS ===== */
+.setting-group { background:#fff; border:1.5px solid var(--line-2); border-radius:var(--r-lg); padding:6px 22px; margin-bottom:18px; box-shadow:var(--shadow-md); }
+.setting-group-title { font-family:var(--font-display); font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--grey); padding:16px 0 6px; }
+.setting-row { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:16px 0; border-top:1px solid var(--line-2); }
+.setting-text { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.setting-label { display:inline-flex; align-items:center; gap:7px; font-size:14.5px; font-weight:600; color:var(--ink); }
+.setting-detail { font-size:13px; line-height:1.5; color:var(--grey); max-width:52ch; }
+.setting-control { flex-shrink:0; }
+.setting-footnote { font-size:12.5px; line-height:1.55; color:var(--grey); padding:14px 0 12px; border-top:1px solid var(--line-2); }
+
+.setting-status { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; padding:5px 11px; border-radius:20px; }
+.setting-status .setting-dot { width:8px; height:8px; border-radius:50%; }
+.setting-status.ok { background:rgba(21,128,61,0.10); color:var(--green); }
+.setting-status.ok .setting-dot { background:var(--green); }
+.setting-status.off { background:var(--paper-2); color:var(--grey); }
+.setting-status.off .setting-dot { background:var(--grey-soft); }
+
+/* Switch. State is carried by position, colour AND the On/Off label, so it is
+   readable without colour vision and by a screen reader (role=switch). */
+.iq button.toggle { display:inline-flex; align-items:center; gap:10px; background:transparent; border:none; padding:4px 0; color:var(--grey); font-size:13px; font-weight:600; }
+.toggle-knob { position:relative; width:42px; height:24px; border-radius:24px; background:var(--grey-soft); transition:background 0.18s; flex-shrink:0; }
+.toggle-knob::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:transform 0.18s; }
+.iq button.toggle.on .toggle-knob { background:var(--blue); }
+.iq button.toggle.on .toggle-knob::after { transform:translateX(18px); }
+.iq button.toggle.on { color:var(--blue-deep); }
+.iq button.toggle:focus-visible .toggle-knob { box-shadow:0 0 0 4px rgba(37,99,235,0.25); }
