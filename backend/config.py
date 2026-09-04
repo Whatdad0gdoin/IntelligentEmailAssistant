@@ -45,9 +45,12 @@ class Config:
     Instantiated per app so tests can build one with a patched environment.
     """
 
-    def __init__(self, require_llm=True):
+    def __init__(self, require_llm=True, require_auth=True):
         # --- Auth (NFR-04) -------------------------------------------------
-        self.jwt_secret = _require("JWT_SECRET")
+        # require_auth is False for processes that are not the API and have no
+        # business holding a signing secret -- the mail server reads only the
+        # SMTP and mailbox settings from this object.
+        self.jwt_secret = _require("JWT_SECRET") if require_auth else _optional("JWT_SECRET", "")
         self.jwt_algorithm = _optional("JWT_ALGORITHM", "HS256")
         self.jwt_expires_in = _int("JWT_EXPIRES_IN", 3600)
 
@@ -96,6 +99,25 @@ class Config:
             "EMAIL_FIXTURE_DIR",
             os.path.join(os.path.dirname(os.path.abspath(__file__)), "adapters", "fixtures"),
         )
+
+        # Where the local mail server delivers received messages. Read together
+        # with the fixture directory, so a message sent to the app appears
+        # alongside the demo mailbox with no configuration.
+        #
+        # Separate from the fixtures on purpose: those are curated, committed
+        # and asserted on by the test suite. Received mail landing in that
+        # directory would change the mailbox out from under the tests.
+        self.email_inbox_dir = _optional(
+            "EMAIL_INBOX_DIR",
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "mailbox"),
+        )
+
+        # SMTP receiver (backend/mailserver.py). 127.0.0.1 accepts only from
+        # this machine; SMTP_HOST=0.0.0.0 accepts from other devices on the
+        # same network, which is how you send from a phone.
+        self.smtp_host = _optional("SMTP_HOST", "127.0.0.1")
+        self.smtp_port = _int("SMTP_PORT", 2525)
+        self.smtp_max_bytes = _int("SMTP_MAX_BYTES", 5000000)
         # Length of the header-derived preview shown in the inbox list.
         self.snippet_chars = _int("SNIPPET_CHARS", 140)
 

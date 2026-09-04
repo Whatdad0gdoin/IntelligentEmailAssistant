@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { matchesQuery, newestFirst, normaliseQuery, searchEmails } from "./search.js";
+import { matchesQuery, newestFirst, normaliseQuery, searchEmails, selectView } from "./search.js";
 
 const EMAILS = [
   { id: "1", sender_name: "Sarah Chen", sender: "sarah.chen.mel@gmail.com",
@@ -87,5 +87,56 @@ describe("robustness", () => {
   it("bodies are not searched, since the list only carries snippets", () => {
     const withBody = [{ id: "9", subject: "s", snippet: "p", body: "secret word", received_at: "2026-01-01" }];
     expect(searchEmails(withBody, "secret")).toEqual([]);
+  });
+});
+
+describe("which view the inbox shows", () => {
+  const ORDER = ["Work", "Personal", "Promotions", "Studies", "Review"];
+  const GROUPS = {
+    Work: [EMAILS[1]],
+    Personal: [EMAILS[0]],
+    Promotions: [],
+    Studies: [EMAILS[2]],
+    Review: [],
+  };
+  const view = (filter, query = "") => selectView({ groups: GROUPS, order: ORDER, filter, query });
+
+  it("All is one flat list, not five stacked groups", () => {
+    const v = view("all");
+    expect(v.mode).toBe("flat");
+    expect(v.list).toHaveLength(3);
+  });
+
+  it("choosing a category shows ONLY that category", () => {
+    // The reported bug: every group rendered regardless of the chosen chip.
+    const v = view("Personal");
+    expect(v.mode).toBe("grouped");
+    expect(v.names).toEqual(["Personal"]);
+  });
+
+  it.each(["Work", "Personal", "Studies"])("%s shows itself and nothing else", (name) => {
+    expect(view(name).names).toEqual([name]);
+  });
+
+  it("an empty category says so instead of rendering a bare heading", () => {
+    const v = view("Promotions");
+    expect(v.names).toEqual(["Promotions"]);
+    expect(v.empty).toBe(true);
+  });
+
+  it("searching flattens, so hits are not buried under five headings", () => {
+    const v = view("Work", "sarah");
+    expect(v.mode).toBe("flat");
+    expect(v.searching).toBe(true);
+    expect(v.list.map((e) => e.id)).toEqual(["1"]);
+  });
+
+  it("clearing the search returns to the chosen category", () => {
+    expect(view("Work", "   ").mode).toBe("grouped");
+    expect(view("Work", "   ").names).toEqual(["Work"]);
+  });
+
+  it("an unknown filter shows nothing rather than everything", () => {
+    expect(view("Nonsense").names).toEqual([]);
   });
 });

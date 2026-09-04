@@ -5,7 +5,8 @@ get back SourceEmail objects with every deterministic field already parsed from
 headers (see headers.py).
 
 Only one source is implemented for this build: FixtureEmailSource, which reads
-RFC-822 .eml files from a configured directory. That directory is the *mail
+RFC-822 .eml files from one or more configured directories -- the committed
+demo fixtures, plus the directory the local mail server delivers into. That directory is the *mail
 server's* role in the architecture, not application state -- the same position
 an IMAP host would occupy. Nothing the app produces is ever written back to it,
 which is what NFR-03 actually constrains.
@@ -49,21 +50,34 @@ class FixtureEmailSource(EmailSource):
     message body outlives the request that needed it.
     """
 
-    def __init__(self, directory):
+    def __init__(self, directory, extra_dirs=()):
+        # `directory` must exist; a missing one is a misconfiguration worth an
+        # error. The extras are optional -- the delivery directory legitimately
+        # does not exist until the first message arrives.
         self.directory = directory
+        self.extra_dirs = tuple(extra_dirs)
 
-    def _read_all(self):
+    def _files(self):
+        """(directory, filename) for every .eml across all configured dirs."""
         if not os.path.isdir(self.directory):
             raise EmailSourceError(
                 f"Email fixture directory not found: {self.directory}. "
                 f"Set EMAIL_FIXTURE_DIR or create the directory."
             )
+        found = []
+        for directory in (self.directory,) + self.extra_dirs:
+            if not os.path.isdir(directory):
+                continue
+            for name in sorted(os.listdir(directory)):
+                if name.lower().endswith(".eml"):
+                    found.append((directory, name))
+        return found
+
+    def _read_all(self):
         emails = []
         parser = BytesParser(policy=policy.default)
-        for name in sorted(os.listdir(self.directory)):
-            if not name.lower().endswith(".eml"):
-                continue
-            path = os.path.join(self.directory, name)
+        for directory, name in self._files():
+            path = os.path.join(directory, name)
             try:
                 with open(path, "rb") as handle:
                     message = parser.parse(handle)
@@ -87,16 +101,9 @@ class FixtureEmailSource(EmailSource):
         full. This is still stateless: nothing is retained between calls, and
         no body is decoded except the one being returned.
         """
-        if not os.path.isdir(self.directory):
-            raise EmailSourceError(
-                f"Email fixture directory not found: {self.directory}. "
-                f"Set EMAIL_FIXTURE_DIR or create the directory."
-            )
         parser = BytesParser(policy=policy.default)
-        for name in sorted(os.listdir(self.directory)):
-            if not name.lower().endswith(".eml"):
-                continue
-            path = os.path.join(self.directory, name)
+        for directory, name in self._files():
+            path = os.path.join(directory, name)
             try:
                 with open(path, "rb") as handle:
                     headers = parser.parse(handle, headersonly=True)
@@ -120,14 +127,16 @@ def get_email_source(config):
             f"Unknown EMAIL_SOURCE '{config.email_source}'. "
             f"Only 'fixture' is implemented in this build."
         )
-    key = ("fixture", config.email_fixture_dir)
+    key = ("fixture", config.email_fixture_dir, config.email_inbox_dir)
     with _lock:
         if key not in _sources:
-            _sources[key] = FixtureEmailSource(config.email_fixture_dir)
+            _sources[key] = FixtureEmailSource(
+                config.email_fixture_dir, extra_dirs=(config.email_inbox_dir,)
+            )
         return _sources[key]
 
 
 def set_email_source(config, source):
     """Test seam: point the configured key at a supplied source."""
     with _lock:
-        _sources[(config.email_source, config.email_fixture_dir)] = source
+        _sources[("fixture", config.email_fixture_dir, config.email_inbox_dir)] = source

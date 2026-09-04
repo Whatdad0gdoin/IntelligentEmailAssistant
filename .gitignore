@@ -24,3 +24,8 @@ Thumbs.db
 # `python -m eval.build_dataset`. The curated CSVs ARE committed.
 eval/data/raw/
 eval/data/interim/
+
+# Mail delivered by the local SMTP server (backend/mailserver.py). Real
+# messages someone sent while testing; not project source.
+backend/mailbox/
+.logs/

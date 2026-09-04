@@ -42,3 +42,31 @@ export function newestFirst(a, b) {
 export function searchEmails(emails, query) {
   return (emails || []).filter((e) => matchesQuery(e, query)).sort(newestFirst);
 }
+
+/**
+ * Decide what the inbox should render.
+ *
+ * Extracted from the view because the bug it replaces was invisible there: the
+ * grouped branch listed every category with a match instead of the selected
+ * one, so clicking "Promotions" showed the whole inbox. Logic that decides
+ * what a user sees is worth testing without a browser.
+ *
+ * Returns either a flat list (All, or any search) or exactly one named group.
+ */
+export function selectView({ groups, order, filter, query }) {
+  const q = normaliseQuery(query);
+  const searching = q.length > 0;
+  const flat = searching || filter === "all";
+
+  if (flat) {
+    const all = order.flatMap((name) => groups[name] || []);
+    return { mode: "flat", searching, list: searchEmails(all, q), names: [] };
+  }
+  return {
+    mode: "grouped",
+    searching,
+    list: [],
+    names: order.filter((name) => name === filter),
+    empty: (groups[filter] || []).length === 0,
+  };
+}

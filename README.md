@@ -91,8 +91,16 @@ from the example if it is missing, installs any missing Python and Node
 packages, downloads the spaCy model, frees ports 5000 and 5173, starts both
 servers in their own windows, waits until they answer, and opens the browser.
 
-Stop everything with `.\start.ps1 -Stop`, double-click `stop.bat`, or close the two
-server windows. `-SkipInstall` skips the dependency check on a restart.
+Everything runs in that one window, with each server's output prefixed and
+colour-coded. **Ctrl+C stops all of them.**
+
+| Flag | Effect |
+|---|---|
+| `-Mail` | also run the local SMTP server (see below) |
+| `-MailLan` | as `-Mail`, but accepts mail from other devices on the network |
+| `-SkipInstall` | skip the dependency check, for a faster restart |
+| `-Windows` | one separate window per server, for when one is crashing |
+| `-Stop` | stop anything still running |
 
 Run it from a terminal you own. A server started inside an agent or IDE task
 session is a child of that shell and dies when the session ends, which shows up
@@ -112,6 +120,42 @@ python -m backend.scripts.hash_password
 
 and add your `OPENAI_API_KEY`. Without it the app runs and login works, but
 summarise, classify and draft return 503.
+
+### Send a real email to it
+
+The app reads a mailbox on disk. `backend/mailserver.py` is a small SMTP server
+that delivers into that mailbox, so you can send the assistant an actual email
+over SMTP and read it in the app.
+
+```powershell
+.\start.ps1 -Mail            # app + a local mail server on port 2525
+python tools/send_test_email.py       # sends one, in another terminal
+```
+
+Then reload the inbox. The message is parsed from its real headers, classified
+like any other, and can be summarised, drafted against and read aloud.
+
+`--category work|studies|personal|promotions` picks a different preset, and
+`--interactive` lets you type your own subject and body. Any SMTP client works
+too: host `localhost`, port `2525`, no auth, no TLS.
+
+To send from a phone or another machine on the same network:
+
+```powershell
+.\start.ps1 -MailLan
+```
+
+That binds the receiver to all interfaces. It has no authentication and no TLS,
+so use it on a network you trust and stop it when you are done. It is a
+development tool, not a mail host, and it cannot receive from the public
+internet without port forwarding.
+
+**On NFR-03.** The mail server writes messages to disk, because that is what a
+mailbox does. The assistant still writes nothing: these are separate tiers and
+separate processes, and `tests/test_mailserver.py` asserts that no module under
+`backend/` imports the mail server. Received mail is delivered to
+`backend/mailbox/`, which is gitignored and kept apart from the committed demo
+fixtures so the test suite always sees the same six messages.
 
 ### Manual start
 

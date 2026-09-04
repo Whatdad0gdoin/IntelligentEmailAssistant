@@ -17,7 +17,7 @@ import { AlertCircle, Inbox as InboxIcon, Search, X } from "lucide-react";
 import ReadingPane from "../components/ReadingPane.jsx";
 import { CATEGORIES, REVIEW_CATEGORY } from "../lib/constants.js";
 import { formatReceived } from "../lib/format.js";
-import { matchesQuery, normaliseQuery, searchEmails } from "../lib/search.js";
+import { matchesQuery, normaliseQuery, selectView } from "../lib/search.js";
 
 const GROUP_ORDER = ["Work", "Personal", "Promotions", "Studies", "Review"];
 
@@ -90,25 +90,21 @@ export default function Inbox({
 
   const total = GROUP_ORDER.reduce((n, g) => n + (groups[g]?.length || 0), 0);
 
-  const visibleGroups = GROUP_ORDER.filter((name) => {
-    if ((groups[name] || []).length === 0) return false;
-    return filter === "all" || filter === name;
-  });
-
   const q = normaliseQuery(query);
   const matches = (email) => matchesQuery(email, q);
 
-  // Search results are one list: splitting six hits across five headed
-  // sections buries them. Same for "All", which reads as a single inbox
-  // rather than five stacked ones.
-  const flatten = (names) => searchEmails(names.flatMap((name) => groups[name] || []), q);
 
-  const searching = q.length > 0;
-  const showFlat = searching || filter === "all";
-  const flatList = showFlat ? flatten(GROUP_ORDER) : [];
-  const groupedNames = showFlat
-    ? []
-    : GROUP_ORDER.filter((name) => (groups[name] || []).some(matches));
+  // "All" and any search render as one flat list. Choosing a category shows
+  // that category and nothing else, still headed so Review keeps its
+  // explanation. Decided in lib/search.js so it can be tested without a
+  // browser: the bug this replaces (every group rendering regardless of the
+  // chosen chip) was invisible in the JSX.
+  const view = selectView({ groups, order: GROUP_ORDER, filter, query });
+  const searching = view.searching;
+  const showFlat = view.mode === "flat";
+  const flatList = view.list;
+  const groupedNames = view.names;
+  const selectedIsEmpty = Boolean(view.empty);
 
   let rowIndex = 0;
 
@@ -168,6 +164,13 @@ export default function Inbox({
               <p>{error}</p>
               <button className="chip" onClick={onRetry}>Try again</button>
             </div>
+          </div>
+        )}
+
+        {!loading && !error && selectedIsEmpty && (
+          <div className="reader-empty">
+            <h3>Nothing in {filter}</h3>
+            <p>No messages were filed here. Choose another category, or All.</p>
           </div>
         )}
 

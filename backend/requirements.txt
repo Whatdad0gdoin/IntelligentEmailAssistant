@@ -3,6 +3,11 @@ Flask-Cors==5.0.0
 PyJWT==2.10.1
 Werkzeug==3.1.3
 python-dotenv==1.0.1
+
+# Local SMTP receiver (backend/mailserver.py). This is the mail-server tier,
+# a stand-in for the provider that would hold the user's mailbox. The Flask
+# API never imports it.
+aiosmtpd==1.4.6
 pytest==8.3.4
 openai==1.59.6   # pinned: the SDK version IS the API contract pin for api.openai.com
 
