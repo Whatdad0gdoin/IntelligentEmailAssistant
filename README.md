@@ -157,6 +157,56 @@ separate processes, and `tests/test_mailserver.py` asserts that no module under
 `backend/mailbox/`, which is gitignored and kept apart from the committed demo
 fixtures so the test suite always sees the same six messages.
 
+### Read a real Gmail mailbox
+
+Gmail cannot deliver to the local SMTP server: inbound mail needs a public MX
+record, a reachable port 25 and TLS on a domain you own. So Gmail is *read*
+rather than delivered to, by a second email source that fetches over IMAP.
+
+Use an account created for the project. An app password is full mailbox access
+sitting in plaintext in `backend/.env`, and every message fetched has its body
+sent to the model for classification and summarisation.
+
+1. Switch on 2-step verification: <https://myaccount.google.com/security>
+2. Create an app password: <https://myaccount.google.com/apppasswords>
+3. Enable IMAP: Gmail → Settings → Forwarding and POP/IMAP → Enable IMAP
+4. Fill in `backend/.env`:
+
+```ini
+EMAIL_SOURCE=gmail
+GMAIL_USER=you@gmail.com
+GMAIL_APP_PASSWORD=abcdefghijklmnop
+GMAIL_MAILBOX=INBOX
+GMAIL_LIMIT=25
+```
+
+5. Check it before starting the app, because every setup failure looks the same
+   from the browser but each needs a different fix:
+
+```bash
+python tools/check_gmail.py
+```
+
+Then restart the backend. The inbox, search, categories, summaries, drafts and
+voice all work unchanged — the whole point of the adapter boundary.
+
+`GMAIL_MAILBOX` takes any Gmail label, so applying a `demo` label by hand and
+setting `GMAIL_MAILBOX=demo` limits what the app can see to messages you chose.
+
+**It never writes to your mailbox.** The mailbox is opened with a read-only
+`SELECT`, bodies are fetched with `BODY.PEEK[]` rather than `RFC822`, and the
+app issues no `STORE`, `APPEND`, `EXPUNGE` or `COPY` anywhere. Reading mail in
+the app does not mark it read in Gmail; `tests/test_gmail_source.py` asserts all
+three against a fake IMAP server, since a live connection would hide it.
+
+**Cost.** Every inbox load fetches `GMAIL_LIMIT` messages over the network —
+about half a second of TLS handshake and login, plus the fetch. Connections are
+per-request, like the fixture source re-reading its directory, so nothing is
+held between requests. Classification results are still cached per message id,
+so the model is not re-billed for mail it has already seen.
+
+Set `EMAIL_SOURCE=fixture` to go back to the demo mailbox.
+
 ### Manual start
 
 ```bash
@@ -241,7 +291,7 @@ backend/
     draft.py       FR-03      intent.py     FR-05
     cache.py       summaries and labels only, never bodies
     budget.py      per-session request cap
-  adapters/    email source, header parsing, fixture mailbox
+  adapters/    email sources (fixture mailbox, Gmail over IMAP), header parsing
   middleware/  jwt guard, log redaction
 eval/          labelled data (DR-01) and the intent harness
 tests/

@@ -4,15 +4,18 @@ Routes never touch a mailbox directly. They ask an EmailSource for messages and
 get back SourceEmail objects with every deterministic field already parsed from
 headers (see headers.py).
 
-Only one source is implemented for this build: FixtureEmailSource, which reads
-RFC-822 .eml files from one or more configured directories -- the committed
-demo fixtures, plus the directory the local mail server delivers into. That directory is the *mail
+Two sources are implemented. FixtureEmailSource reads RFC-822 .eml files from
+one or more configured directories -- the committed demo fixtures, plus the
+directory the local mail server delivers into. That directory is the *mail
 server's* role in the architecture, not application state -- the same position
 an IMAP host would occupy. Nothing the app produces is ever written back to it,
 which is what NFR-03 actually constrains.
 
-Swapping in Gmail or IMAP later means adding one class here that returns
-SourceEmail objects. No route, orchestrator module or view changes.
+GmailImapSource (gmail_source.py, EMAIL_SOURCE=gmail) puts a real Gmail mailbox
+in that same position. It was the test of the claim this file used to make in
+the abstract: adding it meant one new class returning SourceEmail objects, one
+branch in the factory below, and no change to any route, orchestrator module or
+view.
 """
 
 import logging
@@ -120,23 +123,53 @@ _lock = threading.Lock()
 _sources = {}
 
 
+def _source_key(config):
+    """Identity of the configured source: same settings, same instance.
+
+    The key carries the settings rather than just the name so a test that
+    repoints a directory, or a config that switches mailbox, gets its own
+    instance instead of one built for the previous settings. The password is
+    not part of it -- it is not an identity, and keys end up in tracebacks.
+    """
+    if config.email_source == "gmail":
+        return ("gmail", config.gmail_host, config.gmail_port,
+                config.gmail_user, config.gmail_mailbox)
+    return ("fixture", config.email_fixture_dir, config.email_inbox_dir)
+
+
 def get_email_source(config):
-    """Return the configured source. One instance per directory, reused."""
-    if config.email_source != "fixture":
+    """Return the configured source. One instance per configuration, reused."""
+    if config.email_source not in ("fixture", "gmail"):
         raise EmailSourceError(
             f"Unknown EMAIL_SOURCE '{config.email_source}'. "
-            f"Only 'fixture' is implemented in this build."
+            f"This build implements 'fixture' and 'gmail'."
         )
-    key = ("fixture", config.email_fixture_dir, config.email_inbox_dir)
+    key = _source_key(config)
     with _lock:
         if key not in _sources:
-            _sources[key] = FixtureEmailSource(
-                config.email_fixture_dir, extra_dirs=(config.email_inbox_dir,)
-            )
+            if config.email_source == "gmail":
+                # Imported here, not at module scope: gmail_source imports this
+                # module for the EmailSource base class, and a fixture-only
+                # deployment has no reason to load an IMAP client at all.
+                from backend.adapters.gmail_source import GmailImapSource
+
+                _sources[key] = GmailImapSource(
+                    host=config.gmail_host,
+                    port=config.gmail_port,
+                    username=config.gmail_user,
+                    password=config.gmail_app_password,
+                    mailbox=config.gmail_mailbox,
+                    limit=config.gmail_limit,
+                    timeout=config.gmail_timeout,
+                )
+            else:
+                _sources[key] = FixtureEmailSource(
+                    config.email_fixture_dir, extra_dirs=(config.email_inbox_dir,)
+                )
         return _sources[key]
 
 
 def set_email_source(config, source):
     """Test seam: point the configured key at a supplied source."""
     with _lock:
-        _sources[("fixture", config.email_fixture_dir, config.email_inbox_dir)] = source
+        _sources[_source_key(config)] = source

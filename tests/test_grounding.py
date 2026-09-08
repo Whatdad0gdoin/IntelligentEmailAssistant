@@ -172,3 +172,93 @@ def test_groundedness_rate_reports_which_entity_backend_ran():
 
 def test_groundedness_rate_of_an_empty_batch_is_not_a_crash():
     assert groundedness_rate([])["rate"] == 0.0
+
+
+# --- evidence verification: typography vs fabrication -----------------------
+#
+# Added after a 480-email evaluation run showed the commonest evidence failure
+# was the model tidying its own quote, not inventing one. Those spans were
+# word-for-word correct and were sending correctly classified emails to Review.
+
+_EVIDENCE_SOURCE = (
+    "Brad: this is just a test e-mail re Port O'Connor. I have added you to "
+    "the list now that I have your e-mail. We are trying hard to wrap up the "
+    "accounting with Marc Deer so we can start on the new season."
+)
+
+
+@pytest.mark.parametrize(
+    "evidence",
+    [
+        "I have added you to the list",                                  # exact
+        "we are trying hard to wrap up the accounting with Marc Deer.",  # added full stop
+        "\u201cthis is just a test e-mail\u201d",                        # requoted
+        "I HAVE ADDED YOU TO THE LIST",                                  # recased
+    ],
+)
+def test_evidence_survives_typography(evidence):
+    assert verify_evidence(evidence, _EVIDENCE_SOURCE) is True
+
+
+@pytest.mark.parametrize(
+    "evidence",
+    [
+        "we agreed to pay Marc Deer five thousand dollars",   # fabricated outright
+        "Brad: this is just a test e-mail we can start on the new season",  # stitched
+        "ok",                                                 # too short to be evidence
+        "",                                                   # nothing at all
+    ],
+)
+def test_fabricated_or_stitched_evidence_still_fails(evidence):
+    assert verify_evidence(evidence, _EVIDENCE_SOURCE) is False
+
+
+# --- proper nouns: NER spans vs quotations ---------------------------------
+#
+# Added after a 57-summary run in which 4 of 10 flags were the same email being
+# reported as unsupported because the model wrote a possessive or an article
+# that the source did not. A flag is shown to the user as an unverified claim,
+# so a false one costs trust in every real warning.
+
+_NAME_SOURCE = (
+    "Please review the Trust Agreement. Robert Parker and Oswald Chamber will "
+    "attend. Contact the Controller / CFO about the Credit Card Consolidation Form."
+)
+
+
+@pytest.mark.parametrize(
+    "generated",
+    [
+        "Robert Parker's report is due.",              # possessive
+        "The sender attached the Trust Agreement.",    # leading article
+        "Oswald Chamber's notes were included.",       # possessive, second name
+        "Escalate to the Controller/CFO.",             # punctuation inside the span
+    ],
+)
+def test_name_survives_span_boundary_differences(generated):
+    assert check_grounding(generated, _NAME_SOURCE).grounded is True
+
+
+@pytest.mark.parametrize(
+    "generated,expected_claim",
+    [
+        ("Priya Sharma will attend the meeting.", "Priya Sharma"),
+        ("Please review the Acme Holdings Agreement.", "Acme Holdings"),
+    ],
+)
+def test_invented_names_are_still_flagged(generated, expected_claim):
+    result = check_grounding(generated, _NAME_SOURCE)
+    assert result.grounded is False
+    assert any(expected_claim in flag.claim for flag in result.flags)
+
+
+def test_dear_org_greeting_is_not_an_invented_name():
+    """spaCy returns "Dear Student Services" as one ORG span, unlike "Hi Sarah"."""
+    source = "From: Student Services <no-reply@monash.edu>\nYour enrolment is confirmed."
+    assert check_grounding("Dear Student Services, thank you.", source).grounded is True
+
+
+def test_dear_greeting_does_not_smuggle_an_invented_org_through():
+    source = "From: Student Services <no-reply@monash.edu>\nYour enrolment is confirmed."
+    result = check_grounding("Dear Acme Holdings, thank you.", source)
+    assert result.grounded is False

@@ -27,13 +27,18 @@ WHAT THE ENRON CORPUS ACTUALLY GIVES US
 Scanning the real folder distribution: the corpus is overwhelmingly
 `all_documents`, `inbox`, `sent_items`, `discussion_threads` -- organisational
 folders, not category labels. It is a corporate mailbox, so nearly everything
-in it is Work. A handful of folders (`myfriends`, `personalfolder`, `personal`)
-genuinely indicate Personal.
+in it is Work.
 
-It supplies essentially ZERO Promotions and ZERO Studies. Any claim that Enron
-provides all four classes does not survive contact with the data. That is why
-the generated set exists: to fill the classes real corpora do not cover, not to
-replace them.
+The `personal` / `myfriends` / `family` folders look like a Personal signal and
+are not one: reading all 120 rows they produced, about 77 were Work (payslips,
+stock options, org announcements), 11 were Promotions (expiry notices, order
+confirmations) and only ~27 were genuinely personal. People file their payslips
+in a folder called "personal". Those mappings were removed -- see
+ENRON_FOLDER_LABELS below.
+
+So Enron supplies Work, and essentially ZERO Personal, Promotions and Studies.
+Any claim that it provides all four classes does not survive contact with the
+data.
 """
 
 import argparse
@@ -68,12 +73,29 @@ FIELDS = [
 
 # Folders whose name genuinely indicates a category. Everything else in the
 # corpus is organisational and gets no label rather than a guessed one.
+# WORK ONLY. The Personal mappings that used to sit here -- myfriends,
+# personalfolder, personal, friends, family -- were removed after the 120 rows
+# they produced were read by hand. Roughly a quarter were genuinely personal
+# ("Superbowl Party", "Baby Shower for the Little Transter", "FW: Wedding
+# photos"). The rest split two ways:
+#
+#   ~77 were Work        Your May 31 Pay Advice / 2001 Special Stock Option
+#                        Grant Awards / RE: Unforced capacity credits
+#   ~11 were Promotions  Your Digital ID is about to expire (x4) /
+#                        ImageStation Order (x3) / EREN Network News
+#
+# A folder called "personal" is where an Enron employee filed their payslips,
+# not where personal correspondence lived. The heuristic was therefore ~25%
+# accurate on this class and contaminated it with two others, so an accuracy
+# figure computed against it would mostly measure filing habits at Enron in
+# 2001 -- and would penalise the classifier for correctly calling a payroll
+# notice Work.
+#
+# Enron is a corporate mailbox: it supplies Work reliably and essentially no
+# Promotions or Studies. Real personal correspondence is in there, but at a
+# density too low for the folder names to find. Recovering it needs hand
+# labelling, not a better folder map.
 ENRON_FOLDER_LABELS = {
-    "myfriends": ("Personal", "weak"),
-    "personalfolder": ("Personal", "weak"),
-    "personal": ("Personal", "weak"),
-    "friends": ("Personal", "weak"),
-    "family": ("Personal", "weak"),
     "inbox": ("Work", "weak"),
     "sent_items": ("Work", "weak"),
     "sent": ("Work", "weak"),
@@ -126,9 +148,16 @@ def build_enron(per_category=120, scan_limit=250_000):
             "    https://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz"
         )
 
-    counts = {"Work": 0, "Personal": 0}
+    counts = {"Work": 0}
     rows = []
     scanned = 0
+    # The archive is ordered by mailbox, so taking the first 120 matches drew
+    # all of them from one person's inbox -- one job, one set of colleagues,
+    # one writing style. A classifier scored on that is partly being asked
+    # "does this look like blair-l's mail", which is not the question. Capping
+    # per mailbox forces the class to span the corpus instead.
+    per_mailbox = {}
+    max_per_mailbox = max(1, per_category // 12)
 
     with tarfile.open(ENRON_ARCHIVE, "r:gz") as tar:
         for member in tar:
@@ -143,12 +172,15 @@ def build_enron(per_category=120, scan_limit=250_000):
             parts = member.name.split("/")
             if len(parts) < 4 or parts[0] != "maildir":
                 continue
+            mailbox = parts[1].lower()
             folder = parts[2].lower()
             label = ENRON_FOLDER_LABELS.get(folder)
             if label is None:
                 continue
             category, confidence = label
             if counts.get(category, 0) >= per_category:
+                continue
+            if per_mailbox.get(mailbox, 0) >= max_per_mailbox:
                 continue
 
             handle = tar.extractfile(member)
@@ -181,9 +213,27 @@ def build_enron(per_category=120, scan_limit=250_000):
                 "source_ref": member.name,
             })
             counts[category] = counts.get(category, 0) + 1
+            per_mailbox[mailbox] = per_mailbox.get(mailbox, 0) + 1
+
+    # Human-labelled rows are the expensive part of this dataset and they are
+    # not reproducible from the archive: someone read each one. An earlier
+    # version of this function wrote the file outright and silently destroyed
+    # 263 of them on a rebuild, which is only recoverable because the review
+    # files still existed. They are carried across instead.
+    existing_path = os.path.join(DATA, "real_enron.csv")
+    preserved = []
+    if os.path.exists(existing_path):
+        with open(existing_path, encoding="utf-8") as f:
+            preserved = [r for r in csv.DictReader(f) if r.get("label_source") == "human"]
+    if preserved:
+        fresh = {r["id"] for r in rows}
+        preserved = [r for r in preserved if r["id"] not in fresh]
+        rows.extend(preserved)
+        print(f"  preserved {len(preserved)} human-labelled rows already in the file")
 
     print(f"  scanned {scanned} archive entries")
-    print(f"  collected {counts}")
+    print(f"  collected {counts} across {len(per_mailbox)} mailboxes "
+          f"(max {max_per_mailbox} each)")
     _write(os.path.join(DATA, "real_enron.csv"), rows)
     return rows
 
@@ -321,11 +371,18 @@ def build_generated(per_category, categories):
     """Generate the Studies class (DR-01).
 
     WHY ONLY STUDIES. The Week 11 dataset slide is the strategy this follows:
-    real corpora supply Work, Personal and Promotions, and generation "fills a
-    gap, not the test". Enron contains no academic mail and the HuggingFace
-    taxonomy has no academic class, so Studies is the one category no real
-    source covers. Generating all 400 would mean grading the model largely on
-    text produced by the same model family.
+    real corpora supply the other classes, and generation "fills a gap, not the
+    test". Enron contains no academic mail and the HuggingFace taxonomy has no
+    academic class, so Studies is the one category no real source covers.
+    Generating all 400 would mean grading the model largely on text produced by
+    the same model family.
+
+    PERSONAL IS NOW ALSO UNSOURCED, and deliberately not generated here. Enron
+    was the intended source and its labels did not hold up (see the module
+    docstring). Adding Personal to this generator is a one-word change, but it
+    would take the set to 120 real against 360 synthetic -- three of four
+    classes model-written -- which is a call for the team to make explicitly
+    rather than something this script should do quietly.
 
     The label is ground truth by construction: we asked for a Studies email, so
     label_source is generation_prompt and label_confidence is strong. That is
@@ -424,7 +481,27 @@ def build_generated(per_category, categories):
 # -------------------------------------------------------------------- merge
 
 
-def merge():
+def _quality_rank(row):
+    """Sort key deciding which rows survive when a class is over-supplied.
+
+    The order encodes what makes a row worth keeping, best first:
+
+      1. real text over synthetic  -- the whole argument of the dataset slide
+      2. human labels over inferred ones
+      3. strong confidence over weak
+
+    So when the Promotions class holds both real Enron marketing and templated
+    HuggingFace rows, the real ones are kept and the synthetic ones fall out on
+    their merits rather than by deleting a file. Rebuild with a larger
+    --per-class and the synthetic rows come back automatically.
+    """
+    origin = 0 if row.get("text_origin") == "real" else 1
+    source = 0 if row.get("label_source") == "human" else 1
+    confidence = 0 if row.get("label_confidence") == "strong" else 1
+    return (origin, source, confidence, row.get("id", ""))
+
+
+def merge(per_class=120):
     rows = []
     for name in ("real_enron.csv", "real_huggingface.csv", "generated.csv"):
         path = os.path.join(DATA, name)
@@ -434,6 +511,27 @@ def merge():
         with open(path, encoding="utf-8") as f:
             rows.extend(list(csv.DictReader(f)))
 
+    # Balance to per_class rows per category. An unbalanced set makes accuracy
+    # a weighted average of class sizes, which reads as a model result and is
+    # really an artefact of how much of each class was collected.
+    by_category = {}
+    for row in rows:
+        by_category.setdefault(row["category"], []).append(row)
+
+    balanced, dropped = [], {}
+    for category, items in sorted(by_category.items()):
+        items.sort(key=_quality_rank)
+        keep = items[:per_class]
+        balanced.extend(keep)
+        if len(items) > per_class:
+            dropped[category] = len(items) - len(keep)
+        elif len(items) < per_class:
+            print(f"  WARNING: {category} has only {len(items)} rows, short of {per_class}")
+
+    if dropped:
+        print(f"  balanced to {per_class}/class; dropped as surplus: {dropped}")
+
+    rows = balanced
     _write(os.path.join(DATA, "dataset.csv"), rows)
 
     table = {}
@@ -459,6 +557,8 @@ def main():
     parser.add_argument("--generate", action="store_true")
     parser.add_argument("--merge", action="store_true")
     parser.add_argument("--per-category", type=int, default=120)
+    parser.add_argument("--per-class", type=int, default=120,
+                        help="rows per category in the merged dataset")
     parser.add_argument("--categories", default="Studies")
     args = parser.parse_args()
 
@@ -477,7 +577,7 @@ def main():
         build_generated(args.per_category, [c.strip() for c in args.categories.split(",")])
     if args.merge:
         print("Merge:")
-        merge()
+        merge(args.per_class)
 
 
 if __name__ == "__main__":

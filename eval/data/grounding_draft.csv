@@ -1,0 +1,39 @@
+task,id,category,text_origin,grounded,flag_count,flags,subject
+draft,enron-0452049916fa,Personal,real,True,0,,Christmas party December 16th
+draft,enron-088cc6495eff,Personal,real,True,0,,never mind
+draft,enron-0989e979887a,Personal,real,True,0,,RE: I'm Leaving Enron
+draft,enron-09d3432b2724,Personal,real,True,0,,Prayer for you
+draft,enron-0c46f4281958,Personal,real,True,0,,RE: Christmas
+draft,enron-0d3815dc2f15,Personal,real,True,0,,Check out AOL Local Guide: Houston - What's Going On - Kingwood Cove Golf Cou
+draft,enron-0e2651538daf,Personal,real,True,0,,drallion
+draft,enron-0e8a95e47904,Personal,real,True,0,,The beginning of the end!!!!!!!!!!!!!!!!
+draft,enron-1221d9e85cef,Personal,real,True,0,,email addresses
+draft,enron-0044e7eaebff,Promotions,real,True,0,,"Enerfax Gas, Oil, Liquids,Derivatives' prices & info (text) Crude Oil Futures Rise as US Urges Tight"
+draft,enron-00ecb971440c,Promotions,real,True,0,,Expand Your Business!                                                   [m6apa]
+draft,enron-02761b49b55b,Promotions,real,True,0,,Something EVERY Business Needs!                                                   [10vh6l]
+draft,enron-0537d7d93ffe,Promotions,real,True,0,,Free Vacation
+draft,enron-07a248e756fd,Promotions,real,True,0,,Home Loan Center... Tremendous Savings!
+draft,enron-07b69ad0557c,Promotions,real,True,0,,Pill to Increase Your Ejaculation by 581%
+draft,enron-0f94d1b29059,Promotions,real,True,0,,"Earn an instant $1k+ weekly, from home!"
+draft,enron-141c403a0ed1,Promotions,real,True,0,,Your children's future...                             QJ
+draft,enron-14e460a4f709,Promotions,real,True,0,,Available Executives!
+draft,generated-03ddea97bdf0,Studies,synthetic,True,0,,Update on Placement Application Status
+draft,generated-0442968be243,Studies,synthetic,True,0,,Congratulations on Your Upcoming Graduation!
+draft,generated-047ed0a4a54b,Studies,synthetic,True,0,,Urgent: Complete Your Academic Integrity Module by October 15
+draft,generated-05ab934e247b,Studies,synthetic,True,0,,Urgent: Special Consideration Outcome Notification
+draft,generated-07c00901e1e0,Studies,synthetic,True,0,,Textbook List for Next Semester
+draft,generated-0af18da72bc3,Studies,synthetic,True,0,,Outcome of Your Scholarship Application
+draft,generated-0b3214c4a7e4,Studies,synthetic,True,0,,Upcoming Thesis Supervision Meeting
+draft,generated-0c7e527b7167,Studies,synthetic,True,0,,Feedback on Your Draft
+draft,generated-0d63beab9986,Studies,synthetic,True,0,,Update on WAM and Results Release Timing
+draft,generated-0f65b635803f,Studies,synthetic,True,0,,Urgent: Change of Tutorial Room for Unit XYZ101
+draft,enron-005ce258fefc,Work,real,True,0,,Re: Christmas names
+draft,enron-01381c3e85c6,Work,real,True,0,,Sampling & Pigging
+draft,enron-039bdefb9036,Work,real,False,1,the NYISO Market Orientation Course (name does not appear in the source email),NYISO Training
+draft,enron-08d24e9ef5aa,Work,real,True,0,,RE: BADGE
+draft,enron-094771a0b5fe,Work,real,True,0,,RE: ISAS Meeting Agenda 2/14&15/2002
+draft,enron-0ad83856a4a6,Work,real,True,0,,FW: Greatest Savings
+draft,enron-0e07207f269e,Work,real,True,0,,Contact info for Kevin Hyatt
+draft,enron-1000f717ae1b,Work,real,True,0,,RE: BADGE
+draft,enron-147a260a7723,Work,real,True,0,,Re: NJ Index plus
+draft,enron-1c03255b2c0f,Work,real,True,0,,Enron/Dynegy Merger; Antitrust Issues

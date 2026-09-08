@@ -60,7 +60,8 @@ def inbox():
         result["id"]: result
         for result in classify_emails(
             [
-                {"id": m.id, "subject": m.subject, "body": cleaned_by_id[m.id].text}
+                {"id": m.id, "subject": m.subject, "body": cleaned_by_id[m.id].text,
+                 "sender": m.sender}
                 for m in messages
             ],
             settings,

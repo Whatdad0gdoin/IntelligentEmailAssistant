@@ -94,6 +94,7 @@ class Config:
         # for the mail server, exactly as an IMAP host would; it is the *source*
         # of email, not the app persisting anything (NFR-03). A real source
         # slots in behind the same interface without touching routes.
+        # "gmail" reads a real mailbox over IMAP instead (adapters/gmail_source.py).
         self.email_source = _optional("EMAIL_SOURCE", "fixture")
         self.email_fixture_dir = _optional(
             "EMAIL_FIXTURE_DIR",
@@ -118,6 +119,27 @@ class Config:
         self.smtp_host = _optional("SMTP_HOST", "127.0.0.1")
         self.smtp_port = _int("SMTP_PORT", 2525)
         self.smtp_max_bytes = _int("SMTP_MAX_BYTES", 5000000)
+
+        # --- Gmail source (EMAIL_SOURCE=gmail) ------------------------------
+        # Only read when that source is selected, so a fixture deployment needs
+        # no Gmail settings at all and CI needs no credentials. The password is
+        # a Google *app password*, not the account password; see the adapter's
+        # module docstring for why IMAP rather than the Gmail API.
+        self.gmail_host = _optional("GMAIL_IMAP_HOST", "imap.gmail.com")
+        self.gmail_port = _int("GMAIL_IMAP_PORT", 993)
+        self.gmail_mailbox = _optional("GMAIL_MAILBOX", "INBOX")
+        # A cap, not a page size. Every inbox load fetches this many messages
+        # over the network and classifies the ones not already cached, so the
+        # default is a demo-sized mailbox rather than a whole archive.
+        self.gmail_limit = _int("GMAIL_LIMIT", 25)
+        self.gmail_timeout = _int("GMAIL_TIMEOUT", 20)
+        if self.email_source == "gmail":
+            self.gmail_user = _require("GMAIL_USER")
+            self.gmail_app_password = _require("GMAIL_APP_PASSWORD")
+        else:
+            self.gmail_user = _optional("GMAIL_USER", "")
+            self.gmail_app_password = _optional("GMAIL_APP_PASSWORD", "")
+
         # Length of the header-derived preview shown in the inbox list.
         self.snippet_chars = _int("SNIPPET_CHARS", 140)
 

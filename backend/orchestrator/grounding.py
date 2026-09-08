@@ -67,12 +67,37 @@ def normalise(text):
 MIN_EVIDENCE_CHARS = 8
 
 
+_PUNCTUATION = re.compile(r"[^\w\s]+")
+
+
+def _depunctuate(text):
+    """Normalised text with punctuation removed and spaces collapsed."""
+    return re.sub(r"\s+", " ", _PUNCTUATION.sub(" ", normalise(text))).strip()
+
+
 def verify_evidence(evidence, source):
-    """True when `evidence` really is a verbatim span of `source`."""
+    """True when `evidence` really is a verbatim span of `source`.
+
+    Compared with punctuation removed from both sides. Measured on a 480-email
+    run: the commonest failure was not fabrication but the model tidying its
+    quote -- appending a full stop, or converting a nested quote to a different
+    quote character. Those spans were word-for-word correct and were being
+    thrown away, sending correctly classified emails to Review.
+
+    This is a narrow relaxation, not a loose match. Every word must still be
+    present, in the same order, contiguously. A stitched span joining two
+    distant parts of the email still fails, because the words between them are
+    missing from the candidate. What it stops punishing is typography.
+    """
     span = normalise(evidence)
     if len(span) < MIN_EVIDENCE_CHARS:
         return False
-    return span in normalise(source)
+    if span in normalise(source):
+        return True
+    stripped = _depunctuate(evidence)
+    if len(stripped) < MIN_EVIDENCE_CHARS:
+        return False
+    return stripped in _depunctuate(source)
 
 
 # --- Claim extraction (sections 4.4, 4.5) ----------------------------------
@@ -283,6 +308,46 @@ _REASONS = {
 }
 
 
+# Articles and salutations that an NER span can swallow. spaCy returns
+# "Dear Student Services" as one ORG while handling "Hi Sarah" correctly, so a
+# draft opening "Dear Student Services," was reported as an invented name even
+# though the sender is called exactly that. Measured on 38 drafts: 7 of 8 flags
+# were this one span shape.
+_LEADING_FILLER = re.compile(r"^(?:the|a|an|dear|hi|hello|greetings|attn|to)\s+")
+_TRAILING_POSSESSIVE = re.compile(r"['’]s?$")
+
+
+def _name_in_source(name, source_normalised, source_depunctuated):
+    """Is this proper noun supported by the source?
+
+    Three forms are tried, because an NER span is not a quotation and the two
+    differ in ways that say nothing about truthfulness. Measured over a 57
+    summary run, 4 of 10 flags were one of the first two cases below -- the
+    name was in the email, spelled exactly, and was reported as unsupported:
+
+      as written           "Marc Deer"
+      without a filler word "the Trust Agreement" / "Dear Student Services"
+      without a possessive "Robert Parker's"      -> source has "Robert Parker"
+
+    A flag is shown to the user as an unverified claim (section 5.3), so a
+    false one costs real trust in the warning. None of these relaxations lets
+    an invented name through: the name itself must still appear.
+    """
+    candidate = normalise(name)
+    if not candidate:
+        return True
+    if candidate in source_normalised:
+        return True
+
+    stripped = _TRAILING_POSSESSIVE.sub("", _LEADING_FILLER.sub("", candidate)).strip()
+    if stripped and stripped in source_normalised:
+        return True
+
+    # Punctuation inside a span ("Controller/CFO") is typography, not content.
+    depunctuated = _depunctuate(stripped or candidate)
+    return bool(depunctuated) and depunctuated in source_depunctuated
+
+
 @dataclass(frozen=True)
 class Flag:
     claim: str
@@ -313,6 +378,7 @@ def check_grounding(generated, source):
     source = source or ""
 
     source_normalised = normalise(source)
+    source_depunctuated = _depunctuate(source)
     source_numbers = _numeric_cores(source)
     source_times = _source_times(source)
 
@@ -338,7 +404,7 @@ def check_grounding(generated, source):
                 flag(claim, kind)
 
     for name in extract_proper_nouns(generated):
-        if normalise(name) not in source_normalised:
+        if not _name_in_source(name, source_normalised, source_depunctuated):
             flag(name, "name")
 
     return GroundingResult(grounded=not flags, flags=flags)

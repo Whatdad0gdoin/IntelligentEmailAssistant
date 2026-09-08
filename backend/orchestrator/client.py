@@ -22,6 +22,10 @@ from backend.orchestrator.budget import get_budget
 
 log = logging.getLogger(__name__)
 
+# The public endpoint, used whenever OPENAI_BASE_URL is not set. Named here
+# rather than left to the SDK so the fallback is explicit and testable.
+DEFAULT_BASE_URL = "https://api.openai.com/v1"
+
 
 class LLMError(RuntimeError):
     """Base for every orchestrator failure surfaced to a route."""
@@ -33,6 +37,40 @@ class LLMUnavailable(LLMError):
 
 class LLMSchemaError(LLMError):
     """The response could not be used: refused, unparseable, or off-schema."""
+
+
+# Cap on how long a request will pause before its single retry. Long enough to
+# clear a per-minute rate limit, short enough that a user waiting on a summary
+# is not left staring at a spinner past the NFR-01 budget.
+MAX_RETRY_WAIT_SECONDS = 20.0
+DEFAULT_RETRY_WAIT_SECONDS = 5.0
+
+
+def _retry_after(exc):
+    """Seconds to wait before retrying, or 0 when waiting will not help.
+
+    Only rate limits and transient server errors are worth pausing for. A bad
+    request or a malformed schema fails identically however long you wait, and
+    sleeping there would just make the failure slower.
+    """
+    name = type(exc).__name__
+    if name not in ("RateLimitError", "APIConnectionError", "InternalServerError",
+                    "APITimeoutError", "ServiceUnavailableError"):
+        return 0.0
+    # The server usually names the window it wants; prefer it over a guess.
+    for source in (getattr(exc, "response", None), exc):
+        headers = getattr(source, "headers", None) or {}
+        for key in ("retry-after", "Retry-After", "retry-after-ms"):
+            value = headers.get(key) if hasattr(headers, "get") else None
+            if value:
+                try:
+                    seconds = float(value)
+                    if key.endswith("-ms"):
+                        seconds /= 1000.0
+                    return min(max(seconds, 0.0), MAX_RETRY_WAIT_SECONDS)
+                except (TypeError, ValueError):
+                    pass
+    return DEFAULT_RETRY_WAIT_SECONDS
 
 
 class OrchestratorClient:
@@ -61,13 +99,24 @@ class OrchestratorClient:
             if not self.config.openai_api_key:
                 raise LLMUnavailable("OPENAI_API_KEY is not set. See backend/.env.example.")
 
+            # base_url is always passed explicitly, even when the config leaves
+            # it empty. Omitting it does *not* select the SDK default: the SDK
+            # then falls back to reading OPENAI_BASE_URL from the environment,
+            # and backend/.env ships that key present-but-empty to document the
+            # knob. An empty string is not None, so the SDK adopts "" as the
+            # base URL and every request dies inside httpx with
+            # UnsupportedProtocol ("Request URL is missing an 'http://' or
+            # 'https://' protocol") -- which the retry loop below reports as the
+            # generic "AI service is unavailable", pointing at the network
+            # rather than at the config. Passing the value ourselves stops an
+            # ambient env var choosing the endpoint behind the config's back.
             kwargs = {
                 "api_key": self.config.openai_api_key,
+                "base_url": self.config.openai_base_url or DEFAULT_BASE_URL,
                 "timeout": self.config.openai_timeout_seconds,
                 "max_retries": 0,  # retry policy is ours, below, so it stays observable
             }
             if self.config.openai_base_url:
-                kwargs["base_url"] = self.config.openai_base_url
                 # Azure OpenAI and most gateways select the REST contract with
                 # an api-version query parameter. api.openai.com does not: it
                 # has no request-level version selector, so against the public
@@ -151,6 +200,15 @@ class OrchestratorClient:
                     attempt,
                     time.perf_counter() - started,
                 )
+                # A rate limit needs time to clear, and the retry was firing
+                # 0.2s later -- close enough to guarantee it failed too, which
+                # made the retry policy decorative for the one error where it
+                # matters most. Wait for the window the server names, or a
+                # short default when it names none.
+                backoff = _retry_after(exc)
+                if backoff and attempt == 1:
+                    log.info("llm %s: waiting %.1fs before the retry", purpose, backoff)
+                    time.sleep(backoff)
 
             if attempt == 1:
                 # The retry is a second chance at the same call, and it is not

@@ -26,11 +26,28 @@ _CATEGORY_LIST = ", ".join(CATEGORIES)
 
 CLASSIFY_SYSTEM = f"""You sort emails into exactly one of these categories: {_CATEGORY_LIST}.
 
-Definitions:
-- Work: employment, clients, colleagues, meetings, projects, invoices, workplace systems and alerts.
-- Personal: friends, family, social plans, personal admin.
-- Promotions: marketing, sales, newsletters, offers, anything with an unsubscribe purpose.
-- Studies: university, coursework, enrolment, supervisors, research, academic administration.
+Classify by what the message IS, not by where it arrived. Most of these emails
+sit in a work mailbox, so "it came to a work address" is not evidence of
+anything.
+
+- Work: the sender wants something done as part of a job. Tasks, deals,
+  meetings, approvals, invoices, staff and systems announcements, HR and
+  payroll.
+- Personal: correspondence between people about their lives. Friends, family,
+  social plans, parties, sport, hobbies, condolences, congratulations, personal
+  purchases and travel. Colleagues arranging a round of golf are writing
+  Personal mail; a farewell note sharing a home address is Personal.
+- Promotions: bulk mail sent to a list rather than to a person. Marketing,
+  offers, sales, subscription newsletters and industry bulletins, price
+  circulars, anything with an unsubscribe link. A newsletter stays Promotions
+  even when its subject matter is job-related.
+- Studies: education. Coursework, enrolment, exams, tuition, supervisors,
+  research administration, academic institutions.
+
+WORK IS NOT THE DEFAULT. It is the most common category in this mailbox, which
+makes it the easiest mistake: when unsure, do not fall back to Work. Decide on
+the content, and if the content genuinely does not settle it, give a low
+confidence and let it go to human review instead.
 
 For every email you must return an `evidence` field: a short span copied WORD
 FOR WORD from that email's subject or body which justifies the category. Do not
@@ -54,8 +71,17 @@ def classify_user(items):
     """
     blocks = []
     for item in items:
+        # The sender is included when the caller has it. This is not the model
+        # extracting deterministic data (rule 5) -- it is the model being given
+        # data the adapter already parsed from the From header. The address is
+        # often the single strongest signal available: no-reply@ and offers@
+        # are almost never Personal, a consumer mail domain is rarely Work.
+        # Withholding it was costing accuracy for no benefit.
+        sender = (item.get("sender") or "").strip()
+        header = f"From: {sender}\n" if sender else ""
         blocks.append(
             f"<email id=\"{item['id']}\">\n"
+            f"{header}"
             f"Subject: {item['subject']}\n"
             f"Body:\n{item['body']}\n"
             f"</email>"

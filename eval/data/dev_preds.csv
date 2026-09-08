@@ -1,0 +1,215 @@
+id,provenance,text_origin,label_source,expected,predicted,correct,confidence,subject
+enron-088cc6495eff,enron,real,human,Personal,Studies,False,0.7,never mind
+enron-0989e979887a,enron,real,human,Personal,Personal,True,0.9,RE: I'm Leaving Enron
+enron-09d3432b2724,enron,real,human,Personal,Personal,True,0.9,Prayer for you
+enron-0de18b5c3f34,enron,real,human,Personal,Review,False,0.5,FW: Westchester Peewee Baseball Warm-up
+enron-1c06b6324d7a,enron,real,human,Personal,Review,False,0.6,Re: Curriculum
+enron-1d7b5814c0aa,enron,real,human,Personal,Review,False,0.5,FW: YOUR PASSWORD
+enron-22176e5e5c8d,enron,real,human,Personal,Personal,True,0.9,xmas card
+enron-29fb5c5daf7e,enron,real,human,Personal,Personal,True,0.9,Re: Christmas party December 16th
+enron-2aa3f87a7032,enron,real,human,Personal,Personal,True,0.9,SF trip
+enron-2cac6a2f3621,enron,real,human,Personal,Review,False,0.6,Re: Tentative List
+enron-3079c2ba13dd,enron,real,human,Personal,Personal,True,0.9,Enjoy Life
+enron-31992c11fd74,enron,real,human,Personal,Personal,True,0.9,Words from a Friend
+enron-3206cf295326,enron,real,human,Personal,Studies,False,0.7,A little good news
+enron-32c83a726a69,enron,real,human,Personal,Personal,True,0.9,Re: Thursday Game - Transaction Notice
+enron-398463c803d4,enron,real,human,Personal,Review,False,0.8,Filter & Temp for ANTHRAX
+enron-3ea54f076625,enron,real,human,Personal,Review,False,0.5,Fwd: NFL.com E-Reports for El Guilmino and the Downtown Players 11/15/01
+enron-401f9a70a0e8,enron,real,human,Personal,Personal,True,0.9,(no subject)
+enron-403ab225ad8b,enron,real,human,Personal,Review,False,0.5,FW: Reservation Confirmation: 329449208
+enron-424d1573c84c,enron,real,human,Personal,Personal,True,0.9,The Palau wedding cost so far...
+enron-467bc23abb83,enron,real,human,Personal,Personal,True,0.9,Dralion February 7
+enron-4753f6a36210,enron,real,human,Personal,Personal,True,0.9,You are in Houston if....
+enron-48819f1e99d9,enron,real,human,Personal,Personal,True,0.9,FWD: Your Free Party At Have Nice Day Cafe
+enron-4bbafbfba2dc,enron,real,human,Personal,Personal,True,0.9,Re: email addresses
+enron-4c817b372e7b,enron,real,human,Personal,Personal,True,0.9,Guest List for Shower
+enron-509619717575,enron,real,human,Personal,Work,False,0.8,Are you receiving anything?
+enron-52bf0811dfd2,enron,real,human,Personal,Personal,True,0.9,Get out the Vote
+enron-54c81c139ad3,enron,real,human,Personal,Personal,True,0.9,"Re: Pictures,"
+enron-572d93cd5992,enron,real,human,Personal,Personal,True,0.9,Re: Keyboard
+enron-5e102f66e67f,enron,real,human,Personal,Personal,True,0.9,Your Address
+enron-61103dbfb7c4,enron,real,human,Personal,Personal,True,0.9,You the man
+enron-64ee0d0ae251,enron,real,human,Personal,Personal,True,0.9,Just wanted you both to know that we are...
+enron-67482d068cc8,enron,real,human,Personal,Personal,True,0.9,Re: trip
+enron-69e0001415e5,enron,real,human,Personal,Studies,False,0.8,My resume
+enron-6c366adc02c6,enron,real,human,Personal,Promotions,False,0.9,Commissioner.COM Transaction Request
+enron-6d16f399041b,enron,real,human,Personal,Personal,True,0.9,RE: Cakes
+enron-768043c36001,enron,real,human,Personal,Review,False,0.9,Fw: Photos 3 of 3
+enron-7e060e001432,enron,real,human,Personal,Personal,True,0.9,Re: Richard Sucks!!!!!!
+enron-7f769ea41bf1,enron,real,human,Personal,Promotions,False,0.9,New Heights - from Diane
+enron-904fc2b5bfb4,enron,real,human,Personal,Personal,True,0.9,Re: (no subject)
+enron-959c8dde2ed5,enron,real,human,Personal,Work,False,0.8,Robert Allen
+enron-9b0bda8e2095,enron,real,human,Personal,Promotions,False,0.9,Your Greeting has been picked up!
+enron-9d795fe9f521,enron,real,human,Personal,Personal,True,0.9,YO MARTY
+enron-a3c75d221cfd,enron,real,human,Personal,Personal,True,0.8,vbs rsvp
+enron-a6782d081164,enron,real,human,Personal,Work,False,0.8,Resume 2
+enron-a985b3d6960e,enron,real,human,Personal,Personal,True,0.7,Gas Prices
+enron-ace0fc0f6c69,enron,real,human,Personal,Personal,True,0.8,"Re: hey kids,"
+enron-ad40fad1e6ac,enron,real,human,Personal,Personal,True,0.8,Re: Hey
+enron-b17db3d17bf6,enron,real,human,Personal,Work,False,0.9,Receipt
+enron-b27734d26540,enron,real,human,Personal,Review,False,0.6,Fw: Be careful...this one is true!
+enron-c000bb1a9cc6,enron,real,human,Personal,Work,False,0.8,Fed Ex
+enron-c2f67f4bab9b,enron,real,human,Personal,Review,False,0.6,Fwd: [Fwd: Chicken Soup for the Beer Drinkers Soul]
+enron-c5480ff5124d,enron,real,human,Personal,Work,False,0.7,FW: PeeWee National League Draft
+enron-c5f23d34b28f,enron,real,human,Personal,Personal,True,0.8,"Re: FW: Greetings from Houston, TX"
+enron-c62b93ca38be,enron,real,human,Personal,Personal,True,0.9,e-mail update
+enron-c655ac89e20f,enron,real,human,Personal,Personal,True,0.9,Thanks for the Good Times
+enron-ce55d85ec29b,enron,real,human,Personal,Personal,True,0.9,What's up?
+enron-cf416f77d6b8,enron,real,human,Personal,Work,False,0.8,Port O'Connor Country Club
+enron-d0984569a259,enron,real,human,Personal,Personal,True,0.9,Party information
+enron-14e460a4f709,enron,real,human,Promotions,Promotions,True,0.9,Available Executives!
+enron-2125d6998f58,enron,real,human,Promotions,Promotions,True,0.9,Copy and make your own DVD movies                                                   [t4d10w]
+enron-2959b77dcd79,enron,real,human,Promotions,Promotions,True,0.9,Enerfax Daily's free web version of gas & power prices and info Enerfax Daily (31).htm
+enron-32e37670c3eb,enron,real,human,Promotions,Promotions,True,0.9,Add REAL Inches To Your Package! GUARANTEED
+enron-33fbee02786d,enron,real,human,Promotions,Promotions,True,0.9,Have Hair Loss? We Can Help You!..Read on..
+enron-3538bc372af0,enron,real,human,Promotions,Promotions,True,0.9,Breakthrough Technology....Remove an inch or two from your waist!!!                         31860
+enron-3938be6d662a,enron,real,human,Promotions,Promotions,True,0.9,UNLIMITED Long Distance at $0.00 per minute!
+enron-3c116ebb9b77,enron,real,human,Promotions,Promotions,True,0.9,"We Fund B, C, and D Credit!"
+enron-43e38752c48a,enron,real,human,Promotions,Promotions,True,0.9,"Enerfax Gas, Oil, Liquids,Derivatives' prices & info (text) Russian Oil Companies See No Reason to Back OPEC Cuts"
+enron-44cd1c0120a1,enron,real,human,Promotions,Promotions,True,0.9,Do you owe a lot of money?           H
+enron-4d2f793fad35,enron,real,human,Promotions,Promotions,True,0.9,You've qualified for a Discount on Term Life Insurance
+enron-56987d8e5015,enron,real,human,Promotions,Promotions,True,0.9,Enerfax Daily's free web version of gas & power prices and info (unknown)
+enron-5b8e5ba7c998,enron,real,human,Promotions,Promotions,True,0.9,Collections companies harassing you?            QI
+enron-5ba7d9e9445b,enron,real,human,Promotions,Promotions,True,0.9,fill out one simple form to start a $5K/mon career. 9666
+enron-5bb22f77cee4,enron,real,human,Promotions,Promotions,True,0.9,Online Home Loan Center... Big Savings!              UGNQXM
+enron-605afc42c40d,enron,real,human,Promotions,Work,False,0.8,Handy Women for Hire
+enron-6e13a8655c46,enron,real,human,Promotions,Promotions,True,0.9,Enerfax Daily's free gas & power prices & info text Natural Gas Futures Rally on Short-Covering
+enron-73a0d1d4775b,enron,real,human,Promotions,Promotions,True,0.9,Fwd: Welcome to FlipDog.com
+enron-76bf910bc468,enron,real,human,Promotions,Promotions,True,0.9,Refinancing your house can SAVE you big dollars!                         19596
+enron-7b5b2445cee6,enron,real,human,Promotions,Promotions,True,0.9,You could search for a year and..........
+enron-7dbfe69b5956,enron,real,human,Promotions,Promotions,True,0.9,Fwd: Actual Jobs with Virtual Santas
+enron-82012a3c7a82,enron,real,human,Promotions,Promotions,True,0.9,Isn't it time you stopped the snoring in your house?
+enron-8598ee3a766f,enron,real,human,Promotions,Promotions,True,0.9,"Are You Living in Debt, Paycheck to Paycheck?23636"
+enron-85dc8cbff223,enron,real,human,Promotions,Promotions,True,0.9,frustrated with Cellphone static and interruptions? Check this out...
+enron-86ac0a5c8710,enron,real,human,Promotions,Promotions,True,0.9,Adult casino cruise... Free First Class Vacation
+enron-86cd9616ee15,enron,real,human,Promotions,Review,False,0.9,"Viagra, we bring good things to life!                         26691"
+enron-878651bce55f,enron,real,human,Promotions,Promotions,True,0.9,Free Foreign Currency Newsletter
+enron-87b7e7452aae,enron,real,human,Promotions,Personal,False,0.8,Demand Ken Lay Donate Proceeds from Enron Stock Sales
+enron-8b684bc6f6e2,enron,real,human,Promotions,Promotions,True,0.9,Double your policy at No Extra Cost!
+enron-8b998161dfcd,enron,real,human,Promotions,Promotions,True,0.9,Enerfax Daily's free web version of gas & power prices and info PJM and Midwest Plan Common Market
+enron-982ef7e63ec3,enron,real,human,Promotions,Promotions,True,0.9,Free debt reduction evaluation                         4601
+enron-99ce3e26a6a9,enron,real,human,Promotions,Promotions,True,0.9,Fw: Tired of the 9 to 5?572
+enron-9c562fd3e9df,enron,real,human,Promotions,Promotions,True,0.9,Get a new full head of hair! Let us help you with new ...
+enron-a3cbfc713fc3,enron,real,human,Promotions,Review,False,0.9,Fwd: Are You Ready to Make a Fortune?
+enron-a5839354f761,enron,real,human,Promotions,Promotions,True,0.9,VIAGRA IS FDA APPROVED TO MAKE YOU HORNY
+enron-ac6819acee9a,enron,real,human,Promotions,Review,False,0.9,FW: Welcome to Tradebonds.com!
+enron-ad93f0a4ec2d,enron,real,human,Promotions,Work,False,0.8,Dr. Lienhard- IACCGH February 13th
+enron-aecd98176439,enron,real,human,Promotions,Promotions,True,0.9,"ALABAMA MAN MAKES $1,341.82 his first week!                                                   pnoup"
+enron-af9bcee7b7a3,enron,real,human,Promotions,Promotions,True,0.9,Are you in debt?                                                   [us3rt]
+enron-afb68718e369,enron,real,human,Promotions,Promotions,True,0.9,"Paul Williams -- williams2002.com -- Candidate for Congress, 9th district"
+enron-b73833302557,enron,real,human,Promotions,Promotions,True,0.9,Fw: Tired of the 9 to 5?29489
+enron-b875e28815c9,enron,real,human,Promotions,Promotions,True,0.9,MARKET TRADING ALERT (8223oIaS0-731mEwR69@18)
+enron-b924f504907c,enron,real,human,Promotions,Promotions,True,0.9,Got Debt?  Cut Your Bills in HALF!
+enron-bfb4d0afc6f7,enron,real,human,Promotions,Promotions,True,0.9,CAN YOU HELP ME? ---  Rob Benson
+enron-c721360b4ba5,enron,real,human,Promotions,Promotions,True,0.9,Something EVERY Business Needs!                                                   [tnnpr]
+enron-ccc562b32be5,enron,real,human,Promotions,Promotions,True,0.9,"Increase Sales, Accept Credit Cards!                                                   [b5b2l]"
+enron-cd700ab061f3,enron,real,human,Promotions,Review,False,0.5,FW: Market Insight: Economic Recovery to the Rescue
+enron-d00f6c04c1ee,enron,real,human,Promotions,Promotions,True,0.9,Got a Mortgage?   5.85% Fixed Rate Mortgage
+enron-d062d32bd895,enron,real,human,Promotions,Promotions,True,0.9,Save up to 70% on your Life Insurance!
+enron-d156459a5792,enron,real,human,Promotions,Promotions,True,0.9,All you need is one big play
+enron-d806da38eb1a,enron,real,human,Promotions,Promotions,True,0.9,HAVING TROUBLE GETTING APPROVED ON LOANS
+enron-d822b6baa373,enron,real,human,Promotions,Review,False,0.5,Fwd: [FreeFootballPicks] Week 10 Free Football Picks
+enron-deccd00317d1,enron,real,human,Promotions,Studies,False,0.9,April Issue/Oregon Law Journal
+enron-df1afdf7f301,enron,real,human,Promotions,Review,False,0.5,Fwd: Analyzing Financial Analysis
+enron-e5157cd69bf4,enron,real,human,Promotions,Review,False,0.5,Fwd: What Is Accreditation?
+enron-e7f33ca1b116,enron,real,human,Promotions,Review,False,0.5,FW: Information You Requested
+enron-ec26be774500,enron,real,human,Promotions,Promotions,True,0.9,Top Airline Executive declares                       FCG
+enron-fc2ad9f2e99a,enron,real,human,Promotions,Promotions,True,0.9,Are you in debt?                                                   [dn47q]
+generated-0442968be243,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Congratulations on Your Upcoming Graduation!
+generated-047ed0a4a54b,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Complete Your Academic Integrity Module by October 15
+generated-07c00901e1e0,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Textbook List for Next Semester
+generated-0af18da72bc3,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Outcome of Your Scholarship Application
+generated-0d63beab9986,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Update on WAM and Results Release Timing
+generated-0f65b635803f,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Change of Tutorial Room for Unit XYZ101
+generated-12921a0cb617,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,"Unit Enrolment Issue for Semester 1, 2024"
+generated-1365650db950,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: WAM and Results Release Information
+generated-1e8b8bb4b91c,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Exam Timetable Release for Semester 2
+generated-204cc1ae3319,generated,synthetic,generation_prompt,Studies,Work,False,0.8,Update on Conference Travel Funding
+generated-2157a608c7d8,generated,synthetic,generation_prompt,Studies,Work,False,0.8,Feedback on Draft Submission
+generated-27b4c25b2586,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Conference Travel Funding Application
+generated-35990c176e3d,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Group Project Coordination for Unit XYZ123
+generated-37eabc7497c3,generated,synthetic,generation_prompt,Studies,Work,False,0.8,Conference Travel Funding Opportunity
+generated-39354d7e8578,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Research Ethics Approval Status
+generated-4455d9ee3056,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Fee Due Date Reminder
+generated-45bcec05939c,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Fee Due Date Reminder
+generated-492fed2b2c60,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Change of Tutorial Room for Unit ENG101
+generated-4d9075744f9b,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Correction Required for Unit Guide - Unit Code ABC123
+generated-4f99b5fb43e8,generated,synthetic,generation_prompt,Studies,Personal,False,0.7,Library Loan Recall Notice
+generated-50b581858165,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: WAM and Results Release Notification
+generated-5255c0fac3b4,generated,synthetic,generation_prompt,Studies,Personal,False,0.7,Reminder: Student Society AGM Scheduled
+generated-55165e4c3da1,generated,synthetic,generation_prompt,Studies,Work,False,0.8,Change in Thesis Supervision Meeting Schedule
+generated-658e4429a6e0,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Update on Special Consideration Outcome
+generated-6e9fce643996,generated,synthetic,generation_prompt,Studies,Review,False,0.9,Important Update: Library Loan Recall Notification
+generated-71beaacd09b6,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Update on Exam Timetable for Unit XYZ101
+generated-71d6699b8bda,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,WAM and Results Release Information
+generated-86a6a427239c,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Change in Assignment Deadline for Unit ENG101
+generated-8c2d5970faa1,generated,synthetic,generation_prompt,Studies,Review,False,0.9,Urgent: Practical Class Swap Request
+generated-8dbb0c6b8df5,generated,synthetic,generation_prompt,Studies,Review,False,0.0,Exciting Opportunity for Conference Travel Funding
+generated-8e454553d5ed,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Research Ethics Approval Update
+generated-94134d69c206,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Unit Enrolment Issue - Immediate Attention Required
+generated-982b06251a2f,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Supervisor Feedback Required on Draft Submission
+generated-a120c2762f22,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Group Project Coordination Required
+generated-a2dc9609984c,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Outcome of Your Special Consideration Request
+generated-a777e242263b,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Reminder: Upcoming Fee Due Date
+generated-ad9434d07ac6,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Lecture Recording Unavailable
+generated-b00da6004638,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Release of Exam Timetable
+generated-b11ed0f1c933,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Assistance with Your Unit Enrolment
+generated-b56887893786,generated,synthetic,generation_prompt,Studies,Personal,False,0.7,Change in Group Project Coordination
+generated-c3518a7b6103,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Textbook List Submission for Next Semester
+generated-d06bb63d79b7,generated,synthetic,generation_prompt,Studies,Personal,False,0.7,Let's Coordinate Our Group Project!
+generated-d35d0951668a,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Correction Needed for Unit Guide
+generated-d3cfda3d56b7,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Conference Travel Funding Application Update
+generated-d4af9abf3277,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Course Plan Guidance for Your Academic Journey
+generated-deaf207af30e,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Upcoming Lab Safety Induction
+generated-dfe4154f92c3,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Update on Lecture Recording Availability
+generated-e2a0414f9e16,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Coordination for Group Project Submission
+generated-e5b704ce2aa5,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Change of Tutorial Room for Unit XYZ101
+generated-ebc0e15e15ca,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Change of Tutorial Room for Upcoming Session
+generated-ef63e32cca7b,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Friendly Reminder: Upcoming Fee Due Date
+generated-ef6efb3f1645,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Notice of Student Society AGM
+generated-f7edf0b7241c,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Exam Timetable Release
+generated-fdb6a7ed199b,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Academic Integrity Module Completion Required
+enron-005ce258fefc,enron,real,folder_heuristic,Work,Personal,False,0.8,Re: Christmas names
+enron-039bdefb9036,enron,real,folder_heuristic,Work,Work,True,0.9,NYISO Training
+enron-0e07207f269e,enron,real,folder_heuristic,Work,Personal,False,0.8,Contact info for Kevin Hyatt
+enron-147a260a7723,enron,real,folder_heuristic,Work,Work,True,0.9,Re: NJ Index plus
+enron-20c2e7e2b1a3,enron,real,folder_heuristic,Work,Work,True,0.9,Re: Trust Agreement
+enron-20e4e20db049,enron,real,folder_heuristic,Work,Work,True,0.9,URGENT - REQUIRES IMMEDIATE ACTION - UBS Orientation tomorrow @The Houstonian
+enron-2269cc89f867,enron,real,folder_heuristic,Work,Work,True,0.9,RE: Statement
+enron-235bc3245835,enron,real,folder_heuristic,Work,Personal,False,0.8,RE: RE: Whats up!!!!!
+enron-2b2cd315f776,enron,real,folder_heuristic,Work,Work,True,0.9,Networking Resources
+enron-3730aea46ba9,enron,real,folder_heuristic,Work,Promotions,False,0.9,WARNING:  Your mailbox is approaching the size limit
+enron-3897eb9ba96f,enron,real,folder_heuristic,Work,Promotions,False,0.9,Falling Gas Prices Trigger Active Rig Count Decline - CERA Decision Brief
+enron-3a207043b51d,enron,real,folder_heuristic,Work,Promotions,False,0.9,Western Energy--Winter Demand Peaks Not Expected to Result in Price Spikes or Reliability Problems - CERA Monthly Briefi
+enron-3b5688cbc539,enron,real,folder_heuristic,Work,Work,True,0.8,Enron Mentions
+enron-3bc65f8fb4ee,enron,real,folder_heuristic,Work,Review,False,0.0,Jane Beatty letter & contract
+enron-4241a124b583,enron,real,folder_heuristic,Work,Review,False,0.0,Just a reminder
+enron-4316264e26f5,enron,real,folder_heuristic,Work,Review,False,0.0,Daily Charts 12/28
+enron-5007fc168bdc,enron,real,folder_heuristic,Work,Review,False,0.0,Lexis-Nexis Training: Houston & Worldwide / Dow Jones Training
+enron-5041f101a5f0,enron,real,folder_heuristic,Work,Review,False,0.0,RE: PNR Balance on PNM Cr# 25672 - PO# 27190
+enron-5330cf0ea294,enron,real,folder_heuristic,Work,Review,False,0.0,Action Requested:  Past Due Invoice
+enron-6268fc1ce9e4,enron,real,folder_heuristic,Work,Review,False,0.0,Reminder:Interivews Thursday Trading Track
+enron-67d98769b267,enron,real,folder_heuristic,Work,Review,False,0.0,Enron in Action 08.27.01
+enron-6c1144e417d1,enron,real,folder_heuristic,Work,Review,False,0.0,Relocation
+enron-73f0398ae589,enron,real,folder_heuristic,Work,Review,False,0.0,ma rps
+enron-74abba8d12d0,enron,real,folder_heuristic,Work,Review,False,0.0,Share Your Thoughts and Win $50!
+enron-7713709b7aae,enron,real,folder_heuristic,Work,Review,False,0.0,Revisions to TransCanada's Transportation Tariff
+enron-78731473b513,enron,real,folder_heuristic,Work,Review,False,0.0,"Invitation to the Stanford Graduate School of Business International Career Fair, Tuesday, January 22, 2002"
+enron-78b9ae9bb6fb,enron,real,folder_heuristic,Work,Review,False,0.0,FW: Power Customer and Transmission Agreements
+enron-7c96199b3eb2,enron,real,folder_heuristic,Work,Review,False,0.0,A Fantastic Gift For DVD Move Users!
+enron-7ece420faa86,enron,real,folder_heuristic,Work,Review,False,0.0,Capacity Posting Procedures
+enron-850cc65f75e4,enron,real,folder_heuristic,Work,Review,False,0.0,Save Up To 50%
+enron-8a853065ce96,enron,real,folder_heuristic,Work,Studies,False,0.9,Hi!
+enron-8c2b8ddb7307,enron,real,folder_heuristic,Work,Work,True,0.8,FW: TW shipper imbals as of 10/22/01
+enron-8fa69ce85e3d,enron,real,folder_heuristic,Work,Work,True,0.9,RE: Enron Networks contract
+enron-92c04a81d554,enron,real,folder_heuristic,Work,Work,True,0.9,Imbalance worksheets
+enron-a316872814b4,enron,real,folder_heuristic,Work,Promotions,False,0.9,"250,000 Life Policy $6.50 per month                    19259"
+enron-a7e4382aa736,enron,real,folder_heuristic,Work,Personal,False,0.8,Pelican Schedule
+enron-a909b0ed8069,enron,real,folder_heuristic,Work,Promotions,False,0.9,Commissioner.COM E-Reports for Big E '01 1/1/02
+enron-b0d3f8cc8754,enron,real,folder_heuristic,Work,Promotions,False,0.9,HYPERIA NEW YEARS -  TONIGHTS THE NIGHT!!!!!!!  Champagne toast at midnight!
+enron-d3c398a59b6e,enron,real,folder_heuristic,Work,Work,True,0.8,E-Tag 1.7 Spec Concerns
+enron-d82dc81fc16a,enron,real,folder_heuristic,Work,Work,True,0.9,Confidential Information and Securities Trading
+enron-ed08cc10ca2f,enron,real,folder_heuristic,Work,Personal,False,0.8,FFL Playoffs
+enron-f367f2f6531f,enron,real,folder_heuristic,Work,Work,True,0.9,Fwd: AG suit to oust ISO Board
+enron-f89c1f15912e,enron,real,folder_heuristic,Work,Work,True,0.9,texas gas tries one more time -- modified cash pool filing
+enron-ff09176079c8,enron,real,folder_heuristic,Work,Personal,False,0.8,RE: RE: Whats up!!!!!
