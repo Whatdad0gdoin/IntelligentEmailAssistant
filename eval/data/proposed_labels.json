@@ -9,6 +9,11 @@
   "weak",
   "Enerfax subscription price newsletter"
  ],
+ "enron-005ce258fefc": [
+  "Personal",
+  "strong",
+  "Secret Santa name collection"
+ ],
  "enron-00bd0b2f7b12": [
   "Work",
   "strong",
@@ -18,6 +23,11 @@
   "Promotions",
   "strong",
   "Merchant account spam"
+ ],
+ "enron-01381c3e85c6": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-01b9f2515959": [
   "Promotions",
@@ -33,6 +43,11 @@
   "Promotions",
   "strong",
   "Merchant account spam"
+ ],
+ "enron-039bdefb9036": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-03cd1fffda12": [
   "Personal",
@@ -114,6 +129,16 @@
   "strong",
   "Party called off, partner studying for the CPA"
  ],
+ "enron-08d24e9ef5aa": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-094771a0b5fe": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-096894307c4d": [
   "Work",
   "strong",
@@ -134,6 +159,11 @@
   "weak",
   "Second-round interview news, career content"
  ],
+ "enron-0ad83856a4a6": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-0c46f4281958": [
   "Personal",
   "strong",
@@ -148,6 +178,11 @@
   "Personal",
   "strong",
   "Children baseball warm-up arrangements"
+ ],
+ "enron-0e07207f269e": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-0e2651538daf": [
   "Personal",
@@ -174,6 +209,11 @@
   "weak",
   "Former employee asking about childcare costs"
  ],
+ "enron-1000f717ae1b": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-1109ae9dd613": [
   "Promotions",
   "strong",
@@ -193,6 +233,11 @@
   "Promotions",
   "strong",
   "Life insurance spam"
+ ],
+ "enron-147a260a7723": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-14e460a4f709": [
   "Promotions",
@@ -219,6 +264,11 @@
   "strong",
   "Friend offering support during the crisis"
  ],
+ "enron-1c03255b2c0f": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-1c06b6324d7a": [
   "Personal",
   "strong",
@@ -244,6 +294,16 @@
   "weak",
   "Business school masters division reply"
  ],
+ "enron-20c2e7e2b1a3": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-20e4e20db049": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-2125d6998f58": [
   "Promotions",
   "strong",
@@ -264,6 +324,11 @@
   "strong",
   "Asking how a friend spent Christmas"
  ],
+ "enron-2269cc89f867": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-22bc51641135": [
   "Work",
   "strong",
@@ -274,10 +339,20 @@
   "strong",
   "Thanks for lunch, catching up with a friend"
  ],
+ "enron-22ef170ac354": [
+  "Personal",
+  "strong",
+  "Wine cellar software recommendation from a dinner"
+ ],
  "enron-234f073d8013": [
   "Promotions",
   "strong",
   "Merchant account spam"
+ ],
+ "enron-235bc3245835": [
+  "Personal",
+  "strong",
+  "Chat about sports and city teams between friends"
  ],
  "enron-2398be6852eb": [
   "Personal",
@@ -304,10 +379,20 @@
   "weak",
   "Charity cocktail party follow-up from a dealer"
  ],
+ "enron-258a1efde235": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-25b13923be8f": [
   "Personal",
   "weak",
   "Personal note of sympathy"
+ ],
+ "enron-25b7ba6a4437": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-25df82436c80": [
   "Work",
@@ -329,6 +414,11 @@
   "strong",
   "Paid-to-read email spam"
  ],
+ "enron-29793e616bac": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-29fb5c5daf7e": [
   "Personal",
   "strong",
@@ -343,6 +433,16 @@
   "Personal",
   "strong",
   "Coordinating flights to meet a friend"
+ ],
+ "enron-2ab526e2e803": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-2b2cd315f776": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-2bf47ebf3237": [
   "Work",
@@ -449,6 +549,11 @@
   "strong",
   "Hair loss product spam"
  ],
+ "enron-351a39cf4e8c": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-351c3b3dbb22": [
   "Personal",
   "weak",
@@ -464,6 +569,11 @@
   "strong",
   "Job seeker with suggestions"
  ],
+ "enron-3730aea46ba9": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-377bcae8ea63": [
   "Promotions",
   "strong",
@@ -473,6 +583,16 @@
   "Work",
   "strong",
   "Job seeker sending a resume"
+ ],
+ "enron-37dbfedf577a": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-3897eb9ba96f": [
+  "Promotions",
+  "weak",
+  "CERA subscription industry bulletin"
  ],
  "enron-38cd9886c87e": [
   "Personal",
@@ -499,10 +619,25 @@
   "strong",
   "Personnel question about a returning employee"
  ],
+ "enron-3a207043b51d": [
+  "Promotions",
+  "weak",
+  "CERA subscription industry bulletin"
+ ],
  "enron-3ac4879af5c9": [
   "Work",
   "strong",
   "Urgent campaign press issue"
+ ],
+ "enron-3b5688cbc539": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-3bc65f8fb4ee": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-3c116ebb9b77": [
   "Promotions",
@@ -518,6 +653,11 @@
   "Work",
   "strong",
   "Former employee advocacy about severance"
+ ],
+ "enron-3cc04200ae27": [
+  "Promotions",
+  "weak",
+  "PIRA subscription weekly market report"
  ],
  "enron-3d1e07eed371": [
   "Work",
@@ -549,6 +689,11 @@
   "weak",
   "Fantasy football report, hobby"
  ],
+ "enron-3f4194353f95": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-3f86fa0ef341": [
   "Work",
   "strong",
@@ -558,6 +703,11 @@
   "Personal",
   "weak",
   "Fantasy football site notification; hobby, automated"
+ ],
+ "enron-3fe8558fc993": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-401f9a70a0e8": [
   "Personal",
@@ -574,10 +724,20 @@
   "weak",
   "Advocacy campaign form letter (mass mailing)"
  ],
+ "enron-4241a124b583": [
+  "Personal",
+  "strong",
+  "Spouse reminder about a gym deduction and insurance"
+ ],
  "enron-424d1573c84c": [
   "Personal",
   "strong",
   "Wedding costs discussed with a partner"
+ ],
+ "enron-4316264e26f5": [
+  "Promotions",
+  "weak",
+  "Subscription daily market charts"
  ],
  "enron-4355cb1f0ff0": [
   "Work",
@@ -588,6 +748,11 @@
   "Promotions",
   "weak",
   "Enerfax subscription price newsletter"
+ ],
+ "enron-440ee77cf3e9": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-441ca1bd4c8e": [
   "Work",
@@ -659,6 +824,11 @@
   "weak",
   "Legislator sharing a political read"
  ],
+ "enron-49cb1ce918f7": [
+  "Personal",
+  "strong",
+  "Reconnecting with an old friend"
+ ],
  "enron-4ab7fd39097c": [
   "Work",
   "strong",
@@ -694,10 +864,20 @@
   "strong",
   "Spouse reminder to buy a birthday card for her mother"
  ],
+ "enron-4cd84732b140": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-4d2f793fad35": [
   "Promotions",
   "strong",
   "Term life insurance spam"
+ ],
+ "enron-4dbbbcff5afc": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-4e5722d69a76": [
   "Promotions",
@@ -708,6 +888,16 @@
   "Promotions",
   "strong",
   "Work from home MLM spam"
+ ],
+ "enron-4f09b337928f": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-4f78d73a7291": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-4f8c81edccfc": [
   "Personal",
@@ -723,6 +913,21 @@
   "Work",
   "strong",
   "Former employees negotiating collectively"
+ ],
+ "enron-5007fc168bdc": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-502c5b40a1c5": [
+  "Promotions",
+  "strong",
+  "BusinessWeek subscriber newsletter"
+ ],
+ "enron-5041f101a5f0": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-509619717575": [
   "Personal",
@@ -743,6 +948,11 @@
   "Personal",
   "strong",
   "Get out the vote note to friends and family"
+ ],
+ "enron-5330cf0ea294": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-53c2b7317973": [
   "Personal",
@@ -814,6 +1024,11 @@
   "weak",
   "Personal subscription login details"
  ],
+ "enron-5b1f766bd69b": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-5b8e5ba7c998": [
   "Promotions",
   "strong",
@@ -838,6 +1053,11 @@
   "Personal",
   "strong",
   "Asking for an address to send a wedding invitation"
+ ],
+ "enron-5e1de0536c74": [
+  "Promotions",
+  "strong",
+  "Printer ink spam"
  ],
  "enron-5e71b64fecf1": [
   "Work",
@@ -884,6 +1104,11 @@
   "strong",
   "Investment scheme spam"
  ],
+ "enron-6268fc1ce9e4": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-62baa6593765": [
   "Work",
   "strong",
@@ -904,6 +1129,11 @@
   "strong",
   "Family conflict, feeling used as a babysitter"
  ],
+ "enron-644660de1d8d": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-64ee0d0ae251": [
   "Personal",
   "strong",
@@ -919,6 +1149,11 @@
   "strong",
   "Confirming a meeting time"
  ],
+ "enron-66591c7b267e": [
+  "Promotions",
+  "weak",
+  "CERA subscription industry bulletin"
+ ],
  "enron-67482d068cc8": [
   "Personal",
   "strong",
@@ -928,6 +1163,21 @@
   "Work",
   "strong",
   "Editorial board meeting logistics"
+ ],
+ "enron-676cea1ee2cf": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-67ce62b6cd9e": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-67d98769b267": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-67f5798c9b52": [
   "Work",
@@ -999,6 +1249,11 @@
   "strong",
   "Daughter asking her father to print her resume"
  ],
+ "enron-6c1144e417d1": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-6c22673dea5f": [
   "Work",
   "strong",
@@ -1069,6 +1324,11 @@
   "weak",
   "Law journal issue announcement"
  ],
+ "enron-718ec5a9cf45": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-7193c8999b4b": [
   "Work",
   "strong",
@@ -1084,6 +1344,11 @@
   "strong",
   "School book fair, arranging baking"
  ],
+ "enron-722fdaed341d": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-725ff2019950": [
   "Work",
   "strong",
@@ -1093,6 +1358,21 @@
   "Promotions",
   "weak",
   "Job site welcome mail"
+ ],
+ "enron-73f0398ae589": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-741f5bea8fa7": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-74abba8d12d0": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-7512a704075d": [
   "Personal",
@@ -1134,6 +1414,31 @@
   "strong",
   "Severed employee querying payments"
  ],
+ "enron-7713709b7aae": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-78258907283d": [
+  "Personal",
+  "strong",
+  "Concern for a friend undergoing medical tests"
+ ],
+ "enron-78731473b513": [
+  "Studies",
+  "weak",
+  "Business school correspondence about a programme"
+ ],
+ "enron-78b9ae9bb6fb": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-78d4d0466e91": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-7935fd185e7f": [
   "Work",
   "strong",
@@ -1154,10 +1459,20 @@
   "strong",
   "Home business opportunity spam"
  ],
+ "enron-7b8c48b0a963": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-7c1e395467bf": [
   "Work",
   "strong",
   "Drafting a contract clause"
+ ],
+ "enron-7c96199b3eb2": [
+  "Promotions",
+  "strong",
+  "DVD copying spam"
  ],
  "enron-7cf3070eacc4": [
   "Personal",
@@ -1174,6 +1489,11 @@
   "strong",
   "Banter about who won"
  ],
+ "enron-7ece420faa86": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-7ed333c7dd5f": [
   "Personal",
   "strong",
@@ -1188,6 +1508,21 @@
   "Personal",
   "strong",
   "Bluemountain greeting card from a friend"
+ ],
+ "enron-7f868087409e": [
+  "Personal",
+  "weak",
+  "Inspirational chain forward"
+ ],
+ "enron-8098a1b5cd3b": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-80ff3792064a": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-81bfa185819d": [
   "Promotions",
@@ -1214,6 +1549,11 @@
   "strong",
   "Dinner with friends, sympathy over an ageing pet"
  ],
+ "enron-838a2d446d96": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-8423b2abedb4": [
   "Promotions",
   "strong",
@@ -1228,6 +1568,11 @@
   "Promotions",
   "strong",
   "Online casino spam"
+ ],
+ "enron-850cc65f75e4": [
+  "Promotions",
+  "strong",
+  "Retailer discount mailshot"
  ],
  "enron-8598ee3a766f": [
   "Promotions",
@@ -1269,10 +1614,25 @@
   "weak",
   "Advocacy campaign form letter (mass mailing)"
  ],
+ "enron-8864127f7375": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-896f9905f881": [
   "Promotions",
   "strong",
   "Supplement spam"
+ ],
+ "enron-89f50ab7c398": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-8a853065ce96": [
+  "Personal",
+  "strong",
+  "Personal good wishes during the collapse"
  ],
  "enron-8ab2c462a3fe": [
   "Personal",
@@ -1299,10 +1659,25 @@
   "strong",
   "Enerfax subscription newsletter"
  ],
+ "enron-8bb13394d406": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-8c2b8ddb7307": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-8d448a92e3bf": [
   "Work",
   "weak",
   "Friendly exchange about a job application"
+ ],
+ "enron-8d54cbe02f84": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-8e30b0aaa797": [
   "Work",
@@ -1323,6 +1698,16 @@
   "Work",
   "strong",
   "Shareholder asking for consideration"
+ ],
+ "enron-8f485e4b9b83": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-8fa69ce85e3d": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-9037fc67da22": [
   "Work",
@@ -1348,6 +1733,11 @@
   "Promotions",
   "strong",
   "Bulk energy report marketing"
+ ],
+ "enron-92c04a81d554": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-93abd8f54dbf": [
   "Personal",
@@ -1384,6 +1774,11 @@
   "strong",
   "Debt reduction spam"
  ],
+ "enron-987726d0017c": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-9908f0fb74ef": [
   "Work",
   "weak",
@@ -1419,6 +1814,11 @@
   "weak",
   "Bare trade quote, 45 @ 2.705"
  ],
+ "enron-9c2f00e6890b": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-9c562fd3e9df": [
   "Promotions",
   "strong",
@@ -1439,10 +1839,20 @@
   "weak",
   "Advocacy campaign form letter (mass mailing)"
  ],
+ "enron-9e5fc3a3fc36": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-9ec340749143": [
   "Work",
   "weak",
   "Abusive message about greed"
+ ],
+ "enron-9f38f0fcda9c": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-a0091f2c756b": [
   "Promotions",
@@ -1483,6 +1893,16 @@
   "Promotions",
   "weak",
   "Advocacy campaign form letter (mass mailing)"
+ ],
+ "enron-a299e445c36d": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-a316872814b4": [
+  "Promotions",
+  "strong",
+  "Life insurance spam"
  ],
  "enron-a389c8de7d66": [
   "Promotions",
@@ -1554,6 +1974,11 @@
   "strong",
   "Industry standards body conference call"
  ],
+ "enron-a7e4382aa736": [
+  "Personal",
+  "strong",
+  "Sports team fixture list and subs"
+ ],
  "enron-a85a1576007c": [
   "Promotions",
   "strong",
@@ -1563,6 +1988,11 @@
   "Personal",
   "strong",
   "Passing on a phone number"
+ ],
+ "enron-a909b0ed8069": [
+  "Personal",
+  "weak",
+  "Fantasy sports report, automated hobby mail"
  ],
  "enron-a92d969b9bf7": [
   "Work",
@@ -1593,6 +2023,11 @@
   "Promotions",
   "weak",
   "Trading site welcome mail"
+ ],
+ "enron-acdaa74967d0": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-ace0fc0f6c69": [
   "Personal",
@@ -1649,6 +2084,11 @@
   "strong",
   "Debt consolidation spam"
  ],
+ "enron-afb4102fd701": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-afb68718e369": [
   "Promotions",
   "strong",
@@ -1663,6 +2103,11 @@
   "Promotions",
   "strong",
   "Background check service spam"
+ ],
+ "enron-b0d3f8cc8754": [
+  "Promotions",
+  "strong",
+  "Nightclub New Year party promotion"
  ],
  "enron-b0f047c54cdf": [
   "Promotions",
@@ -1709,6 +2154,11 @@
   "strong",
   "Thanks after a corporate philanthropy meeting"
  ],
+ "enron-b5a9e98633f2": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-b68cc72026a1": [
   "Promotions",
   "weak",
@@ -1749,6 +2199,16 @@
   "strong",
   "Background check service spam"
  ],
+ "enron-baa868205b97": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-bc769224dc0f": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-bc8f5dea51ac": [
   "Work",
   "weak",
@@ -1758,6 +2218,11 @@
   "Work",
   "strong",
   "Housing initiative pitch"
+ ],
+ "enron-bd12063b5b52": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-bd30e1b2cd9f": [
   "Work",
@@ -1809,6 +2274,11 @@
   "strong",
   "Stakeholder on corporate responsibility"
  ],
+ "enron-c495bbf86533": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-c4f270dad411": [
   "Work",
   "strong",
@@ -1859,6 +2329,11 @@
   "strong",
   "Stadium naming rights heads-up"
  ],
+ "enron-c688b5ade879": [
+  "Promotions",
+  "strong",
+  "Retailer New Year marketing"
+ ],
  "enron-c6a610552127": [
   "Work",
   "strong",
@@ -1879,10 +2354,20 @@
   "strong",
   "Merchant account spam"
  ],
+ "enron-c7507c55e14a": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-c8e6b449d696": [
   "Personal",
   "strong",
   "Relative writing to Uncle Ken and Aunt Linda"
+ ],
+ "enron-c8f3b48bb2a1": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-c95b8e6d1cbf": [
   "Personal",
@@ -2004,6 +2489,11 @@
   "strong",
   "Family news, mother reporting on a sore throat"
  ],
+ "enron-d22363ab3b91": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-d23063b21e53": [
   "Personal",
   "strong",
@@ -2014,10 +2504,20 @@
   "strong",
   "Stockholder who has sold their shares"
  ],
+ "enron-d331a52c44d7": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-d382823c8fdd": [
   "Personal",
   "weak",
   "Personal eBay auction correspondence"
+ ],
+ "enron-d3c398a59b6e": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-d43158341537": [
   "Work",
@@ -2028,6 +2528,11 @@
   "Work",
   "strong",
   "Correspondence about an Indian power plant"
+ ],
+ "enron-d4cd177cefc1": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-d5101dde0abe": [
   "Work",
@@ -2054,10 +2559,20 @@
   "strong",
   "Loan approval spam"
  ],
+ "enron-d81249bf464e": [
+  "Personal",
+  "strong",
+  "Private sale of motorcycle parts"
+ ],
  "enron-d822b6baa373": [
   "Promotions",
   "strong",
   "Football picks marketing list"
+ ],
+ "enron-d82dc81fc16a": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-d898ff8cc803": [
   "Promotions",
@@ -2069,6 +2584,16 @@
   "",
   "No usable content: header dump, bounce or empty forward"
  ],
+ "enron-d96d69d53d70": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-d9b4c6a262f9": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-daacf177f8e9": [
   "Work",
   "strong",
@@ -2078,6 +2603,11 @@
   "Personal",
   "strong",
   "Sending an attachment, chat about the kids"
+ ],
+ "enron-dce88c471a19": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-dd40c26991cf": [
   "Promotions",
@@ -2134,15 +2664,30 @@
   "weak",
   "Abusive message on religious grounds"
  ],
+ "enron-e180c7f33ea9": [
+  "Promotions",
+  "strong",
+  "Adult content spam"
+ ],
  "enron-e2fe1dabb4f1": [
   "Work",
   "weak",
   "West Point alumnus making a business introduction"
  ],
+ "enron-e30c4b328352": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-e3b08233c474": [
   "Promotions",
   "strong",
   "Home loan spam"
+ ],
+ "enron-e3b7f10eab55": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-e5157cd69bf4": [
   "Promotions",
@@ -2234,6 +2779,11 @@
   "strong",
   "Adoption registration and a Disney World trip"
  ],
+ "enron-ed08cc10ca2f": [
+  "Personal",
+  "strong",
+  "Fantasy football league standings"
+ ],
  "enron-ed2f6137c7eb": [
   "Promotions",
   "strong",
@@ -2294,6 +2844,11 @@
   "",
   "No usable content: header dump, bounce or empty forward"
  ],
+ "enron-f1a5ecd8cc62": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-f273732aa05a": [
   "Work",
   "strong",
@@ -2309,6 +2864,11 @@
   "strong",
   "American Airlines fare promotion"
  ],
+ "enron-f367f2f6531f": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-f397c46cfb2f": [
   "Personal",
   "strong",
@@ -2319,10 +2879,20 @@
   "strong",
   "Invitation list administration"
  ],
+ "enron-f428df3916da": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-f461791c67b5": [
   "Personal",
   "strong",
   "Confirming who is attending a show"
+ ],
+ "enron-f4686408945c": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-f49df45c4800": [
   "Work",
@@ -2339,10 +2909,25 @@
   "strong",
   "Stock pump and dump spam"
  ],
+ "enron-f52bc2b60ddc": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
+ "enron-f55a500b409c": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-f637e96042f4": [
   "Personal",
   "strong",
   "Family member on the Enron collapse, mom sends me stuff"
+ ],
+ "enron-f63c893fc48a": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-f700d1e37a3f": [
   "Personal",
@@ -2353,6 +2938,11 @@
   "Promotions",
   "strong",
   "Adult content spam"
+ ],
+ "enron-f89c1f15912e": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
  ],
  "enron-f9af91c1a48b": [
   "Personal",
@@ -2409,6 +2999,11 @@
   "strong",
   "Unsolicited pitch for the CFO role"
  ],
+ "enron-fdeaab7f7698": [
+  "Work",
+  "strong",
+  "Work correspondence, folder label confirmed"
+ ],
  "enron-fe7e48053fdf": [
   "Work",
   "weak",
@@ -2418,6 +3013,11 @@
   "Personal",
   "weak",
   "Stranger offering prayers during the crisis"
+ ],
+ "enron-ff09176079c8": [
+  "Personal",
+  "strong",
+  "Colleagues on the Super Bowl and moving jobs, informal"
  ],
  "enron-ff2e687ae41d": [
   "Work",

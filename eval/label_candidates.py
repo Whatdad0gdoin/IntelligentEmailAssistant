@@ -108,15 +108,30 @@ def _labels():
         return json.load(f)
 
 
-def _candidates():
+def _candidates(source="candidates"):
+    """Rows available for review.
+
+    "candidates" is the mined pool from extract_personal_candidates.
+    "enron" is the Work class already sitting in real_enron.csv, which needs
+    reviewing for the opposite reason: those rows are labelled folder_heuristic
+    ("it was in the inbox"), and reading them showed roughly a fifth are not
+    Work at all -- spam, club flyers and fantasy football among them. Same
+    failure the Personal folder had.
+    """
+    if source == "enron":
+        if not os.path.exists(ENRON_PATH):
+            sys.exit(f"Missing {ENRON_PATH}.")
+        with open(ENRON_PATH, encoding="utf-8") as f:
+            rows = [r for r in csv.DictReader(f) if r["label_source"] == "folder_heuristic"]
+        return {i: r for i, r in enumerate(rows, 1)}
     if not os.path.exists(BODIES):
         sys.exit(f"Missing {BODIES}. Run: python -m eval.extract_personal_candidates")
     with open(BODIES, encoding="utf-8") as f:
         return {int(r["row"]): r for r in csv.DictReader(f)}
 
 
-def build(category):
-    rows = _candidates()
+def build(category, source="candidates"):
+    rows = _candidates(source)
     labels = _labels()
     cap = MAX_PER_SENDER.get(category, DEFAULT_CAP)
     family_cap = MAX_PER_SUBJECT_FAMILY.get(category, DEFAULT_FAMILY_CAP)
@@ -129,16 +144,24 @@ def build(category):
         if label is None:
             continue
         label_category, confidence, rationale = label
-        if label_category != category:
-            continue
-        sender = candidate["sender"].split("<")[-1].strip("<> ").lower()
-        if per_sender.get(sender, 0) >= cap:
-            dropped_cap += 1
-            continue
-        family = " ".join(candidate["subject"].lower().split())[:SUBJECT_FAMILY_CHARS]
-        if per_family.get(family, 0) >= family_cap:
-            dropped_family += 1
-            continue
+        # The enron source is a re-review of rows already in the dataset, so
+        # every one is included whatever it is now proposed to be -- the whole
+        # point is to check the corrections. The diversity caps are for
+        # sampling a large pool and would silently drop rows here.
+        if source != "enron":
+            if label_category != category:
+                continue
+            sender = candidate["sender"].split("<")[-1].strip("<> ").lower()
+            if per_sender.get(sender, 0) >= cap:
+                dropped_cap += 1
+                continue
+            family = " ".join(candidate["subject"].lower().split())[:SUBJECT_FAMILY_CHARS]
+            if per_family.get(family, 0) >= family_cap:
+                dropped_family += 1
+                continue
+        else:
+            sender = candidate["sender"]
+            family = candidate["subject"]
         per_sender[sender] = per_sender.get(sender, 0) + 1
         per_family[family] = per_family.get(family, 0) + 1
         selected.append({
@@ -180,7 +203,7 @@ def build(category):
 VALID = {"Work", "Personal", "Promotions", "Studies"}
 
 
-def apply(category):
+def apply(category, source="candidates"):
     path = review_path(category)
     if not os.path.exists(path):
         sys.exit(f"{path} does not exist. Run --build first.")
@@ -199,7 +222,7 @@ def apply(category):
     # Keyed on id, not row: the review file and the candidate pool are separate
     # artefacts, and a re-extraction between building and applying would shift
     # every row number while ids stay put.
-    rows = {r["id"]: r for r in _candidates().values()}
+    rows = {r["id"]: r for r in _candidates(source).values()}
     decisions = {}
     for entry in review:
         verdict = entry["verified"].strip()
@@ -218,6 +241,21 @@ def apply(category):
     with open(ENRON_PATH, encoding="utf-8") as f:
         existing = list(csv.DictReader(f))
     have = {r["id"] for r in existing}
+
+    # A row already in the file is being RE-labelled, not added: the Work
+    # review corrects labels that are already there. Updating in place keeps
+    # the row (and its body) and promotes label_source to human.
+    updated = 0
+    by_id = {r["id"]: r for r in existing}
+    for row_id, category in list(decisions.items()):
+        if row_id in by_id:
+            by_id[row_id]["category"] = category
+            by_id[row_id]["label_source"] = "human"
+            by_id[row_id]["label_confidence"] = "strong"
+            updated += 1
+            decisions.pop(row_id)
+    if updated:
+        print(f"  re-labelled {updated} rows already in the file")
 
     added = []
     for row_id, category in decisions.items():
@@ -254,11 +292,15 @@ def main():
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--category", default="Personal",
                         choices=["Personal", "Promotions", "Work", "Studies"])
+    parser.add_argument("--source", default="candidates",
+                        choices=["candidates", "enron"],
+                        help="'enron' reviews the folder-heuristic rows already "
+                             "in real_enron.csv")
     args = parser.parse_args()
     if args.build:
-        build(args.category)
+        build(args.category, args.source)
     elif args.apply:
-        apply(args.category)
+        apply(args.category, args.source)
     else:
         parser.print_help()
 

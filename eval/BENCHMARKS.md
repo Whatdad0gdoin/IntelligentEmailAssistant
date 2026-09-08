@@ -1,18 +1,23 @@
 # Benchmark runs
 
-Every measured result, in the order it was produced. Numbers here are copied
-from the runs recorded in this file's commands — nothing is estimated.
+Every measured result, in the order it was produced. Numbers are copied from the
+runs named beside them — nothing here is estimated.
 
-**Reproduce any row:** the command is given with it. All runs use
-`temperature=0` and `--batch-size 20`.
+All runs use `temperature=0` and `--batch-size 20`. See
+[Run-to-run variance](#run-to-run-variance) before quoting any figure to more
+than one decimal place.
 
 ---
 
 ## Headline figures
 
+Measured on the **held-out test split** with the shipped configuration
+(`gpt-4o-mini`, as set in `backend/.env`):
+
 | Requirement | Metric | Result |
 |---|---|---|
-| **FR-02** categorisation | accuracy (held-out test) | **86.9%** |
+| **FR-02** categorisation | accuracy (test split, n=266) | **83.0%** |
+| | — on real email only | **78.1%** |
 | **FR-01** summarisation | groundedness rate | **93.0%** |
 | **FR-03** draft reply | groundedness rate | **97.4%** |
 | FR-05 voice intent | dispatch accuracy | not yet run |
@@ -39,7 +44,7 @@ groundedness — see [Why not ROUGE](#why-not-rouge).
 
 Split for tuning: **dev 214 / test 266**, assigned deterministically by hashing
 the row id (40% dev). Every prompt and model choice below was made on dev. The
-reported figure was measured once on test.
+reported figure was measured on test.
 
 ---
 
@@ -72,62 +77,105 @@ python -m eval.evaluate_classifier --split test         # reported figure
 | 3 | gpt-4o-mini | baseline on dev | dev | 214 | 92.1% | 70.1% | 64.5% | 0.668 |
 | 4 | gpt-4o-mini | + sender in prompt | dev | 214 | 91.1% | 70.3% | 64.0% | 0.666 |
 | 5 | gpt-4o-mini | + rewritten definitions | dev | 214 | 91.6% | 72.4% | 66.4% | 0.680 |
-| 6 | **gpt-4o** | same prompt, stronger model | dev | 214 | 90.7% | 85.1% | 77.1% | 0.792 |
-| **7** | **gpt-4o** | **final, held-out** | **test** | **266** | **89.1%** | **86.9%** | **77.4%** | **0.814** |
+| 6 | gpt-4o | same prompt, stronger model | dev | 214 | 90.7% | 85.1% | 77.1% | 0.792 |
+| 7 | gpt-4o | final prompt, held-out | test | 266 | 89.1% | 86.9% | 77.4% | 0.814 |
+| **8** | **gpt-4o-mini** | **like-for-like against run 7** | **test** | **266** | **92.9%** | **83.0%** | **77.1%** | **0.795** |
+| 9 | gpt-4o-mini | repeat of run 8, unchanged | test | 266 | 92.1% | 83.3% | 76.7% | 0.793 |
 
-What each change was worth:
+### Does the stronger model earn its cost? No.
 
-| Change | Effect on dev accuracy |
+Runs 7 and 8 are the same prompt on the same held-out rows, differing only in
+model:
+
+| | Coverage | Accuracy | Strict | Macro-F1 |
+|---|---|---|---|---|
+| gpt-4o-mini | 92.9% | 83.0% | 77.1% | 0.795 |
+| gpt-4o | 89.1% | 86.9% | 77.4% | 0.814 |
+| difference | −3.8 | **+3.9** | **+0.3** | +0.019 |
+
+**gpt-4o buys about 4 points of covered accuracy and nothing at all on strict
+accuracy**, for roughly 15× the cost per call and a lower rate limit. It also
+abstains more often, so mini answers more emails. The project stays on
+gpt-4o-mini.
+
+**A correction worth recording.** On dev the same comparison looked like +12.7
+points (run 5 vs run 6), and that was reported internally as the model being the
+dominant factor. It was not. The same gpt-4o-mini configuration scored 72.4% on
+dev and 83.0% on test — a 10.6-point swing between splits, larger than the model
+difference itself. The dev gap was mostly split difficulty, not capability. This
+is why the like-for-like run on held-out data is the only one quoted.
+
+### What each change was actually worth
+
+| Change | Verdict |
 |---|---|
-| Sender address added to the prompt | **+0.2 pts — no effect.** Bodies already carry forwarded headers, so the address was largely redundant |
-| Category definitions rewritten ("Work is not the default") | **+2.1 pts.** Work precision 42.9% → 52.5% |
-| gpt-4o-mini → gpt-4o | **+12.7 pts.** The dominant factor by a wide margin |
+| Sender address added to the prompt | **Nothing.** +0.2 on dev, inside noise. Bodies already carry forwarded headers, so the address was largely redundant. Kept because it is principled and free, but it did not help |
+| Category definitions rewritten ("Work is not the default") | **Real and free.** +2.1 on dev, and the effect holds on test: Work precision 42.9% → 81.4% |
+| gpt-4o-mini → gpt-4o | **+3.9 covered accuracy, +0.3 strict.** Not worth 15× cost |
 
-Run 1 → 2 is not a model change: it is the evidence verifier no longer
-rejecting correct quotes over typography. Coverage rose 5.8 points because
-fewer emails were pushed to Review; accuracy-on-covered fell 1.8 because rows
-that were previously abstentions are now answered, some wrongly. Strict
-accuracy, which counts every row, rose 3.0.
+Runs 1 → 2 are not a model change: that is the evidence verifier no longer
+rejecting correct quotes over typography. Coverage rose 5.8 points because fewer
+emails were pushed to Review; accuracy-on-covered fell 1.8 because rows that
+were previously abstentions are now answered, some wrongly. Strict accuracy,
+which counts every row, rose 3.0.
 
-### Final run detail (run 7, test split, gpt-4o)
+### Shipped-configuration detail (run 8, test split, gpt-4o-mini)
 
 ```
-n=266   coverage 89.1%   accuracy 86.9%   strict 77.4%   macro-F1 0.814
+n=266   coverage 92.9%   accuracy 83.0%   strict 77.1%   macro-F1 0.795
 ```
 
 Per class, over covered rows:
 
 | Class | Precision | Recall | F1 |
 |---|---|---|---|
-| Work | 89.5% | 67.1% | 0.767 |
-| Personal | 78.4% | 64.5% | 0.708 |
-| Promotions | 79.0% | 79.0% | 0.790 |
-| Studies | 98.5% | 100.0% | 0.992 |
+| Work | 81.4% | 75.0% | 0.781 |
+| Personal | 80.0% | 58.1% | 0.673 |
+| Promotions | 76.9% | 80.6% | 0.787 |
+| Studies | 93.8% | 92.4% | 0.931 |
 
-Confusion matrix (rows = true label):
+Confusion matrix (rows = true label; from run 9):
 
 | | Work | Personal | Promotions | Studies | Review |
 |---|---|---|---|---|---|
-| **Work** | 51 | 7 | 8 | 0 | 10 |
-| **Personal** | 6 | 40 | 5 | 0 | 11 |
-| **Promotions** | 0 | 4 | 49 | 1 | 8 |
-| **Studies** | 0 | 0 | 0 | 66 | 0 |
+| **Work** | 57 | 5 | 8 | 0 | 6 |
+| **Personal** | 11 | 36 | 7 | 1 | 7 |
+| **Promotions** | 2 | 3 | 50 | 3 | 4 |
+| **Studies** | 0 | 1 | 0 | 61 | 4 |
 
 **Broken down — do not quote the pooled figure alone:**
 
 | Group | n | Coverage | Accuracy | Strict | Macro-F1 |
 |---|---|---|---|---|---|
-| real text (Enron) | 200 | 85.5% | **81.9%** | 70.0% | 0.755 |
-| synthetic text (generated) | 66 | 100% | 100% | 100% | 1.000 |
-| label_source `human` | 124 | 84.7% | **84.8%** | 71.8% | 0.800 |
-| label_source `folder_heuristic` | 76 | 86.8% | **77.3%** | 67.1% | 0.803 |
-| label_source `generation_prompt` | 66 | 100% | 100% | 100% | 1.000 |
+| real text (Enron) | 200 | 91.5% | **78.1%** | 71.5% | 0.749 |
+| synthetic text (generated) | 66 | 93.9% | 98.4% | 92.4% | 0.961 |
+| label_source `human` | 124 | 91.1% | 76.1% | 69.4% | 0.777 |
+| label_source `folder_heuristic` | 76 | 92.1% | 81.4% | 75.0% | 0.857 |
+| label_source `generation_prompt` | 66 | 93.9% | 98.4% | 92.4% | 0.961 |
 
-Class and source are still correlated — Studies is the only generated class, and
-the model identifies it perfectly. Part of any pooled number is therefore the
-model telling real mail from model-written mail, which is not FR-02.
+Class and source remain correlated — Studies is the only generated class, and
+the model identifies it almost perfectly. Part of any pooled number is therefore
+the model telling real mail from model-written mail, which is not FR-02.
 
-**If one categorisation figure goes on the slide, use 81.9% on real email.**
+**If one categorisation figure goes on the slide, use 78.1% on real email.**
+
+---
+
+## Run-to-run variance
+
+Runs 8 and 9 are the **same model, same prompt, same rows, same batch size**,
+executed twice:
+
+| | Coverage | Accuracy | Strict | Macro-F1 |
+|---|---|---|---|---|
+| run 8 | 92.9% | 83.0% | 77.1% | 0.795 |
+| run 9 | 92.1% | 83.3% | 76.7% | 0.793 |
+| spread | 0.8 | 0.3 | 0.4 | 0.002 |
+
+`temperature=0` is not determinism. Batch composition changes what context each
+email is classified alongside, and the provider does not guarantee identical
+output for identical input. **Treat anything under about half a point as noise**,
+and state the batch size with any figure quoted.
 
 ---
 
@@ -211,25 +259,27 @@ are all still flagged — see `tests/test_grounding.py`.
 ## Known limitation: the Work labels are wrong
 
 The 120 Work rows are `label_source = folder_heuristic`, meaning only "it was in
-the inbox". Inspecting the 12 dev rows where the classifier disagreed with the
-label, **the classifier was right on all 12**:
+the inbox". All 120 were read: **27 (22.5%) are not Work** — 13 Personal, 13
+Promotions, 1 Studies.
 
-| Subject | Labelled | Classifier said | Which is right |
-|---|---|---|---|
-| `250,000 Life Policy $6.50 per month` | Work | Promotions | classifier — it is spam |
-| `HYPERIA NEW YEARS - TONIGHTS THE NIGHT!!!!!` | Work | Promotions | classifier — club night flyer |
-| `FFL Playoffs` | Work | Personal | classifier — fantasy football |
-| `Pelican Schedule` | Work | Personal | classifier — sports fixtures |
-| `RE: RE: Whats up!!!!!` | Work | Personal | classifier — Super Bowl chat |
+| Subject | Labelled | Actually |
+|---|---|---|
+| `250,000 Life Policy $6.50 per month` | Work | Promotions — spam |
+| `Adult Industry Secrets Revealed!` | Work | Promotions — spam |
+| `HYPERIA NEW YEARS - TONIGHTS THE NIGHT!!!!!!!` | Work | Promotions — club flyer |
+| `FFL Playoffs` | Work | Personal — fantasy football |
+| `Pelican Schedule` | Work | Personal — sports fixtures |
+| `Re: Christmas names` | Work | Personal — Secret Santa |
+| `Just a reminder` | Work | Personal — from a spouse |
+| `PIRA's API Weekly Comment` | Work | Promotions — subscription bulletin |
 
-This is the same failure already corrected in the Personal class. It shows in
-the results: human-labelled classes score **84.8%**, the folder-heuristic class
-**77.3%**.
+This is the same failure already corrected in the Personal class. Corrections
+are staged in `eval/data/review_work.csv` awaiting human verification; nothing
+has been applied.
 
-**The reported accuracy therefore understates the classifier.** Hand-labelling
-the Work class — as was done for Personal and Promotions — is expected to
-recover roughly 5–8 points. That is a measurement correction, not a capability
-improvement, and should be described as such.
+**The reported accuracy therefore understates the classifier.** Once the Work
+labels are corrected, expect the figure to rise — as a measurement correction,
+not a capability improvement, and it must be described as such.
 
 ---
 
@@ -259,14 +309,13 @@ Both directions belong in the limitations section.
 
 ---
 
-## Cost and reproducibility notes
+## Cost and rate limits
 
-- **gpt-4o costs roughly 15× gpt-4o-mini per call.** `backend/.env` still
-  specifies `gpt-4o-mini`; run 6 and 7 used an environment override. Adopting
-  gpt-4o as the default is a budget decision.
-- **gpt-4o has a lower rate limit.** The first test run failed with
-  `RateLimitError`. `--delay 8` paces the batches; `client.py` now waits before
-  its retry, honouring `Retry-After` when the server sends one.
-- **Batch composition affects results.** At temperature 0 the same email in a
-  different batch can receive a different evidence span and flip its
-  verification outcome. Fix and state the batch size when quoting a figure.
+- **gpt-4o costs roughly 15× gpt-4o-mini per call** and, measured like for like,
+  is worth +3.9 covered accuracy and +0.3 strict. `backend/.env` specifies
+  `gpt-4o-mini`; runs 6 and 7 used an environment override.
+- **gpt-4o has a lower rate limit.** The first attempt at run 7 died with
+  `RateLimitError`. `--delay 8` paces the batches, and `client.py` now waits
+  before its single retry, honouring `Retry-After` when the server sends one —
+  previously the retry fired 0.23s after the failure, which made the retry
+  policy decorative for the one error where it matters most.
