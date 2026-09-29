@@ -115,10 +115,25 @@ def classify_emails(items, config, session_key=None, user=None, use_cache=True,
                 CLASSIFY_CACHE.set(user, verified["id"], verified)
 
     # Any id the model dropped is still owed an answer.
-    for email_id in ordered_ids:
-        if email_id not in results:
-            log.info("classify %s -> Review (%s)", email_id, REASON_MISSING_FROM_RESPONSE)
-            results[email_id] = _review(email_id)
+    dropped = [email_id for email_id in ordered_ids if email_id not in results]
+    for email_id in dropped:
+        log.info("classify %s -> Review (%s)", email_id, REASON_MISSING_FROM_RESPONSE)
+        results[email_id] = _review(email_id)
+
+    # Routing a dropped id to Review is the right outcome -- better an honest
+    # "unsorted" than a guessed label. But losing a large share of one batch is
+    # not a per-email event, it is a failed request that still returned 200,
+    # and at info level it was invisible: a run in eval/data/dev_preds.csv lost
+    # 17 of one 20-email batch and nobody noticed until the file would not
+    # reconcile. One warning per batch makes that legible at a glance.
+    if dropped and pending:
+        log.warning(
+            "classify: the model returned no result for %d of %d emails in this "
+            "batch; they were routed to Review. A large share suggests a "
+            "truncated or malformed response rather than %d individual "
+            "judgements.",
+            len(dropped), len(pending), len(dropped),
+        )
 
     return [results[email_id] for email_id in ordered_ids]
 

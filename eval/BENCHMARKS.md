@@ -18,13 +18,31 @@ Measured on the **held-out test split** with the shipped configuration
 
 | Requirement | Metric | Result |
 |---|---|---|
-| **FR-02** categorisation | accuracy (test split, n=266) | **83.0%** |
-| | — on real email only | **78.1%** |
+| **FR-02** categorisation | accuracy (test split, n=215) | **83.8%** |
+| | — on real email only | **81.5%** |
 | **FR-01** summarisation | groundedness rate | **93.0%** |
 | **FR-03** draft reply | groundedness rate | **97.4%** |
 | **FR-05** voice intent | dispatch accuracy (n=30) | **86.7%** — criterion ≥90% **not met** |
 | | — wrong action dispatched | **3.3%** (1/30) |
-| NFR-01 latency | p95 | not yet instrumented |
+| NFR-01 latency | p95 | instrumented, not yet measured |
+
+Both FR-02 figures are **run 10**, and both recompute from
+`eval/data/test_preds_mini.csv`, the saved per-row predictions for that run.
+
+Run 10 is the first measurement against the corrected labels. Runs 1-9 were
+measured against the earlier 480-row set, whose Work class was labelled by
+folder name and was wrong on 27 of 120 rows. Those runs remain valid history
+and the comparisons between them still hold, because each compares like with
+like — but they describe a dataset that no longer exists, and their numbers
+should not be quoted as current.
+
+**NFR-01 is instrumented but unmeasured.** `GET /api/metrics`
+(`backend/routes/metrics.py`) reports p95 over the last 100 requests, so the
+figure is now collectable; it has simply not been collected against the real
+model, and this table will not carry a latency number until it has been. A
+single cold-load observation — 8218 ms against the 5000 ms target — exists from
+one live run and is discussed under item 10 of `FIXES.md`. One observation is
+not a p95 and is not quoted as one here.
 
 Categorisation and voice intent are the only accuracies here. Summarisation and
 drafting have no single correct output to score against, so they use
@@ -39,20 +57,31 @@ says why.
 
 ## The dataset these run against
 
-`eval/data/dataset.csv` — 480 rows, balanced 120 per class.
+`eval/data/dataset.csv` — 376 rows, balanced 94 per class.
 
 | | rows |
 |---|---|
-| Work / Personal / Promotions / Studies | 120 each |
-| **real** email text | **360** |
-| synthetic email text | 120 |
-| `label_source = human` (verified row by row) | 240 |
-| `label_source = generation_prompt` | 120 |
-| `label_source = folder_heuristic` (weak) | 120 |
+| Work / Personal / Promotions / Studies | 94 each |
+| **real** email text | **282** |
+| synthetic email text | 94 |
+| `label_source = human` (verified row by row) | 282 |
+| `label_source = generation_prompt` | 94 |
 
-Split for tuning: **dev 214 / test 266**, assigned deterministically by hashing
+Split for tuning: **dev 161 / test 215**, assigned deterministically by hashing
 the row id (40% dev). Every prompt and model choice below was made on dev. The
 reported figure was measured on test.
+
+**Every label on a real email is now human-verified.** `folder_heuristic` is
+gone: the Work class was read row by row and 27 of its 120 rows were not Work
+at all (13 Personal, 13 Promotions, 1 a conference invitation from a business
+school that is professional correspondence rather than study). Those rows moved
+to their true classes, which left Work with 94 and the set was rebalanced to
+94 per class rather than topping Work back up with fresh unverified rows.
+
+That is why the figures below differ from earlier runs against the 480-row set.
+**It is a measurement correction, not a better classifier** — on most of the
+rows that changed, the model had been right and was being marked wrong against
+a bad label.
 
 ---
 
@@ -87,8 +116,44 @@ python -m eval.evaluate_classifier --split test         # reported figure
 | 5 | gpt-4o-mini | + rewritten definitions | dev | 214 | 91.6% | 72.4% | 66.4% | 0.680 |
 | 6 | gpt-4o | same prompt, stronger model | dev | 214 | 90.7% | 85.1% | 77.1% | 0.792 |
 | 7 | gpt-4o | final prompt, held-out | test | 266 | 89.1% | 86.9% | 77.4% | 0.814 |
-| **8** | **gpt-4o-mini** | **like-for-like against run 7** | **test** | **266** | **92.9%** | **83.0%** | **77.1%** | **0.795** |
+| 8 | gpt-4o-mini | like-for-like against run 7 | test | 266 | 92.9% | 83.0% | 77.1% | 0.795 |
 | 9 | gpt-4o-mini | repeat of run 8, unchanged | test | 266 | 92.1% | 83.3% | 76.7% | 0.793 |
+| **10** | **gpt-4o-mini** | **corrected labels, 94/class — the quoted run** | **test** | **215** | **92.1%** | **83.8%** | **77.2%** | **0.802** |
+
+Run 8 stays in the table because it happened and because the variance section
+below needs both halves of the pair. It is no longer the run quoted, for one
+reason only: **its per-row predictions were not retained.** Run 9 is the same
+model, prompt, rows and batch size, and it has a committed file behind it.
+
+### Which saved prediction file is which run
+
+| File | Run | Recomputes to (coverage / accuracy / strict / macro-F1) |
+|---|---|---|
+| `eval/data/predictions.csv` | 2 | 88.3% / 75.5% / 66.7% / 0.701 |
+| `eval/data/test_preds.csv` | 7 | 89.1% / 86.9% / 77.4% / 0.814 |
+| `eval/data/test_preds_mini.csv` | **10** | 92.1% / 83.8% / 77.2% / 0.802 |
+| `eval/data/dev_preds.csv` | none — see below | 82.2% / 78.4% / 64.5% / 0.681 |
+
+Each of the first three reproduces its row in the history table exactly, from
+the committed file, with no model call:
+
+```bash
+python - <<'PY'
+import csv
+from eval.evaluate_classifier import _score          # the same scoring code the run used
+rows = list(csv.DictReader(open("eval/data/test_preds_mini.csv", encoding="utf-8")))
+m = _score([(r["expected"], r["predicted"]) for r in rows])
+print(f"{m['coverage']:.1%} / {m['accuracy']:.1%} / {m['strict']:.1%} / {m['macro_f1']:.3f}")
+PY
+# 92.1% / 83.8% / 77.2% / 0.802
+```
+
+Runs 1, 3, 4, 5, 6, 8 and 9 have no saved predictions of their own: run 9's
+file was overwritten by run 10, which reused the same path. Runs 1 and 3-6 are
+tuning history and nothing reported rests on them. Nothing reported rests on
+runs 8 and 9 either now that run 10 supersedes them, but the overwrite is worth
+noting -- `--out` takes whatever path it is given, and a run that reuses a path
+destroys the evidence for the previous one.
 
 ### Does the stronger model earn its cost? No.
 
@@ -97,19 +162,28 @@ model:
 
 | | Coverage | Accuracy | Strict | Macro-F1 |
 |---|---|---|---|---|
-| gpt-4o-mini | 92.9% | 83.0% | 77.1% | 0.795 |
-| gpt-4o | 89.1% | 86.9% | 77.4% | 0.814 |
-| difference | −3.8 | **+3.9** | **+0.3** | +0.019 |
+| gpt-4o-mini, run 8 | 92.9% | 83.0% | 77.1% | 0.795 |
+| gpt-4o-mini, run 9 | 92.1% | 83.3% | 76.7% | 0.793 |
+| gpt-4o, run 7 | 89.1% | 86.9% | 77.4% | 0.814 |
+| difference, gpt-4o − run 8 | −3.8 | **+3.9** | **+0.3** | +0.019 |
+| difference, gpt-4o − run 9 | −3.0 | **+3.6** | **+0.7** | +0.021 |
 
-**gpt-4o buys about 4 points of covered accuracy and nothing at all on strict
-accuracy**, for roughly 15× the cost per call and a lower rate limit. It also
-abstains more often, so mini answers more emails. The project stays on
-gpt-4o-mini.
+Both mini runs are shown because run 8 was the pairing originally designed
+against run 7, and run 9 is the one that can be recomputed. The verdict does not
+depend on which is used.
+
+**gpt-4o buys between three and four points of covered accuracy and under a
+point of strict accuracy**, for roughly 15× the cost per call and a lower rate
+limit. Strict accuracy is the figure that counts every row, and the gain there
+is +0.3 against run 8 and +0.7 against run 9 — at or barely above the 0.4-point
+run-to-run spread on strict documented below, from a pair of runs that changed
+nothing at all. gpt-4o also abstains more often, so mini answers more emails.
+The project stays on gpt-4o-mini.
 
 **A correction worth recording.** On dev the same comparison looked like +12.7
 points (run 5 vs run 6), and that was reported internally as the model being the
 dominant factor. It was not. The same gpt-4o-mini configuration scored 72.4% on
-dev and 83.0% on test — a 10.6-point swing between splits, larger than the model
+dev and 83.3% on test — a 10.9-point swing between splits, larger than the model
 difference itself. The dev gap was mostly split difficulty, not capability. This
 is why the like-for-like run on held-out data is the only one quoted.
 
@@ -119,7 +193,7 @@ is why the like-for-like run on held-out data is the only one quoted.
 |---|---|
 | Sender address added to the prompt | **Nothing.** +0.2 on dev, inside noise. Bodies already carry forwarded headers, so the address was largely redundant. Kept because it is principled and free, but it did not help |
 | Category definitions rewritten ("Work is not the default") | **Real and free.** +2.1 on dev, and the effect holds on test: Work precision 42.9% → 81.4% |
-| gpt-4o-mini → gpt-4o | **+3.9 covered accuracy, +0.3 strict.** Not worth 15× cost |
+| gpt-4o-mini → gpt-4o | **+3.6 to +3.9 covered accuracy, +0.3 to +0.7 strict** (against runs 9 and 8 respectively). Not worth 15× cost |
 
 Runs 1 → 2 are not a model change: that is the evidence verifier no longer
 rejecting correct quotes over typography. Coverage rose 5.8 points because fewer
@@ -127,45 +201,53 @@ emails were pushed to Review; accuracy-on-covered fell 1.8 because rows that
 were previously abstentions are now answered, some wrongly. Strict accuracy,
 which counts every row, rose 3.0.
 
-### Shipped-configuration detail (run 8, test split, gpt-4o-mini)
+### Shipped-configuration detail (run 10, test split, gpt-4o-mini)
+
+Run 10 is the first measurement against the corrected labels. Every table in
+this section — the headline line, the per-class figures, the confusion matrix
+and the breakdown — recomputes from `eval/data/test_preds_mini.csv`.
 
 ```
-n=266   coverage 92.9%   accuracy 83.0%   strict 77.1%   macro-F1 0.795
+n=215   coverage 92.1%   accuracy 83.8%   strict 77.2%   macro-F1 0.802
 ```
 
 Per class, over covered rows:
 
 | Class | Precision | Recall | F1 |
 |---|---|---|---|
-| Work | 81.4% | 75.0% | 0.781 |
-| Personal | 80.0% | 58.1% | 0.673 |
-| Promotions | 76.9% | 80.6% | 0.787 |
-| Studies | 93.8% | 92.4% | 0.931 |
+| Work | 80.3% | 75.4% | 0.778 |
+| Personal | 82.1% | 66.7% | 0.736 |
+| Promotions | 80.9% | 79.2% | 0.800 |
+| Studies | 92.2% | 87.0% | 0.895 |
 
-Confusion matrix (rows = true label; from run 9):
+Confusion matrix (rows = true label):
 
 | | Work | Personal | Promotions | Studies | Review |
 |---|---|---|---|---|---|
-| **Work** | 57 | 5 | 8 | 0 | 6 |
-| **Personal** | 11 | 36 | 7 | 1 | 7 |
-| **Promotions** | 2 | 3 | 50 | 3 | 4 |
-| **Studies** | 0 | 1 | 0 | 61 | 4 |
+| **Work** | 49 | 3 | 5 | 0 | 8 |
+| **Personal** | 6 | 32 | 4 | 1 | 5 |
+| **Promotions** | 4 | 1 | 38 | 3 | 2 |
+| **Studies** | 2 | 3 | 0 | 47 | 2 |
 
 **Broken down — do not quote the pooled figure alone:**
 
 | Group | n | Coverage | Accuracy | Strict | Macro-F1 |
 |---|---|---|---|---|---|
-| real text (Enron) | 200 | 91.5% | **78.1%** | 71.5% | 0.749 |
-| synthetic text (generated) | 66 | 93.9% | 98.4% | 92.4% | 0.961 |
-| label_source `human` | 124 | 91.1% | 76.1% | 69.4% | 0.777 |
-| label_source `folder_heuristic` | 76 | 92.1% | 81.4% | 75.0% | 0.857 |
-| label_source `generation_prompt` | 66 | 93.9% | 98.4% | 92.4% | 0.961 |
+| real text (Enron), all `human` labels | 161 | 90.7% | **81.5%** | 73.9% | 0.784 |
+| synthetic text (`generation_prompt`) | 54 | 96.3% | 90.4% | 87.0% | 0.931 |
+
+The `label_source` split is no longer a separate table: every real row is now
+`human` and every synthetic row is `generation_prompt`, so it carries exactly
+the same information as the two rows above.
 
 Class and source remain correlated — Studies is the only generated class, and
-the model identifies it almost perfectly. Part of any pooled number is therefore
-the model telling real mail from model-written mail, which is not FR-02.
+the model identifies it far more easily than the rest. Part of any pooled
+number is therefore the model telling real mail from model-written mail, which
+is not FR-02.
 
-**If one categorisation figure goes on the slide, use 78.1% on real email.**
+**If one categorisation figure goes on the slide, use 81.5% on real email.** It
+comes from the same file as everything else in this section, so it is
+reproducible on the same command.
 
 ---
 
@@ -180,6 +262,10 @@ executed twice:
 | run 9 | 92.1% | 83.3% | 76.7% | 0.793 |
 | spread | 0.8 | 0.3 | 0.4 | 0.002 |
 
+Both were measured on the earlier 480-row set. The pair is kept because it is
+the cleanest evidence of the noise floor: same model, same prompt, same rows,
+same batch size, run twice.
+
 `temperature=0` is not determinism. Batch composition changes what context each
 email is classified alongside, and the provider does not guarantee identical
 output for identical input. **Treat anything under about half a point as noise**,
@@ -192,6 +278,49 @@ for the batched classifier. One confidence *score* still drifted (0.95 → 0.90)
 so the provider is not bit-identical even unbatched; it is batching that turns
 that into movement in the headline. This supports batch composition as the
 dominant variance source rather than sampling.
+
+### `dev_preds.csv` is an incomplete run, not a run with odd numbers
+
+It reconciles with no entry in the history table, and the reason is that its
+three figures are not a measurement of anything. **18 of its 214 rows carry no
+model label at all.** They are recorded as `Review` with `confidence` exactly
+0.0, which is what `classify_emails` backfills when the model's batch response
+omits an id it was asked about — `REASON_MISSING_FROM_RESPONSE` in
+`backend/orchestrator/classify.py` — and what `--out` then writes for them.
+
+Seventeen of the eighteen are one contiguous block: the last 17 rows of a single
+20-row batch (rows 180–199 of the dev split), and that batch is entirely Work.
+The eighteenth is a lone row in an earlier batch.
+
+The rows are not at fault, and three checks say so. All eighteen have bodies
+between 200 and 2818 characters, so none was empty. None of them is among the
+three zero-confidence rows in `predictions.csv`, so it is not a property of the
+rows that recurs across runs. And run 2 gave fifteen of the same eighteen a real
+category, eleven of them at confidence 0.9. The ids were dropped by one
+response; they were not declined by the classifier.
+
+That explains the direction of the mismatch precisely. The 18 phantom `Review`
+rows depress **coverage** — 82.2%, against 90.7–92.1% for every recorded dev run
+— while leaving **accuracy** arithmetically untouched, because accuracy is
+computed over covered rows only. Accuracy is nonetheless flattered, because 17
+of the rows that vanished are Work, the hardest class. Over the 196 rows that
+were actually classified the file reads **89.8% coverage / 78.4% accuracy /
+70.4% strict / 0.714 macro-F1**.
+
+**Which configuration produced it cannot be established.** Those corrected
+figures match no recorded dev run, and could not be compared with one anyway:
+the recorded runs cover all 214 rows and this one covers 196, missing 17 of the
+hardest. The only hint is Work precision at 51.9%, well below the 81.4% the
+rewritten category definitions bought on test, which points at a prompt from
+before that change — run 3 or run 4. But the dropout biases precision downward
+too, so that is a hint, not an identification.
+
+The file is kept rather than deleted for two reasons: `eval/notebook.ipynb`
+reads it, and the failure mode is worth having on the record. **A run can
+silently lose rows and still report three plausible-looking figures** — this one
+reads as a merely disappointing run rather than a broken one, and only the
+confidence column gives it away. No published figure depends on it and nothing
+in this document quotes it.
 
 ---
 

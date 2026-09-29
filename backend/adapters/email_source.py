@@ -138,33 +138,65 @@ _sources = {}
 SOURCES = ("fixture", "gmail", "gmail_imap")
 
 
-def _source_key(config):
+def effective_source(config, user=None):
+    """Which source this signed-in user gets.
+
+    A real Gmail inbox belongs to one person, but EMAIL_SOURCE is a single
+    global setting. Without this, every account in AUTH_USERS that can sign in
+    would be shown that person's actual mail -- a teammate logging in to try
+    the app would be reading someone's inbox.
+
+    GMAIL_OWNER names the one login the real mailbox belongs to. Everyone else
+    falls back to the fixture mailbox, which is the demo data and is meant to
+    be seen. Leaving GMAIL_OWNER empty keeps the previous behaviour, so a
+    fixture-only deployment and the test suite are unaffected.
+    """
+    configured = config.email_source
+    owner = getattr(config, "gmail_owner", "")
+    if configured in ("gmail", "gmail_imap") and owner:
+        if (user or "").strip().lower() != owner:
+            return "fixture"
+    return configured
+
+
+def _source_key(config, source=None):
     """Identity of the configured source: same settings, same instance.
 
     The key carries the settings rather than just the name so a test that
     repoints a directory, or a config that switches mailbox, gets its own
     instance instead of one built for the previous settings. The password is
     not part of it -- it is not an identity, and keys end up in tracebacks.
+
+    `source` is the *effective* source for this caller, which is not always
+    config.email_source: a non-owner is served fixtures even when Gmail is
+    configured, and must not be handed the cached Gmail instance.
     """
-    if config.email_source == "gmail":
+    source = source or config.email_source
+    if source == "gmail":
         return ("gmail", config.gmail_token_file, config.gmail_mailbox, config.gmail_limit)
-    if config.email_source == "gmail_imap":
+    if source == "gmail_imap":
         return ("gmail_imap", config.gmail_host, config.gmail_port,
                 config.gmail_user, config.gmail_mailbox)
     return ("fixture", config.email_fixture_dir, config.email_inbox_dir)
 
 
-def get_email_source(config):
-    """Return the configured source. One instance per configuration, reused."""
+def get_email_source(config, user=None):
+    """Return the source for this signed-in user. One instance per config.
+
+    `user` is the authenticated login. It only changes anything when
+    GMAIL_OWNER is set -- see effective_source() for why a real mailbox is
+    tied to one account.
+    """
     if config.email_source not in SOURCES:
         raise EmailSourceError(
             f"Unknown EMAIL_SOURCE '{config.email_source}'. "
             f"This build implements: {', '.join(SOURCES)}."
         )
-    key = _source_key(config)
+    source = effective_source(config, user)
+    key = _source_key(config, source)
     with _lock:
         if key not in _sources:
-            if config.email_source == "gmail":
+            if source == "gmail":
                 # Imported here, not at module scope: both Gmail adapters import
                 # this module for the EmailSource base class, and a fixture-only
                 # deployment has no reason to load a Google client at all.
@@ -176,7 +208,7 @@ def get_email_source(config):
                     limit=config.gmail_limit,
                     timeout=config.gmail_timeout,
                 )
-            elif config.email_source == "gmail_imap":
+            elif source == "gmail_imap":
                 from backend.adapters.gmail_source import GmailImapSource
 
                 _sources[key] = GmailImapSource(

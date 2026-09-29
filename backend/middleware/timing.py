@@ -152,7 +152,19 @@ class LatencyWindow:
 
 
 def _ms(seconds):
-    return round(seconds * 1000, 1)
+    """Seconds to milliseconds, keeping sub-millisecond requests non-zero.
+
+    Rounded to 0.1 ms this reported 0.0 for anything faster than 50
+    microseconds, which /api/healthz routinely is. That is a false zero in a
+    latency report -- and it made test_real_requests_are_recorded flaky, since
+    it asserts the recorded durations are positive: the test failed or passed
+    depending on how fast the machine was.
+
+    Three decimals is microsecond resolution, which perf_counter genuinely
+    provides. The extra digits are noise on a slow request and the difference
+    between a number and a wrong number on a fast one.
+    """
+    return round(seconds * 1000, 3)
 
 
 def _block(durations, target_seconds):

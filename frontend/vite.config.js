@@ -15,4 +15,14 @@ export default defineConfig({
       },
     },
   },
+  // Component tests need somewhere to mount. jsdom is deliberately bare: it
+  // ships no speechSynthesis and no SpeechRecognition, which makes it exactly
+  // the unsupported browser SR-01 is written for -- so the degraded path is
+  // the default a test gets, and the supported one is the case that has to be
+  // set up. The pure-logic and stylesheet tests are unaffected by running in
+  // a DOM; `globals` stays off so every test keeps importing from vitest.
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.js"],
+  },
 });

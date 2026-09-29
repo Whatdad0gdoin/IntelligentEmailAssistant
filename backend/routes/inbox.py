@@ -41,7 +41,7 @@ def inbox():
     settings = config()
     user = current_user()
 
-    messages = get_email_source(settings).list_emails()
+    messages = get_email_source(settings, user).list_emails()
 
     # Preprocess each body exactly once. Both the classifier and the snippet
     # need the cleaned text, and an earlier version computed it twice per
@@ -115,7 +115,7 @@ def inbox_message(email_id):
     orchestrator summarises, not a different one.
     """
     settings = config()
-    message = get_email_source(settings).get_email(email_id)
+    message = get_email_source(settings, current_user()).get_email(email_id)
     if message is None:
         raise EmailNotFound(f"No email with id {email_id}.")
 

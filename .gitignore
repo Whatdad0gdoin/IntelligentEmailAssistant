@@ -33,3 +33,10 @@ backend/mailbox/
 # OAuth client file and token for the Gmail API source. The token is a live,
 # refreshable credential for someone's mailbox.
 backend/secrets/
+
+# Personal editor config. It reached the repo once by accident (1fa2852):
+# a Postman notification preference, nothing the project needs.
+.vscode/
+# Same typo guard: the OAuth client was once saved to the singular spelling,
+# which this file did not cover.
+backend/secret/

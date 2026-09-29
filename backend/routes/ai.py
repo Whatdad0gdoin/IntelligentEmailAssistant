@@ -36,7 +36,7 @@ MAX_BODY_CHARS = 100_000
 
 
 def _load_email(email_id):
-    message = get_email_source(config()).get_email(email_id)
+    message = get_email_source(config(), current_user()).get_email(email_id)
     if message is None:
         # A real multi-account source scopes the lookup by user inside the
         # adapter, so by the time a lookup misses here it genuinely is "no such

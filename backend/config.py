@@ -149,6 +149,16 @@ class Config:
         # and refreshed in place. Both are credentials and live in a gitignored
         # directory. GMAIL_MAILBOX, GMAIL_LIMIT and GMAIL_TIMEOUT above apply to
         # this source too.
+        # Which app login owns the real mailbox. A real Gmail inbox belongs to
+        # one person, but EMAIL_SOURCE is global, so without this every account
+        # that can sign in sees that person's mail. Set it and any other login
+        # falls back to the fixture mailbox instead.
+        #
+        # Empty keeps the old behaviour (whoever signs in sees the configured
+        # source), which is what the test suite and a fixture-only deployment
+        # expect.
+        self.gmail_owner = _optional("GMAIL_OWNER", "").strip().lower()
+
         secrets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secrets")
         self.gmail_client_file = _optional(
             "GMAIL_CLIENT_FILE", os.path.join(secrets_dir, "gmail_client.json")

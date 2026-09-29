@@ -128,6 +128,21 @@ def _output_text(output):
                     + [item["text"] for item in output.get("action_items", [])])
 
 
+def _claims_checked(output):
+    """How many checkable claims the grounding check saw in this output.
+
+    Computed once and cached on the output, because the printed report and
+    the --out CSV must quote the same figure. A groundedness rate is only
+    interpretable next to how much was actually checked, so if these two ever
+    disagreed the saved data would contradict the report built from it.
+    """
+    if "_claims_checked" not in output:
+        text = _output_text(output)
+        output["_claims_checked"] = (len(grounding.extract_typed_claims(text))
+                                     + len(grounding.extract_proper_nouns(text)))
+    return output["_claims_checked"]
+
+
 def _report(task, outputs, errors, elapsed):
     print("\n" + "=" * 72)
     print(f"{task.upper()}  (FR-01)" if task == "summarise" else f"{task.upper()}  (FR-03)")
@@ -152,9 +167,7 @@ def _report(task, outputs, errors, elapsed):
     # above means something.
     checked, checkable_outputs = 0, 0
     for output in outputs:
-        text = _output_text(output)
-        count = (len(grounding.extract_typed_claims(text))
-                 + len(grounding.extract_proper_nouns(text)))
+        count = _claims_checked(output)
         checked += count
         if count:
             checkable_outputs += 1
@@ -239,6 +252,9 @@ def main():
                 "text_origin": row["text_origin"],
                 "grounded": output["grounded"],
                 "flag_count": len(output["ungrounded_flags"]),
+                # Saved so the denominator travels with the rate: flag_count
+                # alone cannot say whether a clean output was checked at all.
+                "claims_checked": _claims_checked(output),
                 "flags": "; ".join(f"{f['claim']} ({f['reason']})"
                                    for f in output["ungrounded_flags"])[:300],
                 "subject": row["subject"][:100],

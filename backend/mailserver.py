@@ -41,11 +41,25 @@ from email.utils import formatdate, make_msgid
 from aiosmtpd.controller import Controller
 from dotenv import load_dotenv
 
-# Same settings file the API reads, so SMTP_PORT and EMAIL_INBOX_DIR can be
-# configured in one place.
-load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+from backend.config import Config
 
-from backend.config import Config  # noqa: E402
+ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+
+
+def load_settings_file():
+    """Read backend/.env into the environment.
+
+    Called from main(), NOT at import. It used to run at module scope, and
+    because tests/test_mailserver.py imports this module, every pytest run
+    silently inherited the developer's real .env -- the whole suite was being
+    run against personal configuration. That stayed invisible while nothing in
+    .env changed behaviour, then GMAIL_OWNER was added and two unrelated Gmail
+    tests began failing in the full suite while passing on their own.
+
+    Importing a module should not mutate global state. Loading the settings
+    file is something the command-line entry point does.
+    """
+    load_dotenv(ENV_FILE)
 
 log = logging.getLogger("mailserver")
 
@@ -127,6 +141,11 @@ def build_controller(config, directory=None):
 
 
 def main():
+    # Same settings file the API reads, so SMTP_PORT and EMAIL_INBOX_DIR are
+    # configured in one place. Loaded here rather than at import; see
+    # load_settings_file().
+    load_settings_file()
+
     parser = argparse.ArgumentParser(description="Local SMTP receiver for the assistant.")
     parser.add_argument("--host", help="Override SMTP_HOST. Use 0.0.0.0 to accept from other devices.")
     parser.add_argument("--port", type=int, help="Override SMTP_PORT.")
