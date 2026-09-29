@@ -359,7 +359,7 @@ def test_an_unreachable_server_is_not_reported_as_an_empty_mailbox(source, monke
 
 def test_the_factory_builds_the_gmail_source(monkeypatch, tmp_path):
     monkeypatch.setenv("JWT_SECRET", "test-secret")
-    monkeypatch.setenv("EMAIL_SOURCE", "gmail")
+    monkeypatch.setenv("EMAIL_SOURCE", "gmail_imap")
     monkeypatch.setenv("GMAIL_USER", "project@example.com")
     monkeypatch.setenv("GMAIL_APP_PASSWORD", PASSWORD)
     monkeypatch.setenv("GMAIL_MAILBOX", "INBOX")
@@ -376,7 +376,7 @@ def test_gmail_without_credentials_fails_at_startup_not_at_first_request(monkeyp
     surface when the process starts rather than when a user first loads the
     inbox."""
     monkeypatch.setenv("JWT_SECRET", "test-secret")
-    monkeypatch.setenv("EMAIL_SOURCE", "gmail")
+    monkeypatch.setenv("EMAIL_SOURCE", "gmail_imap")
     monkeypatch.delenv("GMAIL_USER", raising=False)
     monkeypatch.delenv("GMAIL_APP_PASSWORD", raising=False)
 

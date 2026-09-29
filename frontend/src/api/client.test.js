@@ -115,3 +115,108 @@ describe("backend not running", () => {
     await expect(api.request("/api/inbox")).rejects.toThrow("Internal server error");
   });
 });
+
+describe("slow and cancelled requests", () => {
+  it("a timeout says the server was slow, not that it is down", async () => {
+    // The two look identical to fetch (both reject) but mean opposite things:
+    // one is a dead backend, the other a backend that is still working.
+    global.fetch = vi.fn((_url, options) =>
+      new Promise((_resolve, reject) => {
+        options.signal.addEventListener("abort", () =>
+          reject(Object.assign(new Error("aborted"), { name: "AbortError" }))
+        );
+      })
+    );
+
+    await expect(api.request("/api/draft", { timeoutMs: 20 })).rejects.toThrow(/took longer than/i);
+  });
+
+  it("a timed-out request reports 408, not 0", async () => {
+    global.fetch = vi.fn((_url, options) =>
+      new Promise((_resolve, reject) => {
+        options.signal.addEventListener("abort", () =>
+          reject(Object.assign(new Error("aborted"), { name: "AbortError" }))
+        );
+      })
+    );
+
+    await api.request("/api/draft", { timeoutMs: 20 }).catch((err) => {
+      expect(err.status).toBe(408);
+    });
+    expect.assertions(1);
+  });
+
+  it("a genuine network failure still says the backend may be down", async () => {
+    global.fetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+    await expect(api.request("/api/inbox")).rejects.toThrow(/could not reach the server/i);
+  });
+
+  it("a caller cancelling is reported as a cancellation, not a failure", async () => {
+    const caller = new AbortController();
+    global.fetch = vi.fn((_url, options) =>
+      new Promise((_resolve, reject) => {
+        options.signal.addEventListener("abort", () =>
+          reject(Object.assign(new Error("aborted"), { name: "AbortError" }))
+        );
+      })
+    );
+
+    const pending = api.request("/api/inbox", { signal: caller.signal });
+    caller.abort();
+    await expect(pending).rejects.toThrow(/cancelled/i);
+  });
+
+  it("a request that succeeds clears its timer rather than aborting later", async () => {
+    global.fetch = mockFetch(200, { ok: true });
+    await expect(api.request("/api/inbox", { timeoutMs: 50 })).resolves.toEqual({ ok: true });
+    // If the timer leaked, this wait would surface an unhandled abort.
+    await new Promise((r) => setTimeout(r, 80));
+  });
+});
+
+describe("draft body construction", () => {
+  // Regression: the toolbar was wired as onClick={runDraft}, so React passed
+  // its click event as the tone. The event reached JSON.stringify, threw, and
+  // the failure was reported as "could not reach the server" - which sent us
+  // hunting a dead backend while the request had never been sent at all.
+  const fakeClickEvent = () => {
+    const target = { value: "x" };
+    const event = { type: "click", target, currentTarget: target, nativeEvent: {} };
+    event.nativeEvent.target = event;   // circular, like a real SyntheticEvent
+    return event;
+  };
+
+  it("a click event passed as the tone is ignored, not serialised", async () => {
+    global.fetch = mockFetch(200, { draft: "hi", tone: "neutral" });
+    await api.draft("email-1", undefined, fakeClickEvent());
+
+    const [, options] = global.fetch.mock.calls[0];
+    expect(JSON.parse(options.body)).toEqual({ email_id: "email-1" });
+  });
+
+  it("a real tone is still sent", async () => {
+    global.fetch = mockFetch(200, { draft: "hi", tone: "formal" });
+    await api.draft("email-1", undefined, "formal");
+
+    const [, options] = global.fetch.mock.calls[0];
+    expect(JSON.parse(options.body).tone).toBe("formal");
+  });
+
+  it("the neutral default is omitted, matching pre-tone callers", async () => {
+    global.fetch = mockFetch(200, { draft: "hi", tone: "neutral" });
+    await api.draft("email-1", undefined, "neutral");
+
+    const [, options] = global.fetch.mock.calls[0];
+    expect(JSON.parse(options.body)).not.toHaveProperty("tone");
+  });
+
+  it("an unencodable body is reported as an app bug, not a server outage", async () => {
+    global.fetch = vi.fn();
+    const circular = {};
+    circular.self = circular;
+
+    await expect(api.request("/api/draft", { method: "POST", body: circular }))
+      .rejects.toThrow(/bug in the app/i);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+});

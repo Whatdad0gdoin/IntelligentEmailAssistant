@@ -4,18 +4,28 @@ Routes never touch a mailbox directly. They ask an EmailSource for messages and
 get back SourceEmail objects with every deterministic field already parsed from
 headers (see headers.py).
 
-Two sources are implemented. FixtureEmailSource reads RFC-822 .eml files from
-one or more configured directories -- the committed demo fixtures, plus the
+Three sources are implemented.
+
+FixtureEmailSource (EMAIL_SOURCE=fixture, the default) reads RFC-822 .eml files
+from one or more configured directories -- the committed demo fixtures, plus the
 directory the local mail server delivers into. That directory is the *mail
 server's* role in the architecture, not application state -- the same position
 an IMAP host would occupy. Nothing the app produces is ever written back to it,
 which is what NFR-03 actually constrains.
 
-GmailImapSource (gmail_source.py, EMAIL_SOURCE=gmail) puts a real Gmail mailbox
-in that same position. It was the test of the claim this file used to make in
-the abstract: adding it meant one new class returning SourceEmail objects, one
-branch in the factory below, and no change to any route, orchestrator module or
-view.
+GmailApiSource (gmail_api_source.py, EMAIL_SOURCE=gmail) reads a real Gmail
+inbox over the Gmail API with OAuth, scoped to gmail.readonly. This is the
+recommended way to read real mail: no password is stored, and read-only is
+enforced by Google rather than only by how the adapter is written.
+
+GmailImapSource (gmail_source.py, EMAIL_SOURCE=gmail_imap) reads the same inbox
+over IMAP with an app password. Kept as a fallback because it needs no Google
+Cloud project.
+
+Adding each of the Gmail sources meant one new class returning SourceEmail
+objects and one branch in the factory below -- no change to any route,
+orchestrator module or view, which was the claim this file used to make in the
+abstract and can now make from experience.
 """
 
 import logging
@@ -122,6 +132,11 @@ class FixtureEmailSource(EmailSource):
 _lock = threading.Lock()
 _sources = {}
 
+# fixture   - .eml files on disk (the default; what the tests use)
+# gmail     - a real Gmail inbox over the Gmail API with OAuth (recommended)
+# gmail_imap - the same inbox over IMAP with an app password (fallback)
+SOURCES = ("fixture", "gmail", "gmail_imap")
+
 
 def _source_key(config):
     """Identity of the configured source: same settings, same instance.
@@ -132,25 +147,36 @@ def _source_key(config):
     not part of it -- it is not an identity, and keys end up in tracebacks.
     """
     if config.email_source == "gmail":
-        return ("gmail", config.gmail_host, config.gmail_port,
+        return ("gmail", config.gmail_token_file, config.gmail_mailbox, config.gmail_limit)
+    if config.email_source == "gmail_imap":
+        return ("gmail_imap", config.gmail_host, config.gmail_port,
                 config.gmail_user, config.gmail_mailbox)
     return ("fixture", config.email_fixture_dir, config.email_inbox_dir)
 
 
 def get_email_source(config):
     """Return the configured source. One instance per configuration, reused."""
-    if config.email_source not in ("fixture", "gmail"):
+    if config.email_source not in SOURCES:
         raise EmailSourceError(
             f"Unknown EMAIL_SOURCE '{config.email_source}'. "
-            f"This build implements 'fixture' and 'gmail'."
+            f"This build implements: {', '.join(SOURCES)}."
         )
     key = _source_key(config)
     with _lock:
         if key not in _sources:
             if config.email_source == "gmail":
-                # Imported here, not at module scope: gmail_source imports this
-                # module for the EmailSource base class, and a fixture-only
-                # deployment has no reason to load an IMAP client at all.
+                # Imported here, not at module scope: both Gmail adapters import
+                # this module for the EmailSource base class, and a fixture-only
+                # deployment has no reason to load a Google client at all.
+                from backend.adapters.gmail_api_source import GmailApiSource
+
+                _sources[key] = GmailApiSource(
+                    token_path=config.gmail_token_file,
+                    label=config.gmail_mailbox,
+                    limit=config.gmail_limit,
+                    timeout=config.gmail_timeout,
+                )
+            elif config.email_source == "gmail_imap":
                 from backend.adapters.gmail_source import GmailImapSource
 
                 _sources[key] = GmailImapSource(

@@ -3,9 +3,11 @@
 Every measured result, in the order it was produced. Numbers are copied from the
 runs named beside them — nothing here is estimated.
 
-All runs use `temperature=0` and `--batch-size 20`. See
-[Run-to-run variance](#run-to-run-variance) before quoting any figure to more
-than one decimal place.
+All runs use `temperature=0`. The categorisation and grounding runs use
+`--batch-size 20`; the voice intent harness is unbatched, one call per
+transcript, which matters for
+[Run-to-run variance](#run-to-run-variance). See that section before quoting
+any figure to more than one decimal place.
 
 ---
 
@@ -20,12 +22,18 @@ Measured on the **held-out test split** with the shipped configuration
 | | — on real email only | **78.1%** |
 | **FR-01** summarisation | groundedness rate | **93.0%** |
 | **FR-03** draft reply | groundedness rate | **97.4%** |
-| FR-05 voice intent | dispatch accuracy | not yet run |
+| **FR-05** voice intent | dispatch accuracy (n=30) | **86.7%** — criterion ≥90% **not met** |
+| | — wrong action dispatched | **3.3%** (1/30) |
 | NFR-01 latency | p95 | not yet instrumented |
 
-Categorisation is the only one of these that is an accuracy. Summarisation and
+Categorisation and voice intent are the only accuracies here. Summarisation and
 drafting have no single correct output to score against, so they use
 groundedness — see [Why not ROUGE](#why-not-rouge).
+
+FR-05 is measured on a 30-transcript acceptance set, not a held-out split:
+there was no tuning pass to hold anything out from. It is the weakest evidence
+in this document and [its own section](#fr-05--voice-intent-dispatch-accuracy)
+says why.
 
 ---
 
@@ -177,6 +185,14 @@ email is classified alongside, and the provider does not guarantee identical
 output for identical input. **Treat anything under about half a point as noise**,
 and state the batch size with any figure quoted.
 
+The voice intent harness is the control case for that explanation. It sends one
+transcript per call with no batch, and across three runs it returned **the same
+intent for all 30 transcripts every time** — 0.0 points of spread, against 0.3–0.8
+for the batched classifier. One confidence *score* still drifted (0.95 → 0.90),
+so the provider is not bit-identical even unbatched; it is batching that turns
+that into movement in the headline. This supports batch composition as the
+dominant variance source rather than sampling.
+
 ---
 
 ## FR-01 — Summarisation groundedness
@@ -238,6 +254,206 @@ run that mostly failed report a high score on the survivors.
 
 ---
 
+## FR-05 — Voice intent dispatch accuracy
+
+```bash
+python -m eval.intent_harness                  # the graded run, 38 model calls
+python -m eval.intent_harness --baseline-only  # dataset difficulty, 0 calls
+```
+
+Measured **2026-09-29**, `gpt-4o-mini`, `temperature=0`, unbatched. The figure
+depends on the model *and* on `INTENT_SYSTEM` in
+`backend/orchestrator/prompts.py`; it is not reproducible without both. The
+harness exits non-zero below the threshold, so it currently exits 1.
+
+### How `unknown` is scored — read this before quoting the number
+
+`unknown` is a required outcome, not a failure mode: spec 6.3 has the interface
+show the transcript back and ask. So it is scored in the two places it appears,
+differently, and on purpose:
+
+- **The graded 30** (`voice_intents.csv`) are all genuine commands — every
+  expected label is `summarise`, `read` or `draft`. The criterion is "dispatched
+  to the correct action", and declining to dispatch is not dispatching, so an
+  `unknown` here **counts as a miss**.
+- **The 8 out-of-scope probes** (`voice_intents_unknown.csv`) are commands the
+  app does not implement. There `unknown` is the **only** correct answer and is
+  scored as a success.
+
+The acceptance figure is the first of these. **86.7% is the number for the
+criterion.** The safety figure below (96.7%) is a different quantity and is not
+a substitute for it.
+
+### Result — the criterion is not met
+
+```
+n=30   accuracy 86.7%   (26/30)   95% CI [70.3%, 94.7%]
+       threshold 90%  ->  FAIL
+
+wrong dispatch (acted on the wrong intent)   1/30 =  3.3%
+declined to guess (returned unknown)         3/30 = 10.0%
+
+never dispatched a wrong action             29/30 = 96.7%   95% CI [83.3%, 99.4%]
+out-of-scope probes: 8/8 = 100% returned unknown
+```
+
+**Quote both numbers.** 86.7% is the criterion and it is not met. 96.7% is the
+share of transcripts on which the app did not do something the user did not ask
+for, which is the figure a user would feel — on this set it declined three times
+and acted wrongly once. Neither replaces the other, and 96.7% is **not** a pass
+against a criterion written about dispatch.
+
+| Run | Harness | Accuracy | Wrong dispatch | Declined | Probes |
+|---|---|---|---|---|---|
+| 1 | as committed | 86.7% | 1 | 3 | 8/8 |
+| 2 | as committed, repeat | 86.7% | 1 | 3 | 8/8 |
+| **3** | **+ reporting added (below)** | **86.7%** | **1** | **3** | **8/8** |
+
+Three runs, the same 26 transcripts right and the same 4 wrong each time. One
+confidence score moved between runs 1 and 2 (0.95 → 0.90 on *can you summarize
+the latest email*); no dispatched intent changed. The batch-composition variance
+documented for FR-02 does not apply here — each transcript is its own call with
+no neighbours — so this figure is more stable than the categorisation ones, and
+**the spread is 0.0 points across three runs.**
+
+### Per intent
+
+| Intent | Support | Times chosen | Precision | Recall | F1 |
+|---|---|---|---|---|---|
+| summarise | 10 | 10 | 90.0% | 90.0% | 0.900 |
+| **read** | 10 | 7 | **100.0%** | **70.0%** | **0.824** |
+| draft | 10 | 10 | 100.0% | 100.0% | 1.000 |
+| `unknown` | 0 | 3 | 0.0% | — | — |
+
+Macro-F1 over the three graded intents: **0.908**.
+
+**`read` is the weak intent, and it fails in the safe direction.** Its precision
+is 100% — nothing was ever wrongly dispatched *to* `read` — while its recall is
+70%: three genuine read commands were not recognised as such. The classifier is
+not confusing read with something else so much as failing to commit to it.
+Recall of 7/10 carries a 95% CI of [39.7%, 89.2%], which is almost the whole
+range; **10 transcripts per intent cannot support a per-intent claim at all**,
+and the per-intent rows above should be read as a pointer to where to look, not
+as measurements.
+
+Confusion matrix (rows = true label):
+
+| | summarise | read | draft | unknown |
+|---|---|---|---|---|
+| **summarise** | 9 | 0 | 0 | 1 |
+| **read** | 1 | 7 | 0 | 2 |
+| **draft** | 0 | 0 | 10 | 0 |
+| **unknown** (probes) | 0 | 0 | 0 | 8 |
+
+### The four errors are one root cause, not four
+
+| Transcript | Expected | Got | Conf |
+|---|---|---|---|
+| read aloud the summary of the latest email | read | `unknown` | 0.70 |
+| play the summary for the github alert | read | **summarise** | 0.90 |
+| say the summary out loud | read | `unknown` | 0.50 |
+| whats the enrolment email about | summarise | `unknown` | 0.70 |
+
+**Three of the four are the same collision: a `read` command whose object is
+"the summary".** The app's own flow produces exactly these utterances — you
+summarise an email, then ask for the summary to be read out — so the transcripts
+are realistic, and the prompt is what is underspecified. `INTENT_SYSTEM` defines
+`read` as "the user wants an email read out loud" and `summarise` as "the user
+wants an email summarised". Neither covers *read the summary out loud*, which
+contains both an existing summary and a request to speak it. The model then does
+the defensible thing under an ambiguous spec: it abstains twice and picks the
+other reading once. Only the `play the summary` row is a wrong dispatch, and it
+is the one where the model was most confident (0.90) — **the single most
+expensive error in the set is also the one it was surest about**, which is worth
+saying plainly, because it means confidence is not usable as a guard here.
+
+The fourth, *whats the enrolment email about*, is an indirect request with no
+summarise verb in it. It is phrased as a question, and the model declined.
+
+A prompt fix is the obvious next step — `read` needs to cover reading out a
+summary, and `summarise` needs to cover the question form. That is a change to
+`backend/orchestrator/prompts.py`, which this evaluation does not own and has
+not touched. **Any re-measurement after that change is a new run in the table
+above, and the 86.7% stands as the figure for the shipped prompt.**
+
+### Is n=30 enough to support the claim? No.
+
+At n=30 one transcript is worth 3.3 points, and 90% of 30 means "at most three
+errors". The measured result is four. The 95% CI on 86.7% is
+**[70.3%, 94.7%] — which contains 90%**, so this run does not establish that the
+classifier is below the criterion either. It establishes that 30 samples cannot
+tell.
+
+That is a property of the acceptance criterion, not of this run:
+
+| If the true dispatch rate were… | P(a fresh 30-transcript run reports PASS) |
+|---|---|
+| exactly 90% (meets spec) | **64.7%** |
+| 95% | 93.9% |
+| 86.7% (as measured) | 41.9% |
+
+**A system that exactly meets the requirement fails this test roughly a third of
+the time.** The criterion as written in the spec is under-powered by
+construction, and "30 spoken commands, ≥90%" cannot distinguish a 90% system
+from an 80% one. Reporting 86.7% without this table would overstate what was
+learned in either direction.
+
+### The transcript set is easier than real speech
+
+This is the finding worth more than the number, and it is the same lesson as
+[the synthetic rows in DR-01](#fr-02--categorisation-accuracy): check what the
+data actually contains before believing what it produces.
+
+Run `--baseline-only`. **A three-line keyword regex scores 28/30 = 93.3% on the
+graded set — it passes the criterion the model fails.**
+
+| | Graded 30 | Out-of-scope 8 | Wrong dispatches, both sets |
+|---|---|---|---|
+| `gpt-4o-mini` | 86.7% | **100%** | **1** |
+| keyword regex | **93.3%** | 87.5% | 2 |
+
+The regex was written after reading the transcripts, so it is not a fair rival
+classifier — it is an **upper bound on how far this set can be solved by
+spotting a verb**, and that bound being this high is the problem. Concretely:
+
+- **26 of 30 transcripts contain exactly one intent keyword, matching their own
+  label.** The model gets **26/26 = 100%** of those.
+- The other 4 are cue-free or carry two competing cues. The model gets
+  **0/4 = 0%** of those.
+
+So the headline is a weighted average of a 100% subset and a 0% subset, with the
+26:4 weighting chosen by whoever wrote the CSV — not by any measurement of how
+users actually speak. **Change that ratio and the headline moves anywhere between
+0% and 100% without the classifier changing at all.** 86.7% is therefore not an
+estimate of field performance; it is an estimate of performance on this mix.
+
+The regex also shows why the keyword route was not taken: its extra 6.6 points
+are bought with `mark this as unread` → `read`, because "unread" contains
+"read". That is a wrong dispatch on an out-of-scope command — the costly error
+class — and the model got it right. **The regex wins the headline and loses the
+failure mode that matters.**
+
+Other properties of the set, for the record: 30 distinct transcripts, exactly 10
+per intent (real usage is not balanced), 4–10 words each (median 7), no
+punctuation and no capitals (correct — that is what the Web Speech API returns),
+3 with filler words, 24 opening with a bare imperative verb, 20 naming a target
+and 10 anaphoric. The surface form is right — these do look like Web Speech
+output. **The vocabulary is too cooperative**: 26 of 30 name their action with
+the obvious verb and nothing else, exactly one names no action verb at all, and
+the remaining three name two. Every error the classifier made is in that last
+group of four.
+
+**What this figure does and does not support.** It supports "on 30 written
+transcripts, the shipped prompt dispatched 26 correctly and misdispatched one".
+It does not support "the voice feature is 86.7% accurate", and it cannot be
+compared to the FR-02 figures, which were measured on held-out data the prompt
+was never tuned against. To claim a dispatch rate at all, the set needs to be
+larger and to be collected rather than composed — transcripts from people who
+were not told which three intents exist, including the indirect phrasings and
+summary-then-read utterances the app's own flow produces.
+
+---
+
 ## Verifier corrections made during evaluation
 
 Each was found by inspecting flagged output, confirmed as a false positive, and
@@ -253,6 +469,26 @@ caught.
 These raised the measured numbers by making the measurement correct, not by
 weakening the check. `Priya Sharma`, `Acme Holdings` and `Dear Acme Holdings`
 are all still flagged — see `tests/test_grounding.py`.
+
+### Reporting added to the intent harness — no measured value changed
+
+`eval/intent_harness.py` was extended while running FR-05, and that is a change
+to a measuring instrument, so it is recorded here rather than left in a commit
+message. **Nothing about what is scored was touched**: the accuracy definition,
+the 0.90 threshold, the CSVs and the exit code are all as they were, which is why
+runs 1–3 in the FR-05 table agree exactly. What was added is reporting the run
+was already entitled to:
+
+| Added | Why |
+|---|---|
+| Wrong dispatches counted apart from `unknown` | The original lumped both into "misclassified". They cost a user completely different things |
+| Per-intent precision / recall / F1, macro-F1 | Derived from the confusion counts the harness already had. This is what identified `read` as the weak intent |
+| Wilson 95% CI on every rate | A bare percentage at n=30 implies precision the sample cannot carry |
+| `--baseline-only`: keyword baseline, 0 API calls | Makes the "a regex scores 93.3%" finding checkable without a key or any spend |
+
+The pass/fail gate was deliberately **not** loosened to count `unknown` as
+correct on the graded set. Doing so would have reported 96.7% and a PASS, by
+redefining the criterion rather than meeting it.
 
 ---
 

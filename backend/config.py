@@ -94,7 +94,9 @@ class Config:
         # for the mail server, exactly as an IMAP host would; it is the *source*
         # of email, not the app persisting anything (NFR-03). A real source
         # slots in behind the same interface without touching routes.
-        # "gmail" reads a real mailbox over IMAP instead (adapters/gmail_source.py).
+        # "gmail" reads a real Gmail inbox over the Gmail API with OAuth
+        # (adapters/gmail_api_source.py); "gmail_imap" reads it over IMAP with
+        # an app password (adapters/gmail_source.py).
         self.email_source = _optional("EMAIL_SOURCE", "fixture")
         self.email_fixture_dir = _optional(
             "EMAIL_FIXTURE_DIR",
@@ -120,7 +122,7 @@ class Config:
         self.smtp_port = _int("SMTP_PORT", 2525)
         self.smtp_max_bytes = _int("SMTP_MAX_BYTES", 5000000)
 
-        # --- Gmail source (EMAIL_SOURCE=gmail) ------------------------------
+        # --- Gmail IMAP source (EMAIL_SOURCE=gmail_imap) ---------------------
         # Only read when that source is selected, so a fixture deployment needs
         # no Gmail settings at all and CI needs no credentials. The password is
         # a Google *app password*, not the account password; see the adapter's
@@ -133,12 +135,27 @@ class Config:
         # default is a demo-sized mailbox rather than a whole archive.
         self.gmail_limit = _int("GMAIL_LIMIT", 25)
         self.gmail_timeout = _int("GMAIL_TIMEOUT", 20)
-        if self.email_source == "gmail":
+        # IMAP credentials are only demanded when the IMAP source is chosen.
+        if self.email_source == "gmail_imap":
             self.gmail_user = _require("GMAIL_USER")
             self.gmail_app_password = _require("GMAIL_APP_PASSWORD")
         else:
             self.gmail_user = _optional("GMAIL_USER", "")
             self.gmail_app_password = _optional("GMAIL_APP_PASSWORD", "")
+
+        # --- Gmail API source (EMAIL_SOURCE=gmail) ---------------------------
+        # OAuth, gmail.readonly only. The client file is downloaded once from
+        # Google Cloud; the token file is written by backend/scripts/gmail_auth.py
+        # and refreshed in place. Both are credentials and live in a gitignored
+        # directory. GMAIL_MAILBOX, GMAIL_LIMIT and GMAIL_TIMEOUT above apply to
+        # this source too.
+        secrets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secrets")
+        self.gmail_client_file = _optional(
+            "GMAIL_CLIENT_FILE", os.path.join(secrets_dir, "gmail_client.json")
+        )
+        self.gmail_token_file = _optional(
+            "GMAIL_TOKEN_FILE", os.path.join(secrets_dir, "gmail_token.json")
+        )
 
         # Length of the header-derived preview shown in the inbox list.
         self.snippet_chars = _int("SNIPPET_CHARS", 140)

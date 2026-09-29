@@ -101,6 +101,12 @@ def _run_full_session(config, stub):
     assert http.post("/api/summarise", json={"email_id": "no-such-id"},
                      headers=headers).status_code == 404
 
+    # And the reading pane and the latency endpoint (NFR-01), so the greps below
+    # cover the two routes that see an email id in a URL path: one that takes it
+    # as a path parameter, and the one that reports on every request made.
+    assert http.get(f"/api/inbox/{WORK_EMAIL_ID}", headers=headers).status_code == 200
+    assert http.get("/api/metrics", headers=headers).status_code == 200
+
     return http, headers
 
 

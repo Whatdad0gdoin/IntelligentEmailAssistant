@@ -123,13 +123,32 @@ foreach ($pair in @(
     else { Ok "$key is set" }
 }
 
+# Gmail mode: catch "not connected" here rather than as an empty inbox later.
+$sourceMatch = [regex]::Match($envText, "(?m)^EMAIL_SOURCE=(\S+)")
+$emailSource = if ($sourceMatch.Success) { $sourceMatch.Groups[1].Value } else { "fixture" }
+if ($emailSource -eq "gmail") {
+    $tokenMatch = [regex]::Match($envText, "(?m)^GMAIL_TOKEN_FILE=(\S+)")
+    $tokenFile = if ($tokenMatch.Success) { $tokenMatch.Groups[1].Value } else { Join-Path $root "backend\secrets\gmail_token.json" }
+    if (Test-Path $tokenFile) {
+        Ok "Gmail API connected (token present)"
+        Say "         access expires every 7 days in Testing; check with: python -m backend.scripts.gmail_auth --check" "DarkGray"
+    } else {
+        Warn "EMAIL_SOURCE=gmail but Gmail is not connected - the inbox will show an error"
+        Say "         connect with: python -m backend.scripts.gmail_auth" "Yellow"
+    }
+} elseif ($emailSource -eq "gmail_imap") {
+    Ok "Gmail over IMAP selected (check with: python tools/check_gmail.py)"
+} else {
+    Ok "email source: $emailSource"
+}
+
 # ------------------------------------------------------------- dependencies
 
 if (-not $SkipInstall) {
     Step "Checking Python packages"
     $missing = python -c "
 import importlib.util as u
-need = {'flask':'Flask','jwt':'PyJWT','flask_cors':'Flask-Cors','dotenv':'python-dotenv','openai':'openai','spacy':'spacy','aiosmtpd':'aiosmtpd'}
+need = {'flask':'Flask','jwt':'PyJWT','flask_cors':'Flask-Cors','dotenv':'python-dotenv','openai':'openai','spacy':'spacy','aiosmtpd':'aiosmtpd','googleapiclient':'google-api-python-client','google_auth_oauthlib':'google-auth-oauthlib','google_auth_httplib2':'google-auth-httplib2'}
 print(','.join(v for k, v in need.items() if u.find_spec(k) is None))
 " 2>$null
     if ($missing) {

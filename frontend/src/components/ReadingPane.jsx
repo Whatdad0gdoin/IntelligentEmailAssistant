@@ -6,8 +6,11 @@
  * toolbar. Nothing navigates away: losing sight of the message you are acting
  * on is what made the old "go to another screen" flow awkward.
  *
- * Two actions deliberately stay out of this pane:
- *  - Tone and Translate (FR-06/FR-07) is out of scope for this build.
+ * Reply tone (FR-06) is here too, on the draft rather than in a settings
+ * screen, because it changes the draft in front of you.
+ *
+ * Two things deliberately stay out of this pane:
+ *  - Translation (FR-07) is not implemented in this build.
  *  - Voice Commands (FR-05) is inbox-wide, not a property of one email, so it
  *    does not belong on a per-message toolbar.
  */
@@ -77,7 +80,10 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
 
   async function runDraft(nextTone) {
     if (draftState === "loading") return;
-    const useTone = nextTone || tone;
+    // Guard the parameter too. A handler wired as onClick={runDraft} would pass
+    // a click event here, and that used to travel all the way into the request
+    // body before failing as a confusing network error.
+    const useTone = typeof nextTone === "string" ? nextTone : tone;
     setDraftState("loading");
     setDraftError(null);
     setApproved(false);
@@ -203,7 +209,9 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
             </button>
           )}
 
-          <button className="action-btn" onClick={runDraft} disabled={draftState === "loading"}>
+          {/* Wrapped, not passed directly: onClick={runDraft} hands React's click
+              event to the first parameter, which is the tone. */}
+          <button className="action-btn" onClick={() => runDraft()} disabled={draftState === "loading"}>
             {draftState === "loading"
               ? <Loader2 size={15} strokeWidth={2.2} className="spin" />
               : <MessageSquareReply size={15} strokeWidth={2.2} />}
@@ -337,7 +345,7 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
                 {/* Regenerate lives here, next to the draft it regenerates.
                     It is also in the toolbar above the message, but that is a
                     long scroll away once a draft is on screen. */}
-                <button className="ai-regen" onClick={runDraft} disabled={draftState === "loading"}>
+                <button className="ai-regen" onClick={() => runDraft()} disabled={draftState === "loading"}>
                   {draftState === "loading"
                     ? <Loader2 size={15} strokeWidth={2.2} className="spin" />
                     : <RefreshCw size={15} strokeWidth={2.2} />}

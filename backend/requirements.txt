@@ -19,3 +19,10 @@ openai==1.59.6   # pinned: the SDK version IS the API contract pin for api.opena
 # records which one ran in ENTITY_BACKEND, so an evaluation run can always say
 # what produced its numbers. The fallback is weaker; it is not silent.
 spacy==3.8.16
+
+# Gmail API source (EMAIL_SOURCE=gmail). OAuth with the gmail.readonly scope;
+# only imported when that source is selected.
+google-api-python-client==2.200.0
+google-auth==2.53.0
+google-auth-oauthlib==1.4.1
+google-auth-httplib2==0.4.2

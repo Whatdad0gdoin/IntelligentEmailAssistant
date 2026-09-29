@@ -30,11 +30,12 @@ export const ROTATING = [
  *   FR-03 reply       -> POST /api/draft        built
  *   FR-05 voice       -> POST /api/voice/intent built
  *   speak             -> browser speechSynthesis, no backend needed
- *   FR-06/07 tone     -> nothing. Out of scope for this build, stays `soon`.
+ *   FR-06 tone        -> POST /api/draft {tone}  built, on the draft panel
+ *   FR-07 translate   -> not implemented in this build
  */
 // Sidebar destinations. Summarise, Read Aloud and Draft Reply are not here:
 // they act on an open message and live on the reading pane. Tone is on the
-// draft. Translation (FR-07) is out of scope.
+// draft. Translation (FR-07) is not implemented.
 export const FEATURES = [
   { id: "inbox", label: "Inbox", icon: Inbox, group: "main" },
   { id: "voice", label: "Voice Commands", icon: Mic, group: "voice", desc: "Control your inbox hands-free with your voice." },

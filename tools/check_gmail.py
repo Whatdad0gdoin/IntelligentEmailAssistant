@@ -2,6 +2,9 @@
 
     python tools/check_gmail.py
 
+Checks the IMAP fallback (EMAIL_SOURCE=gmail_imap). For the recommended Gmail
+API source use `python -m backend.scripts.gmail_auth --check` instead.
+
 Reads backend/.env, connects exactly the way GmailImapSource does, and prints
 what it can see. It exists because every setup failure here looks identical
 from the browser -- an empty inbox with a red banner -- while the actual causes
@@ -85,7 +88,7 @@ def main():
         print(f"    ... and {len(emails) - PREVIEW} more")
 
     print("")
-    print("Set EMAIL_SOURCE=gmail in backend/.env and restart the backend to use it.")
+    print("Set EMAIL_SOURCE=gmail_imap in backend/.env and restart the backend to use it.")
     return 0
 
 

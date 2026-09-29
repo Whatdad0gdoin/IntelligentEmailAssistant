@@ -29,3 +29,7 @@ eval/data/interim/
 # messages someone sent while testing; not project source.
 backend/mailbox/
 .logs/
+
+# OAuth client file and token for the Gmail API source. The token is a live,
+# refreshable credential for someone's mailbox.
+backend/secrets/

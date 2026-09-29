@@ -3,7 +3,7 @@
 Rebuild everything with:
 
 ```bash
-python -m eval.build_dataset --enron --huggingface --merge --per-category 120
+python -m eval.build_dataset --enron --merge --per-category 120
 ```
 
 ## Schema
@@ -36,27 +36,29 @@ reader of the report needs to see. Always report accuracy **broken down by
 
 | Provenance | Source | Licence | Status |
 |---|---|---|---|
-| `enron` | [CMU Enron corpus](https://www.cs.cmu.edu/~enron/), 517k messages | Public, research use | **Built** - 120 rows, **Work only** |
-| `huggingface` | [jason23322/high-accuracy-email-classifier](https://huggingface.co/datasets/jason23322/high-accuracy-email-classifier) | Apache-2.0 | **Built** - 120 rows (Promotions only) |
+| `enron` | [CMU Enron corpus](https://www.cs.cmu.edu/~enron/), 517k messages | Public, research use | **Built** - 360 rows: Work, Personal, Promotions |
 | `generated` | Produced by the project's own orchestrator | n/a | **Built** - 120 rows (Studies only) |
+| `huggingface` | [jason23322/high-accuracy-email-classifier](https://huggingface.co/datasets/jason23322/high-accuracy-email-classifier) | Apache-2.0 | **No longer used** - replaced by real Enron Promotions; see the analysis below for why |
 
-Current merged set: **360 rows across three of the four classes**, 120 per class:
+Current merged set: **480 rows, all four classes, 120 per class**:
 
-| provenance | text_origin | category | rows |
-|---|---|---|---|
-| `enron` | real | Work | 120 |
-| `huggingface` | synthetic | Promotions | 120 |
-| `generated` | synthetic | Studies | 120 |
-| — | — | **Personal** | **0 — no source** |
+| provenance | text_origin | category | label_source | rows |
+|---|---|---|---|---|
+| `enron` | real | Work | `folder_heuristic` | 120 |
+| `enron` | real | Personal | `human` | 120 |
+| `enron` | real | Promotions | `human` | 120 |
+| `generated` | synthetic | Studies | `generation_prompt` | 120 |
 
-**120 real / 240 synthetic.** Report accuracy split on `text_origin`, never pooled.
+**360 real / 120 synthetic.** Report accuracy split on `text_origin`, never
+pooled: `eval/BENCHMARKS.md` records 78.1% on real email against 98.4% on
+synthetic, so a pooled figure is partly the model telling real mail from
+model-written mail, which is not what FR-02 asks.
 
-> **Personal has no data.** Enron's Personal rows were removed (see below) and
-> nothing has replaced them. Any classification evaluation run today covers
-> three classes; a four-class accuracy figure cannot be computed from this set,
-> and a three-class figure must say which class is missing. The classifier
-> still *emits* Personal -- it is in the schema enum -- so Personal predictions
-> on this set are unscoreable rather than wrong.
+> **Class and `text_origin` are perfectly confounded.** Studies is the only
+> generated class and the only one no real corpus supplies. Any comparison
+> between Studies and the rest is therefore also a comparison between synthetic
+> and real text, and neither effect can be separated from the other on this
+> set. State that wherever a per-class figure is quoted.
 
 Raw archives live in `raw/` and are gitignored (the Enron tarball is 443 MB).
 The curated CSVs are committed.
@@ -154,13 +156,13 @@ airline fare alerts, credit card offers, loan and pharmaceutical spam, job
 board newsletters, industry price bulletins. 120 are staged in
 `review_promotions.csv`.
 
-Replacing the synthetic HuggingFace class with these would move the merged set
-from 120 real / 240 synthetic to roughly **360 real / 120 synthetic**, and
-would make the Week 11 deck's "Real emails. Not AI testing AI." claim
-defensible for three classes instead of one. Studies would remain the only
-generated class -- which is the position the slide actually argued for.
+**This has since been done.** The synthetic HuggingFace class was replaced by
+these real messages, moving the merged set from 120 real / 240 synthetic to
+**360 real / 120 synthetic**. The Week 11 deck's "Real emails. Not AI testing
+AI." claim is now defensible for three of the four classes, with Studies the
+only generated one -- the position the slide actually argued for.
 
-Note Promotions has no rejection margin: it lands on exactly 120.
+Promotions had no rejection margin: it landed on exactly 120.
 
 
 ## The HuggingFace corpus is synthetic, not real mail

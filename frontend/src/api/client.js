@@ -15,6 +15,12 @@
 
 const BASE = import.meta.env.VITE_API_BASE ?? "";
 
+// Every request is bounded. Without this a request that never settles leaves
+// the button spinning forever with nothing to tell the user. 45s is generous
+// for a model call -- drafting a reply normally takes one to two seconds -- so
+// hitting it means something is genuinely wrong rather than merely slow.
+const TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 45000);
+
 let authToken = null;
 let unauthorizedHandler = null;
 
@@ -43,22 +49,69 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, { method = "GET", body, signal, isAuthAttempt = false } = {}) {
+async function request(path, { method = "GET", body, signal, isAuthAttempt = false,
+                              timeoutMs = TIMEOUT_MS } = {}) {
   const headers = { Accept: "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
+
+  // A flag rather than inspecting the abort reason: reason support varies
+  // across browsers, and getting this wrong means reporting the wrong cause.
+  let timedOut = false;
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  // A caller-supplied signal (a component unmounting, say) must still work, so
+  // it is chained onto ours rather than replacing it.
+  if (signal) {
+    if (signal.aborted) controller.abort();
+    else signal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+
+  // Serialised before the try, so a body that cannot be encoded is reported as
+  // what it is -- a bug in the caller -- rather than being swallowed by the
+  // network branch below and blamed on the backend.
+  let encodedBody;
+  try {
+    encodedBody = body === undefined ? undefined : JSON.stringify(body);
+  } catch (cause) {
+    clearTimeout(timer);
+    throw new ApiError(
+      `Could not encode the request to ${path}. This is a bug in the app, not a server problem.`,
+      0,
+      { cause }
+    );
+  }
 
   let response;
   try {
     response = await fetch(`${BASE}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-      signal,
+      body: encodedBody,
+      signal: controller.signal,
     });
   } catch (cause) {
-    // fetch only rejects on network failure, not on HTTP error status.
+    // fetch rejects on network failure and on abort, never on HTTP status.
+    // These are three different problems and deserve three different answers:
+    // "the backend is down" sent us looking for a dead server when the real
+    // cause was a request that never came back.
+    if (timedOut) {
+      throw new ApiError(
+        `The server took longer than ${Math.round(timeoutMs / 1000)} seconds to respond. It may still be working - try again.`,
+        408,
+        { cause }
+      );
+    }
+    if (signal && signal.aborted) {
+      throw new ApiError("Request cancelled.", 0, { cause });
+    }
     throw new ApiError("Could not reach the server. Is the backend running?", 0, { cause });
+  } finally {
+    clearTimeout(timer);
   }
 
   // A 401 means two different things depending on where it came from, and
@@ -138,8 +191,11 @@ export async function draft(emailId, instruction, tone, { signal } = {}) {
   const body = { email_id: emailId };
   if (instruction && instruction.trim()) body.instruction = instruction.trim();
   // Omitted rather than sent as "neutral" when unset, so the request stays
-  // identical to what callers sent before tone existed.
-  if (tone && tone !== "neutral") body.tone = tone;
+  // identical to what callers sent before tone existed. Non-strings are
+  // dropped: a handler wired as onClick={runDraft} passes a click event here,
+  // and an unserialisable object in the body surfaces as "could not reach the
+  // server", which points at the wrong tier entirely.
+  if (typeof tone === "string" && tone && tone !== "neutral") body.tone = tone;
   return request("/api/draft", { method: "POST", body, signal });
 }
 
