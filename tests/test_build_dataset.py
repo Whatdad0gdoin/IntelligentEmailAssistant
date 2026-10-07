@@ -110,16 +110,22 @@ def test_an_unbalanced_dataset_needs_an_explicit_flag(data_dir):
 
 
 def test_the_documented_rebuild_reproduces_the_committed_dataset(data_dir):
-    """`python -m eval.build_dataset --merge --per-class 94` (eval/data/README.md)
-    must rebuild exactly the dataset every benchmark since run 10 used."""
+    """`python -m eval.build_dataset --merge --per-class <n>` (eval/data/README.md)
+    must rebuild exactly the committed dataset from the committed sources. The
+    class size is read from the committed set, so growing it (94 -> 100 for
+    DR-01) keeps this test meaningful instead of breaking it."""
     for name in ("real_enron.csv", "real_huggingface.csv", "generated.csv"):
         source = os.path.join(DATA, name)
         if os.path.exists(source):
             shutil.copy(source, data_dir / name)
-    build_dataset.merge(per_class=94)
-    with open(data_dir / "dataset.csv", encoding="utf-8") as f:
-        rebuilt = list(csv.DictReader(f))
     with open(os.path.join(DATA, "dataset.csv"), encoding="utf-8") as f:
         committed = list(csv.DictReader(f))
+    sizes = {}
+    for row in committed:
+        sizes[row["category"]] = sizes.get(row["category"], 0) + 1
+    assert len(set(sizes.values())) == 1, f"the committed set is not balanced: {sizes}"
+    build_dataset.merge(per_class=next(iter(sizes.values())))
+    with open(data_dir / "dataset.csv", encoding="utf-8") as f:
+        rebuilt = list(csv.DictReader(f))
     assert sorted(r["id"] for r in rebuilt) == sorted(r["id"] for r in committed)
     assert {r["id"]: r["category"] for r in rebuilt} == {r["id"]: r["category"] for r in committed}

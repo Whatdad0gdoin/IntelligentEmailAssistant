@@ -138,7 +138,25 @@ def _has_verdicts(path):
         return any((r.get("verified") or "").strip() for r in csv.DictReader(f))
 
 
-def build(category, source="candidates", out=None, force=False):
+def _already_in_dataset():
+    """Ids and source refs of every row real_enron.csv already holds."""
+    if not os.path.exists(ENRON_PATH):
+        return set(), set()
+    with open(ENRON_PATH, encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    return {r["id"] for r in rows}, {r["source_ref"] for r in rows if r.get("source_ref")}
+
+
+def build(category, source="candidates", out=None, force=False, limit=None):
+    """Write a review file of pool candidates proposed as `category`.
+
+    `limit` stops after that many rows, in pool order -- an order that says
+    nothing about the email -- so a small target (six more Work rows) means
+    reading a short file rather than every candidate the pool proposes; --apply
+    needs every row in the file decided. A candidate real_enron.csv already
+    holds, by id or as the same message, is not offered again, so a second
+    batch continues where the first left off.
+    """
     path = out or review_path(category)
     # review_work.csv is also the only record of the 120 Work decisions people
     # already made. Rebuilding over it silently would erase that record, so a
@@ -156,8 +174,13 @@ def build(category, source="candidates", out=None, force=False):
     family_cap = MAX_PER_SUBJECT_FAMILY.get(category, DEFAULT_FAMILY_CAP)
     selected, per_sender, dropped_cap = [], {}, 0
     per_family, dropped_family = {}, 0
+    # The enron source re-reviews rows that are in the dataset by definition.
+    have_ids, have_refs = _already_in_dataset() if source != "enron" else (set(), set())
+    already = 0
 
     for row in sorted(rows):
+        if limit and len(selected) >= limit:
+            break
         candidate = rows[row]
         label = labels.get(candidate["id"])
         if label is None:
@@ -169,6 +192,9 @@ def build(category, source="candidates", out=None, force=False):
         # sampling a large pool and would silently drop rows here.
         if source != "enron":
             if label_category != category:
+                continue
+            if candidate["id"] in have_ids or candidate.get("source_ref") in have_refs:
+                already += 1
                 continue
             sender = candidate["sender"].split("<")[-1].strip("<> ").lower()
             if per_sender.get(sender, 0) >= cap:
@@ -210,6 +236,10 @@ def build(category, source="candidates", out=None, force=False):
     print(f"  {unusable} excluded as unusable (header dumps, bounces, empty forwards)")
     print(f"  {dropped_cap} dropped by the per-sender cap of {cap}, "
           f"{dropped_family} by the subject-family cap of {family_cap}")
+    if already:
+        print(f"  {already} not offered again: already in real_enron.csv")
+    if limit and len(selected) >= limit:
+        print(f"  stopped at --limit {limit}")
     print(f"  wrote {len(selected)} {category} rows -> {os.path.relpath(path, ROOT)}")
     print(f"  {weak} marked weak -- read those first")
     print(f"  distinct senders: {len(per_sender)}")
@@ -335,9 +365,13 @@ def main():
                         help="--apply: read verdicts from this file")
     parser.add_argument("--force", action="store_true",
                         help="--build: overwrite a review file that already holds verdicts")
+    parser.add_argument("--limit", type=int, default=None,
+                        help="--build: write only the first N candidates, in pool order")
     args = parser.parse_args()
+    if args.limit is not None and args.limit < 1:
+        parser.error("--limit must be at least 1")
     if args.build:
-        build(args.category, args.source, out=args.out, force=args.force)
+        build(args.category, args.source, out=args.out, force=args.force, limit=args.limit)
     elif args.apply:
         apply(args.category, args.source, review_file=args.review_file)
     else:

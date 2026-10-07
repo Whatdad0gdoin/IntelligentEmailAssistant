@@ -19,9 +19,9 @@ Measured with the shipped configuration (`gpt-4o-mini`, as set in
 
 | Requirement | Metric | Result |
 |---|---|---|
-| **FR-02** categorisation | strict accuracy, Review counted as wrong (test split, n=215) | **91.6%** |
-| | — over the emails it answered (coverage 99.5%) | 92.1% |
-| | — on real email only, strict (n=161) | **89.4%** |
+| **FR-02** categorisation | strict accuracy, Review counted as wrong (test split, n=226) | **89.8%** |
+| | — over the emails it answered (coverage 99.1%) | 90.6% |
+| | — on real email only, strict (n=168) | **86.9%** |
 | | — on a holdout nobody had scored, strict (n=123, run 11 settings) | **87.0%** |
 | **FR-01** summarisation | groundedness rate | **93.0%** |
 | **FR-03** draft reply | groundedness rate | **97.4%** |
@@ -29,8 +29,8 @@ Measured with the shipped configuration (`gpt-4o-mini`, as set in
 | | — wrong action dispatched | **0 of 180** attempts |
 | **NFR-01** latency | cold inbox load, 25 emails, 8 loads | **median 2.0 s, worst 2.7 s** — all under 5 s |
 
-The FR-02 figures are **run 12**, and recompute from
-`eval/data/test_preds_run12.csv`; the holdout figure recomputes from
+The FR-02 figures are **run 13**, measured on the 400-email set, and recompute
+from `eval/data/test_preds_run13.csv`; the holdout figure recomputes from
 `eval/data/holdout_preds_per_email.csv`. **Strict accuracy is quoted first**
 because it is the figure a marker can hold against the 80% target without
 asking what happened to the emails the classifier declined: Review counts as a
@@ -40,7 +40,7 @@ email — were accuracy over answered emails only. Counted strictly, run 10 was
 gap was classifying one email per call: see
 [One email per call](#one-email-per-call-runs-11-and-12).
 
-Runs 10–12 are measured against the corrected labels. Runs 1-9 were
+Runs 10–13 are measured against the corrected labels. Runs 1-9 were
 measured against the earlier 480-row set, whose Work class was labelled by
 folder name and was wrong on 27 of 120 rows. Those runs remain valid history
 and the comparisons between them still hold, because each compares like with
@@ -67,19 +67,21 @@ transcripts still cannot establish 90% with confidence.
 
 ## The dataset these run against
 
-`eval/data/dataset.csv` — 376 rows, balanced 94 per class.
+`eval/data/dataset.csv` — 400 rows, balanced 100 per class: DR-01's size.
 
 | | rows |
 |---|---|
-| Work / Personal / Promotions / Studies | 94 each |
-| **real** email text | **282** |
-| synthetic email text | 94 |
-| `label_source = human` (verified row by row) | 282 |
-| `label_source = generation_prompt` | 94 |
+| Work / Personal / Promotions / Studies | 100 each |
+| **real** email text | **300** |
+| synthetic email text (Studies, the class no real corpus supplies) | 100 |
+| `label_source = human` (verified row by row) | 300 |
+| `label_source = generation_prompt` | 100 |
 
-Split for tuning: **dev 161 / test 215**, assigned deterministically by hashing
+Split for tuning: **dev 174 / test 226**, assigned deterministically by hashing
 the row id (40% dev). Every prompt and model choice below was made on dev. The
-reported figure was measured on test.
+reported figure was measured on test. Runs 10–12 used the 376-row set (94 per
+class, dev 161 / test 215) that preceded it; see
+[Growing the set to 400](#growing-the-set-to-400-run-13).
 
 **Every label on a real email is now human-verified.** `folder_heuristic` is
 gone: the Work class was read row by row and 27 of its 120 rows were not Work
@@ -130,7 +132,8 @@ python -m eval.evaluate_classifier --split test         # reported figure
 | 9 | gpt-4o-mini | repeat of run 8, unchanged | test | 266 | 92.1% | 83.3% | 76.7% | 0.793 |
 | 10 | gpt-4o-mini | corrected labels, 94/class | test | 215 | 92.1% | 83.8% | 77.2% | 0.802 |
 | 11 | gpt-4o-mini | one email per call (`CLASSIFY_BATCH_SIZE=1`) | test | 215 | 97.7% | 92.9% | 90.7% | 0.918 |
-| **12** | **gpt-4o-mini** | **+ image alt text, HTML fallback, footer rule, spam sentence — the quoted run** | **test** | **215** | **99.5%** | **92.1%** | **91.6%** | **0.917** |
+| 12 | gpt-4o-mini | + image alt text, HTML fallback, footer rule, spam sentence | test | 215 | 99.5% | 92.1% | 91.6% | 0.917 |
+| **13** | **gpt-4o-mini** | **same configuration; the set grown to 400 — the quoted run** | **test** | **226** | **99.1%** | **90.6%** | **89.8%** | **0.902** |
 
 Run 8 stays in the table because it happened and because the variance section
 below needs both halves of the pair. It is no longer the run quoted, for one
@@ -145,7 +148,8 @@ model, prompt, rows and batch size, and it has a committed file behind it.
 | `eval/data/test_preds.csv` | 7 | 89.1% / 86.9% / 77.4% / 0.814 |
 | `eval/data/test_preds_mini.csv` | 10 | 92.1% / 83.8% / 77.2% / 0.802 |
 | `eval/data/test_preds_run11_per_email.csv` | 11 | 97.7% / 92.9% / 90.7% / 0.918 |
-| `eval/data/test_preds_run12.csv` | **12** | 99.5% / 92.1% / 91.6% / 0.917 |
+| `eval/data/test_preds_run12.csv` | 12 | 99.5% / 92.1% / 91.6% / 0.917 |
+| `eval/data/test_preds_run13.csv` | **13** | 99.1% / 90.6% / 89.8% / 0.902 |
 | `eval/data/holdout_preds_per_email.csv` | holdout, one email per call | 96.7% / 89.9% / 87.0% / 0.894 |
 | `eval/data/holdout_preds_batch20.csv` | holdout, 20 per call | 82.9% / 76.5% / 63.4% / 0.733 |
 | `eval/data/dev_preds.csv` | none — see below | 82.2% / 78.4% / 64.5% / 0.681 |
@@ -157,11 +161,11 @@ with no model call:
 python - <<'PY'
 import csv
 from eval.evaluate_classifier import _score          # the same scoring code the run used
-rows = list(csv.DictReader(open("eval/data/test_preds_run12.csv", encoding="utf-8")))
+rows = list(csv.DictReader(open("eval/data/test_preds_run13.csv", encoding="utf-8")))
 m = _score([(r["expected"], r["predicted"]) for r in rows])
 print(f"{m['coverage']:.1%} / {m['accuracy']:.1%} / {m['strict']:.1%} / {m['macro_f1']:.3f}")
 PY
-# 99.5% / 92.1% / 91.6% / 0.917
+# 99.1% / 90.6% / 89.8% / 0.902
 ```
 
 From run 11 on, every row of `--out` also records the model and the batch
@@ -275,6 +279,11 @@ at the same size, on fresh data.** The holdout is harder than the test split
 for both settings and lacks a Work class, so compare its two rows with each
 other, not with run 11.
 
+Since then, the 100-per-class merge moved 17 of those 123 rows into the dataset
+(6 Personal, 5 Promotions, 6 Studies), so `holdout_unscored.csv` now holds the
+other 106. The two prediction files keep all 123, so the table above still
+recomputes.
+
 What it costs: the instructions are sent with every email rather than once per
 20, so classification rises from US$0.06 to US$0.15 per 1,000 emails at
 gpt-4o-mini prices (measured in `eval/data/compare/REPORT.md`), and a cold
@@ -284,41 +293,62 @@ per-session request cap still counts one unit per 20 emails, so a cold load
 uses the same allowance as before. `CLASSIFY_BATCH_SIZE=20` restores the batched
 design; nothing else needs to change with it.
 
-### Shipped-configuration detail (run 12, test split, gpt-4o-mini)
+### Growing the set to 400 (run 13)
 
-Every table in this section recomputes from `eval/data/test_preds_run12.csv`.
+DR-01 asks for 400 emails, 100 per class. Twelve more Work emails from the mined
+Enron pool were read and confirmed by a person (2026-10-08), and the set was
+rebuilt with `--merge --per-class 100`. Within a class, rows of equal quality
+are kept in id order, so Work — now 106 verified rows — kept its 100 lowest ids:
+the 12 new rows came in and 6 earlier ones fell out. The other classes took
+their next 6 rows, 17 of them from the holdout. In all, 30 rows were added, 6
+removed, and none relabelled. Run 13 is the shipped configuration, unchanged,
+on the new test split.
+
+**The classifier did not change; the test rows did.** On the 210 test rows the
+two splits share, run 12 scored 91.4% strict and run 13 91.0% — one row apart
+(p = 1). The headline fell from 91.6% to 89.8% because the merge took out 5 test
+rows run 12 had right, all Work, and brought in 16, of which run 13 gets 12. Two
+of the four it misses are new Work mail that reads like Personal: a résumé
+("jpk's resume") and a short "Re: Hey". The new rows are harder, not the model
+worse — and the 89.8% describes the set DR-01 asks for.
+
+### Shipped-configuration detail (run 13, test split, gpt-4o-mini)
+
+Every table in this section recomputes from `eval/data/test_preds_run13.csv`.
 
 ```
-n=215   coverage 99.5%   accuracy 92.1%   strict 91.6%   macro-F1 0.917
+n=226   coverage 99.1%   accuracy 90.6%   strict 89.8%   macro-F1 0.902
 ```
 
 Per class, over covered rows:
 
 | Class | Precision | Recall | F1 |
 |---|---|---|---|
-| Work | 96.6% | 86.2% | 0.911 |
-| Personal | 86.0% | 89.6% | 0.878 |
-| Promotions | 88.2% | 93.8% | 0.909 |
-| Studies | 96.4% | 98.1% | 0.972 |
+| Work | 94.7% | 81.8% | 0.878 |
+| Personal | 81.8% | 86.5% | 0.841 |
+| Promotions | 88.7% | 94.0% | 0.913 |
+| Studies | 96.6% | 98.3% | 0.974 |
 
 Confusion matrix (rows = true label):
 
 | | Work | Personal | Promotions | Studies | Review |
 |---|---|---|---|---|---|
-| **Work** | 56 | 5 | 4 | 0 | 0 |
-| **Personal** | 1 | 43 | 2 | 1 | 1 |
-| **Promotions** | 0 | 2 | 45 | 1 | 0 |
-| **Studies** | 1 | 0 | 0 | 53 | 0 |
+| **Work** | 54 | 8 | 4 | 0 | 0 |
+| **Personal** | 2 | 45 | 2 | 1 | 2 |
+| **Promotions** | 0 | 2 | 47 | 1 | 0 |
+| **Studies** | 1 | 0 | 0 | 57 | 0 |
 
-Most of what remains is Work read as Personal (5) or as Promotions (4): Work
-precision is now the highest of the four classes and its recall the lowest.
+Most of what remains is Work read as Personal (8) or as Promotions (4): Work
+precision is the second highest of the four classes and its recall the lowest.
+The Work/Personal boundary — recruiting mail, colleagues writing about life
+outside work — is where the errors are.
 
 **Broken down — do not quote the pooled figure alone:**
 
 | Group | n | Coverage | Accuracy | Strict | Macro-F1 |
 |---|---|---|---|---|---|
-| real text (Enron), all `human` labels | 161 | 99.4% | 90.0% | **89.4%** | 0.902 |
-| synthetic text (`generation_prompt`) | 54 | 100.0% | 98.1% | 98.1% | 0.991 |
+| real text (Enron), all `human` labels | 168 | 98.8% | 88.0% | **86.9%** | 0.880 |
+| synthetic text (`generation_prompt`) | 58 | 100.0% | 98.3% | 98.3% | 0.991 |
 
 The `label_source` split is no longer a separate table: every real row is now
 `human` and every synthetic row is `generation_prompt`, so it carries exactly
@@ -329,7 +359,7 @@ the model identifies it far more easily than the rest. Part of any pooled
 number is therefore the model telling real mail from model-written mail, which
 is not FR-02.
 
-**If one categorisation figure goes on the slide, use 89.4% strict on real
+**If one categorisation figure goes on the slide, use 86.9% strict on real
 email** — Review counted as a miss, synthetic Studies mail left out. It comes
 from the same file as everything else in this section, so it is reproducible
 on the same command. If a second figure fits, it is the holdout's 83.5% strict

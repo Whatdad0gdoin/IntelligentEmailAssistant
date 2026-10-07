@@ -66,50 +66,6 @@ question.
 
 ---
 
-### 16. Six more verified Work rows, for DR-01's 400 — about 2 hours
-
-DR-01 asks for 400 emails, 100 per class. The set has 376, 94 per class, because
-the Work relabel found 27 of 120 folder-labelled rows were not Work and the set
-was rebalanced rather than topped up with unverified rows. Six more verified
-Work rows make 100 per class; the other classes already have verified rows to
-spare. 228 Work candidates exist.
-
-```bash
-python -m eval.label_candidates --build --category Work --source enron --out eval/data/review_work_new.csv
-python -m eval.review_cli --category Work --file eval/data/review_work_new.csv
-python -m eval.label_candidates --apply --category Work --review-file eval/data/review_work_new.csv
-python -m eval.build_dataset --merge --per-class 100
-```
-
-`--build` refuses to overwrite a review file that already holds verdicts, and
-`--apply` skips a candidate that is the same message as a row already in the
-set. **A model must not do the reading**: the proposals come from a language
-model, and promoting them without a human read makes the evaluation circular.
-
-**Done when:** the merge writes 400 rows, the test split is run once and
-recorded as a new run in `eval/BENCHMARKS.md`, and the rows the merge took are
-dropped from `holdout_unscored.csv` (see `eval/data/README.md`).
-
----
-
-### 17. A second, blind annotator — about 1 hour
-
-382 of the first 383 verdicts accepted the model's proposed label unchanged, on a
-tool that showed the proposal before asking. That is what anchoring looks like.
-
-```bash
-python -m eval.review_cli --category Work --file eval/data/review_work.csv --blind --annotator <name>
-python -m eval.review_cli --category Work --file eval/data/review_work.csv --agreement --annotator <name>
-```
-
-`--blind` hides the proposal, the folder and the model's reason and writes to a
-column of its own; `--agreement` reports raw agreement and Cohen's kappa.
-
-**Done when:** a teammate who did not do the first pass has read at least 50
-rows blind, and the kappa is written into `eval/data/README.md`.
-
----
-
 ### 4. Decide FR-07 (translation) — a decision, not a task
 
 In the RTM at LOW priority. Not implemented: no route, no prompt, no schema, no
@@ -129,7 +85,7 @@ wireframes. Pick one before the demo and the report.
 
 ---
 
-### 18. Attachment text in summaries — a decision
+### 17. Attachment text in summaries — a decision
 
 Attachments are now listed — name, type and size — and their content still
 never reaches a body, a summary or a model. Reading PDF text for summaries would
@@ -148,7 +104,7 @@ changes. Run `git rm --cached .vscode/settings.json` and commit.
 
 ---
 
-### 19. The IMAP source still downloads every attachment — half a day
+### 18. The IMAP source still downloads every attachment — half a day
 
 `backend/adapters/gmail_source.py` fetches `BODY.PEEK[]`, every byte of every
 attachment, to list names and sizes. The Gmail API source no longer does: it
@@ -159,7 +115,7 @@ docstring.
 
 ---
 
-### 20. Seven misheard names still resolve to nothing
+### 19. Seven misheard names still resolve to nothing
 
 `tests/test_voice_resolver.py` pins 16 realistic mishearings ("sara",
 "git hub", "fit three one six four"). Joining split words rescued five; 9 now
@@ -169,7 +125,7 @@ reference makes the UI ask, so this is a convenience gap, not an error.
 
 ---
 
-### 21. The 0.7 confidence threshold is calibrated for one model
+### 20. The 0.7 confidence threshold is calibrated for one model
 
 `CLASSIFY_CONFIDENCE_THRESHOLD` was tuned on gpt-4o-mini. Claude Sonnet and Opus
 send about a fifth of emails to Review at the same threshold
@@ -179,7 +135,7 @@ dev, and count misfiled emails as well as strict accuracy when choosing.
 
 ---
 
-### 22. Typed commands miss what spoken ones miss
+### 21. Typed commands miss what spoken ones miss
 
 The command bar uses the voice intent classifier, so it declines the same short
 or indirect commands ("let tom know i can make it on friday", "reply please").
@@ -203,19 +159,20 @@ re-run; the result is not kept.
 | 11 | Save `claims_checked` | `evaluate_grounding.py` writes it |
 | 12 | No React component tests | 178 frontend tests in 14 files, including component tests for the inbox, the reading pane, the voice view, the command bar and the shared intent question |
 | 13 | FR-04/05 priority | **HIGH.** The PDF draws an orange MED badge and then a red HIGH badge over the same cell; the rendered slide shows HIGH, and the README now says so |
+| 16 | DR-01's 400 emails | Twelve more Work emails read and confirmed (2026-10-08); the 100-per-class merge wrote **400 rows, 300 real**. Run 13 measures the shipped configuration on it: 89.8% strict, 86.9% on real email. The 17 holdout rows the merge took were dropped from `holdout_unscored.csv` |
 
 Found in the October review, not previously listed, and fixed:
 
 | Problem | Fix |
 |---|---|
 | Batched classification cost 13 points of strict accuracy and caused the slow cold load | One email per call (runs 11 and 12; confirmed on a holdout nobody had scored, 63.4% → 87.0% strict) |
-| FR-02's "meets 80% on real email" counted only answered emails: 73.9% strictly | Figures quoted strictly, Review counted as a miss: 89.4% on real email now |
+| FR-02's "meets 80% on real email" counted only answered emails: 73.9% strictly | Figures quoted strictly, Review counted as a miss: 86.9% on real email now (run 13, 400-email set) |
 | The README, `BENCHMARKS.md` and the dataset README contradicted the data | Brought in line |
 | The recogniser language followed the browser's UI language | en-AU by default, chosen in Settings |
 | "The latest email" picked the newest Work email | Candidates sent newest first with `received_at`, and re-sorted on the server |
 | "Processed in your browser" was inaccurate | "Our server never receives your audio" |
 | A long inbox lost its newest emails to the 100-candidate cap | The route reads up to 1,000 and keeps the newest 100 |
-| Both Gmail sources downloaded every attachment on every inbox load | The Gmail API source uses `format=full` (IMAP: item 19) |
+| Both Gmail sources downloaded every attachment on every inbox load | The Gmail API source uses `format=full` (IMAP: item 18) |
 | An attached email's text was read into the body, and so reached the model | Body walkers skip an attachment and everything inside it, on both paths |
 | Image-only marketing email cleaned to nothing | Image alt text kept; HTML used when the plain-text part cleans to nothing |
 | The preprocessor cut a marketing email at its first "unsubscribe" line | A footer phrase cuts only when what follows it is footer |

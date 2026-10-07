@@ -16,7 +16,7 @@ is one requirement nobody started, work only a person can do, and the limits of
 what each measurement can show.
 
 **FR-07 (translation) is not implemented at all.** Everything else in the table
-is built on both tiers, reachable in the browser, and measured: FR-02 at 89.4%
+is built on both tiers, reachable in the browser, and measured: FR-02 at 86.9%
 strict on real email, FR-05 at 91.7–95.0% on held-out transcripts, NFR-01 at a
 2.0 s median cold load. Where a figure still falls short of proving its
 requirement, [the list below the table](#where-this-build-falls-short-precisely)
@@ -25,7 +25,7 @@ says how.
 | ID | Requirement (RTM wording, abbreviated) | Pri | Status | Implementation, and how it is checked |
 |---|---|---|---|---|
 | FR-01 | Summarise unread emails, 2–3 sentences each | HIGH | Done | `POST /api/summarise` → `orchestrator/summarise.py`, which enforces the sentence count in Python and retries once. Rendered in place by `components/ReadingPane.jsx`, with a Verified/Unverified chip and a per-sentence "show source" that highlights the passage a sentence came from. Groundedness **93.0%** |
-| FR-02 | Auto-categorise into Work / Personal / Promotions / Studies, 80% | HIGH | Done · target met | `POST /api/classify` and `GET /api/inbox`, one email per model call, 25 at once. **91.6% on the held-out test split (n=215), 89.4% on real email only, 87.0% on a holdout no configuration had been scored on** — all strict, an email sent to Review counted as wrong. See `eval/BENCHMARKS.md` |
+| FR-02 | Auto-categorise into Work / Personal / Promotions / Studies, 80% | HIGH | Done · target met | `POST /api/classify` and `GET /api/inbox`, one email per model call, 25 at once. **89.8% on the held-out test split (n=226), 86.9% on real email only, 87.0% on a holdout no configuration had been scored on** — all strict, an email sent to Review counted as wrong. See `eval/BENCHMARKS.md` |
 | FR-03 | Draft a reply; editable area; not sent without explicit approval | HIGH | Done | `POST /api/draft` returns text and nothing else. The draft lands in an editable textarea with an **Approve** button; approval marks the text reviewed and stops there. There is no send route and no mail-sending library in the backend, both asserted by `tests/test_draft.py`. Groundedness **97.4%** |
 | FR-04 | Read summaries aloud via Web Speech API ("Read Aloud") | HIGH¹ | Done | `hooks/useSpeech.jsx`, browser-side only, no backend. Reads the *summary* sentences, never the raw body; fetches a summary first if none exists yet, so the button cannot read email text. The control is hidden outright when the browser has no `speechSynthesis` |
 | FR-05 | Accept spoken voice commands; classify intent | HIGH¹ | Done · criterion met on held-out transcripts | `views/Voice.jsx` (spoken; only the transcript reaches our server; recognition language en-AU by default, chosen in Settings) and `components/CommandBar.jsx` (typed, shown in every browser) → `POST /api/voice/intent`. Below the confidence floor both show the command back and ask (`components/IntentChoice.jsx`, shared) rather than guessing. **91.7–95.0% on 60 held-out transcripts over three runs, no wrong dispatch in 180**; the earlier prompt scored 86.7% on the original 30. See `eval/BENCHMARKS.md` |
@@ -37,7 +37,7 @@ says how.
 | NFR-03 | Email content not stored permanently; no body data between calls | HIGH | Done | Bodies are fetched per request, preprocessed in memory and dropped; the cache holds model output only; logs carry character counts rather than content. `tests/test_no_body_in_logs.py` runs a full session against a real log file on disk and greps it |
 | NFR-04 | Login required before email data or assistant features | HIGH | Done | One fail-closed `before_request` guard with a two-entry public allowlist. `tests/test_auth.py` enumerates the URL map rather than listing routes by hand, so it covers all seven protected routes and picked up `/api/metrics` the moment that was registered, with no change to the test |
 | SR-01 | Voice restricted to Chrome/Edge; notify on unsupported browsers | MED | Done | `lib/capabilities.js` reads `speechSynthesis` and `SpeechRecognition` once at load. Without STT the Voice destination is removed rather than shown as a dead end; without TTS the Read Aloud button is not rendered; a persistent, non-blocking notice says which one is missing. Every voice action is also a button, and every voice command can also be typed into the command bar, which needs no speech support |
-| DR-01 | Labelled dataset of 400 emails, 100 per category | MED | Done · 376 of 400 | `eval/data/dataset.csv`: **376 rows, 94 per class, 282 real / 94 synthetic, every real label read and verified by a person**. It was 480; reading the folder-labelled Work rows found 27 of 120 were not Work, and the set was rebalanced rather than topped up with unverified rows. The RTM asks for an AI-generated set; the Week 11 dataset slide asks for real mail. The slide won — generation fills Studies only, the class no real corpus covers. See below |
+| DR-01 | Labelled dataset of 400 emails, 100 per category | MED | Done | `eval/data/dataset.csv`: **400 rows, 100 per class, 300 real / 100 synthetic, every real label read and verified by a person**. It was 480; reading the folder-labelled Work rows found 27 of 120 were not Work, so the set was rebalanced to 94 per class rather than topped up with unverified rows, then brought to 100 with twelve more Work emails read and confirmed. The RTM asks for an AI-generated set; the Week 11 dataset slide asks for real mail. The slide won — generation fills Studies only, the class no real corpus covers. See below |
 | DR-02 | Labelled set as ground truth: accuracy, precision, recall, F1, matrix | MED | Done | `eval/evaluate_classifier.py` prints coverage, accuracy and strict accuracy, per-class precision/recall/F1, macro-F1 and a confusion matrix. Every run is logged in `eval/BENCHMARKS.md` |
 
 ¹ The RTM slide's PDF draws an orange `MED` badge and then a red `HIGH` badge
@@ -49,8 +49,8 @@ over the same cell for FR-04 and FR-05, so text extraction reads both
 - **FR-07 is not implemented at all.** It is LOW priority in the RTM and was
   not attempted. Nothing partial exists to describe.
 - **FR-02's figure is quoted strictly, and on real email.** Counting Review as
-  a miss, the shipped configuration scores 89.4% on real email and 98.1% on the
-  synthetic Studies mail, so the pooled 91.6% partly measures the model telling
+  a miss, the shipped configuration scores 86.9% on real email and 98.3% on the
+  synthetic Studies mail, so the pooled 89.8% partly measures the model telling
   real mail from model-written mail, which is not FR-02. Before the switch to
   one email per call, the same count on real email was 73.9% — below target —
   and the 81.5% then quoted left the abstentions out.
@@ -63,14 +63,10 @@ over the same cell for FR-04 and FR-05, so text extraction reads both
   browser and the mail source's own fetch time, and the first load after a
   server start is slower (4.2 s) because it also opens the connections later
   loads reuse.
-- **DR-01 is 376 emails, not 400.** Six more human-verified Work rows reach 100
-  per class (`python -m eval.review_cli`, then
-  `python -m eval.build_dataset --merge --per-class 100`); 228 Work candidates
-  are waiting.
-- **Every label has one annotator.** 382 of the first 383 verdicts accepted the
-  model's proposal, which looks like anchoring. `eval.review_cli --blind` gives
-  a second person a read without the proposal, and `--agreement` reports
-  Cohen's kappa between the two; the second read has not been done.
+- **Studies is the one synthetic class.** Work, Personal and Promotions are real
+  Enron mail, read and labelled by a person; the 100 Studies emails were
+  generated, because no real corpus supplies student mail. That is why every
+  FR-02 figure is also quoted on real email alone.
 - **The Gmail source has never touched real Gmail.** Every test runs against a
   fake service; connecting an account needs a person (`FIXES.md` item 1).
 - **Attachments are listed, never read.** Names, types and sizes reach the
@@ -403,7 +399,7 @@ not tuned against:
 
 | Requirement | Metric | Result |
 |---|---|---|
-| FR-02 categorisation | strict accuracy, Review counted as wrong (test split, n=215) | 91.6% — **89.4% on real email only** |
+| FR-02 categorisation | strict accuracy, Review counted as wrong (test split, n=226) | 89.8% — **86.9% on real email only** |
 | FR-01 summarisation | groundedness rate | 93.0% |
 | FR-03 draft reply | groundedness rate | 97.4% |
 | FR-05 voice intent | dispatch accuracy, 60 held-out transcripts, three runs | 91.7–95.0%, no wrong dispatch in 180 |
@@ -411,12 +407,13 @@ not tuned against:
 
 The tooling:
 
-- `eval/data/dataset.csv` (DR-01) - 376 rows, 94 per class, 282 real / 94
+- `eval/data/dataset.csv` (DR-01) - 400 rows, 100 per class, 300 real / 100
   synthetic, every real label verified by a person. `holdout_unscored.csv` holds
-  123 more verified rows no configuration had been scored on.
+  106 more verified rows, kept outside the set for confirming a change on data
+  nothing was tuned against.
   `eval/data/README.md` documents every column, where each class came from and
   what is wrong with it.
-- `eval/build_dataset.py` - rebuilds the set; `--merge --per-class 94`
+- `eval/build_dataset.py` - rebuilds the set; `--merge --per-class 100`
   reproduces `dataset.csv` exactly, and a merge refuses to write an unbalanced
   set.
 - `eval/evaluate_classifier.py` (FR-02, DR-02) - coverage, accuracy, strict
@@ -439,9 +436,7 @@ The tooling:
   interface; results and the report are in `eval/data/compare/`.
 - `eval/label_candidates.py`, `eval/review_labels.py`, `eval/review_cli.py` -
   the human-review path. `--apply` refuses to run until a person has confirmed
-  every row, because model labels used to grade a model are not an evaluation;
-  `review_cli --blind` and `--agreement` give a second annotator a read without
-  the model's proposal and report Cohen's kappa.
+  every row, because model labels used to grade a model are not an evaluation.
 
 **For the report, three caveats that belong in the limitations section:**
 

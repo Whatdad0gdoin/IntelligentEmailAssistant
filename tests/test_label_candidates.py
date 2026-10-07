@@ -66,7 +66,7 @@ def test_build_can_write_a_new_review_file_alongside(pool):
          [{"row": "9", "verified": "y", "proposed_category": "Work", "id": "enron-x"}])
     lc.build("Work", out=str(pool / "review_work_new.csv"))
     with open(pool / "review_work_new.csv", encoding="utf-8") as f:
-        assert {r["id"] for r in csv.DictReader(f)} == {"enron-new", "enron-dupe"}
+        assert {r["id"] for r in csv.DictReader(f)} == {"enron-new"}
 
 
 def test_build_may_replace_an_unreviewed_file(pool):
@@ -74,7 +74,44 @@ def test_build_may_replace_an_unreviewed_file(pool):
          [{"row": "9", "verified": "", "proposed_category": "Work", "id": "enron-x"}])
     lc.build("Work")
     with open(pool / "review_work.csv", encoding="utf-8") as f:
-        assert {r["id"] for r in csv.DictReader(f)} == {"enron-new", "enron-dupe"}
+        assert {r["id"] for r in csv.DictReader(f)} == {"enron-new"}
+
+
+def _more_work_candidates(pool, count):
+    """Add `count` fresh Work candidates, each from its own sender and subject."""
+    with open(pool / "personal_candidates_bodies.csv", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    with open(pool / "proposed_labels.json", encoding="utf-8") as f:
+        labels = json.load(f)
+    for i in range(count):
+        rows.append({"row": str(10 + i), "id": f"enron-more-{i}", "sender": f"s{i}@corp.com",
+                     "subject": f"Budget item {i}", "body": "Please approve.",
+                     "source_ref": f"maildir/m/inbox/{i}."})
+        labels[f"enron-more-{i}"] = ["Work", "strong", "a task"]
+    _csv(pool / "personal_candidates_bodies.csv", BODY_FIELDS, rows)
+    with open(pool / "proposed_labels.json", "w", encoding="utf-8") as f:
+        json.dump(labels, f)
+
+
+def test_limit_writes_a_short_batch_in_pool_order(pool):
+    """Six more Work rows should not mean reading every candidate the pool has:
+    --apply needs every row in the file decided."""
+    _more_work_candidates(pool, 5)
+    lc.build("Work", out=str(pool / "batch.csv"), limit=3)
+    with open(pool / "batch.csv", encoding="utf-8") as f:
+        assert [r["id"] for r in csv.DictReader(f)] == ["enron-new", "enron-more-0", "enron-more-1"]
+
+
+def test_a_candidate_already_in_the_dataset_is_not_offered_again(pool):
+    """So a second batch picks up after the first, rather than repeating it."""
+    _more_work_candidates(pool, 2)
+    with open(pool / "real_enron.csv", encoding="utf-8") as f:
+        existing = list(csv.DictReader(f))
+    existing.append({**existing[0], "id": "enron-new", "source_ref": "maildir/a/inbox/1."})
+    _csv(pool / "real_enron.csv", ENRON_FIELDS, existing)
+    lc.build("Work", out=str(pool / "batch2.csv"), limit=1)
+    with open(pool / "batch2.csv", encoding="utf-8") as f:
+        assert [r["id"] for r in csv.DictReader(f)] == ["enron-more-0"]
 
 
 def test_apply_skips_a_message_already_in_the_dataset_under_another_id(pool):
