@@ -69,6 +69,92 @@ _MIN_SUBJECT_TOKEN = 4
 # the confidently-wrong dispatch this resolver exists to avoid.
 _FUZZY_NAME_RATIO = 0.78
 
+# Recognisers also split one written token into several spoken ones: "GitHub"
+# comes back as "git hub", "Robinson" as "robin son", "FIT3164" as "fit 3164"
+# or "fit three one six four". Fuzzy matching cannot rescue these, because each
+# piece is compared on its own and "git" is nothing like "github". So the
+# resolver also tries adjacent spoken words joined together, digits said one at
+# a time glued into one number, and letters spelled one at a time glued into
+# one word -- see _spoken_forms().
+#
+# A joined form only ever counts as an EXACT match. Fuzzy-matching the joins was
+# tried and rejected: "read the one from the deals team" joins to "thedeals",
+# 0.82 similar to "techdeals", and an unrelated request went to TechDeals.
+#
+# And it counts in full for sender names, but for a subject word only when
+# that word contains a digit. Commands are made of everyday two-word phrases,
+# and many of those are one-word compounds in subject lines: "read me" joins
+# to "readme", "check out" to "checkout", "set up" to "setup". Allowed to match
+# subjects, those joins sent "read me the latest email" to a GitHub "Update
+# README.md" notification instead of the newest email. Sender names are proper
+# nouns -- the words recognisers actually split -- and no everyday phrase joins
+# into a unit code like "fit3164".
+#
+# Measured offline on 27 spoken references to an 8-email inbox
+# (tests/test_voice_resolver.py): 15 resolved before, 20 after, none to the
+# wrong email either way, and 16 references to nothing in the inbox resolve no
+# more often than before.
+
+# Digits said one at a time, so "three one six four" can meet the "3164" in a
+# unit code. "oh" is how most people say a zero inside a code.
+_SPOKEN_DIGITS = {
+    "zero": "0", "oh": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+    "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+}
+
+# Two catches "git hub"; three catches "c s 1001". Runs of digits and spelled
+# letters are glued before joining, so a long code does not need a longer join.
+_MAX_JOINED_WORDS = 3
+
+
+def _glue(tokens, belongs):
+    """Merge each run of adjacent tokens that `belongs` accepts into one."""
+    glued = []
+    run = ""
+    for token in tokens:
+        if belongs(token):
+            run += token
+            continue
+        if run:
+            glued.append(run)
+            run = ""
+        glued.append(token)
+    if run:
+        glued.append(run)
+    return glued
+
+
+def _is_spelled_letter(token):
+    return len(token) == 1 and token.isalpha()
+
+
+def _has_digit(token):
+    return any(ch.isdigit() for ch in token)
+
+
+def _spoken_forms(words):
+    """Every token one utterance's words could stand for. EXACT matching only.
+
+    The words as heard; the same words with spoken digits as digits and each
+    run of digits glued ("three one six four" -> "3164"); that again with each
+    run of spelled letters glued ("c s" -> "cs"); and, for all three, every two
+    or three adjacent words joined ("git hub" -> "github", "c s 1001" ->
+    "cs1001").
+
+    The plain words are kept alongside the digit forms rather than replaced by
+    them, so "one drive" still joins to "onedrive" and a subject word like
+    "three" still matches as itself.
+    """
+    numbered = _glue([_SPOKEN_DIGITS.get(word, word) for word in words], str.isdigit)
+    spelled = _glue(numbered, _is_spelled_letter)
+    forms = set()
+    for sequence in (words, numbered, spelled):
+        forms.update(sequence)
+        for size in range(2, _MAX_JOINED_WORDS + 1):
+            for start in range(len(sequence) - size + 1):
+                forms.add("".join(sequence[start:start + size]))
+    return forms
+
 
 def _fuzzy_hit(haystack_words, token):
     """True when some spoken word is a near miss for `token`."""
@@ -103,15 +189,26 @@ def resolve_target(reference, transcript, candidates, alternatives=None):
     They are pooled into the search text: if the top hypothesis dropped the name
     but the third one caught it, that is still the user's own speech, and using
     it beats asking them to repeat themselves.
+
+    A word the recogniser split ("git hub") is matched by joining the pieces
+    back together. That is an exact match, scored like one, and it never takes
+    part in fuzzy matching (see the note above _SPOKEN_DIGITS).
     """
     if not candidates:
         return None
 
+    segments = [reference or "", transcript or ""] + list(alternatives or [])
     spoken = " ".join([transcript or ""] + list(alternatives or []))
     haystack = _words(f"{reference or ''} {spoken}")
     if not haystack:
         return None
     haystack_set = set(haystack)
+
+    # Joined within each utterance, never across two: the last word of one
+    # hypothesis and the first word of the next were not said together.
+    joined = set()
+    for segment in segments:
+        joined |= _spoken_forms(_words(segment))
 
     scores = {}
     for candidate in candidates:
@@ -122,16 +219,21 @@ def resolve_target(reference, transcript, candidates, alternatives=None):
 
         for token in _words(candidate.get("sender_name") or ""):
             if len(token) >= _MIN_NAME_TOKEN and token not in _TITLES:
-                if _contains_word(haystack_set, token):
+                if _contains_word(haystack_set, token) or token in joined:
                     score += 3
                 elif _fuzzy_hit(haystack_set, token):
                     # Worth less than an exact match, so a clean hit on another
-                    # email still beats a near miss on this one.
+                    # email still beats a near miss on this one. Only the words
+                    # as heard are fuzzy-matched, never the joined forms.
                     score += 2
 
         for token in set(_words(candidate.get("subject") or "")):
             if len(token) >= _MIN_SUBJECT_TOKEN and token not in _SUBJECT_STOPWORDS:
-                if _contains_word(haystack_set, token):
+                # A joined form counts here only for a code with a digit in it:
+                # "read me" must not reach a subject about a README.
+                if _contains_word(haystack_set, token) or (
+                    token in joined and _has_digit(token)
+                ):
                     score += 1
 
         if score:
@@ -148,7 +250,10 @@ def resolve_target(reference, transcript, candidates, alternatives=None):
         return None
 
     if _RECENCY.search(f"{reference or ''} {spoken}"):
-        # Candidates arrive newest first (the adapter sorts them).
+        # Candidates arrive newest first. The frontend sends them in that order,
+        # and POST /api/voice/intent re-sorts them whenever the caller says when
+        # each one arrived, so this is the newest email in the mailbox -- not the
+        # newest of whichever category happened to be listed first.
         return candidates[0].get("id")
 
     return None

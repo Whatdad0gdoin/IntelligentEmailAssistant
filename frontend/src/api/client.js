@@ -202,11 +202,20 @@ export async function draft(emailId, instruction, tone, { signal } = {}) {
 /**
  * POST /api/voice/intent -> { intent, target_email_id, confidence } (FR-05)
  *
- * `intent` is one of summarise | read | draft | unknown. The audio never leaves
- * the browser: recognition happens client-side and only the transcript is sent.
+ * `intent` is one of summarise | read | draft | unknown.
  *
- * `emails` is optional context ({ id, sender_name, subject }) that lets the
- * backend resolve "the one from Sarah" onto a real id deterministically.
+ * Only the transcript is sent: our server never receives audio. The browser's
+ * own speech service may (Chrome sends it to Google unless on-device
+ * recognition is used; Edge sends it to Microsoft).
+ *
+ * `emails` is optional context ({ id, sender_name, subject, received_at }),
+ * newest first; with received_at present the backend re-sorts it, since "the
+ * latest email" resolves to the first entry. It is also what lets the backend
+ * resolve "the one from Sarah" onto a real id deterministically.
+ *
+ * The command bar makes this same call with typed text in place of a
+ * transcript (and no alternatives), so a typed command and a spoken one are
+ * interpreted identically.
  */
 export async function voiceIntent(transcript, emails = [], alternatives = [], { signal } = {}) {
   return request("/api/voice/intent", {

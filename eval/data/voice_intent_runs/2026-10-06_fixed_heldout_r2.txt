@@ -1,0 +1,218 @@
+model gpt-4o-mini, temperature 0.0, INTENT_SYSTEM sha256 c9fd6e5fbcba
+
+Graded set voice_intents_heldout.csv: summarise / read / draft (60 transcripts)
+------------------------------------------------------------------------------
+  ok    summarise  (conf 0.90)  summarise the latest one
+  ok    summarise  (conf 0.90)  please summarize the message from the recruiter
+  ok    summarise  (conf 0.90)  can you sum up the email from priya
+  ok    summarise  (conf 0.90)  um give me a summary of the bank email
+  MISS  unknown    (conf 0.50)  summarise it
+  ok    summarise  (conf 0.90)  could you summarise the gym newsletter please
+  ok    summarise  (conf 0.90)  summary of the email from professor nguyen
+  ok    summarise  (conf 0.90)  whats the email from emma about
+  ok    summarise  (conf 0.90)  what does the library one say
+  ok    summarise  (conf 0.90)  um what is the uber email saying
+  ok    summarise  (conf 0.90)  whats in the email from the dentist
+  ok    summarise  (conf 0.90)  what is the latest email about
+  ok    summarise  (conf 0.90)  what does james want in his email
+  ok    summarise  (conf 0.90)  give me the main points of the council email
+  ok    summarise  (conf 0.90)  quick rundown of the email from tom
+  ok    summarise  (conf 0.90)  key points from the canvas announcement please
+  ok    summarise  (conf 0.90)  can you give me the short version of this one
+  ok    summarise  (conf 0.90)  i dont have time to read the landlord email just summarise it
+  ok    summarise  (conf 0.90)  give me a summary of the reply from james
+  ok    summarise  (conf 0.90)  write me a short summary of the email from mum
+  ok    read       (conf 0.90)  read me the email from james
+  ok    read       (conf 0.90)  read out the newest email
+  ok    read       (conf 0.90)  could you read the bank email to me please
+  ok    read       (conf 0.90)  um read this out
+  ok    read       (conf 0.90)  read aloud whatever the council sent
+  ok    read       (conf 0.90)  read the email from the landlord
+  ok    read       (conf 0.90)  read me that summary
+  ok    read       (conf 0.90)  play it back
+  ok    read       (conf 0.90)  let me hear it
+  ok    read       (conf 0.90)  read out the summary please
+  ok    read       (conf 0.90)  can you read the summary of the gym email aloud
+  ok    read       (conf 0.90)  play the summary of the email from the recruiter
+  ok    read       (conf 0.90)  can i hear the email from priya
+  ok    read       (conf 0.90)  i want to listen to the latest email
+  ok    read       (conf 0.90)  let me listen to what emma sent
+  ok    read       (conf 0.90)  say it out loud for me
+  ok    read       (conf 0.90)  play the email from mum
+  ok    read       (conf 0.90)  i am driving can you read me the email from tom
+  ok    read       (conf 0.90)  read the reply from emma out loud
+  ok    read       (conf 0.90)  can i listen to the summary of the uber email
+  ok    draft      (conf 0.90)  reply to james
+  ok    draft      (conf 0.90)  write back to priya and say thanks
+  ok    draft      (conf 0.90)  respond to the email from the bank
+  ok    draft      (conf 0.90)  draft a response to whatever emma sent
+  ok    draft      (conf 0.90)  um can you write a reply to the dentist confirming tuesday
+  MISS  unknown    (conf 0.50)  reply please
+  ok    draft      (conf 0.90)  lets reply to the latest one
+  MISS  unknown    (conf 0.50)  help me get back to the recruiter
+  MISS  unknown    (conf 0.50)  let tom know i can make it on friday
+  ok    draft      (conf 0.90)  tell the landlord i will pay the rent on monday
+  MISS  unknown    (conf 0.20)  say yes to the dinner invite from mum
+  ok    draft      (conf 0.90)  put together a response to professor nguyen
+  ok    draft      (conf 0.90)  can you help me answer the email from the gym
+  ok    draft      (conf 0.90)  write a reply to priya summarising what we agreed
+  ok    draft      (conf 0.90)  reply to the email i just read
+  ok    draft      (conf 0.90)  answer emma and tell her i read her notes
+  ok    draft      (conf 0.90)  write back to tom thanking him for the summary
+  ok    draft      (conf 0.90)  compose a polite no to the party invite from james
+  ok    draft      (conf 0.90)  draft something for the library saying i returned the book
+  ok    draft      (conf 0.90)  respond to this one
+------------------------------------------------------------------------------
+  correct: 55/60 = 91.7%  (threshold 90%)
+  95% CI (Wilson): [81.9%, 96.4%]   one transcript = 1.7%
+
+  errors by cost to the user:
+    wrong dispatch (acted on the wrong intent)   0/60 = 0.0%
+    declined to guess (returned unknown)         5/60 = 8.3%
+
+  per intent (support = true label, predicted = times chosen):
+    intent     support  pred  precision  recall     F1
+    draft           20    16    100.0%  80.0%  0.889
+    read            20    20    100.0% 100.0%  1.000
+    summarise       20    19    100.0%  95.0%  0.974
+    unknown          0     5      0.0%      -      -
+    macro-F1 over the 3 intents present: 0.954
+
+  misclassified:
+    expected summarise  got unknown    (conf 0.50)  summarise it
+    expected draft      got unknown    (conf 0.50)  reply please
+    expected draft      got unknown    (conf 0.50)  help me get back to the recruiter
+    expected draft      got unknown    (conf 0.50)  let tom know i can make it on friday
+    expected draft      got unknown    (conf 0.20)  say yes to the dinner invite from mum
+
+  confusion (expected -> actual):
+    draft      -> draft       16
+    draft      -> unknown      4   <-- error
+    read       -> read        20
+    summarise  -> summarise   19
+    summarise  -> unknown      1   <-- error
+
+Out-of-scope probes voice_intents_heldout_unknown.csv: must return unknown (22 transcripts)
+------------------------------------------------------------------------------
+  ok    unknown    (conf 0.50)  mark this as read
+  ok    unknown    (conf 0.30)  send the summary to james
+  ok    unknown    (conf 0.00)  open my drafts folder
+  ok    unknown    (conf 0.00)  turn off read receipts
+  ok    unknown    (conf 0.20)  forward the reply from james to tom
+  ok    unknown    (conf 0.00)  delete the newsletter from the gym
+  ok    unknown    (conf 0.50)  archive everything from the council
+  ok    unknown    (conf 0.50)  translate the email from priya into english
+  ok    unknown    (conf 0.50)  search for emails from the landlord
+  ok    unknown    (conf 0.00)  schedule a meeting with tom on thursday
+  ok    unknown    (conf 0.00)  unsubscribe me from this mailing list
+  ok    unknown    (conf 0.10)  send it
+  ok    unknown    (conf 0.00)  how many unread emails do i have
+  ok    unknown    (conf 0.00)  read my calendar for tomorrow
+  ok    unknown    (conf 0.50)  remind me to reply to emma tomorrow
+  ok    unknown    (conf 0.50)  stop reading
+  ok    unknown    (conf 0.00)  play some music
+  ok    unknown    (conf 0.10)  block this sender
+  ok    unknown    (conf 0.50)  copy the summary to my clipboard
+  ok    unknown    (conf 0.00)  delete that draft
+  ok    unknown    (conf 0.50)  the email from james
+  ok    unknown    (conf 0.50)  um can you do the bank one
+------------------------------------------------------------------------------
+  correct: 22/22 = 100.0%  (threshold 0%)
+  95% CI (Wilson): [85.1%, 100.0%]   one transcript = 4.5%
+
+  errors by cost to the user:
+    wrong dispatch (acted on the wrong intent)   0/22 = 0.0%
+    declined to guess (returned unknown)         0/22 = 0.0%
+
+  per intent (support = true label, predicted = times chosen):
+    intent     support  pred  precision  recall     F1
+    unknown         22    22    100.0% 100.0%  1.000
+    macro-F1 over the 1 intents present: 1.000
+
+  confusion (expected -> actual):
+    unknown    -> unknown     22
+
+per-transcript results: eval/data/voice_intent_runs/2026-10-06_fixed_heldout_r2.csv (82 rows)
+
+Dataset-difficulty probe: keyword baseline, no model (0 API calls)
+  graded: voice_intents_heldout.csv   probes: voice_intents_heldout_unknown.csv
+------------------------------------------------------------------------------
+  graded set             33/60 = 55.0%   of which wrong dispatches: 7
+      expected summarise  got unknown     whats the email from emma about
+      expected summarise  got unknown     what does the library one say
+      expected summarise  got unknown     um what is the uber email saying
+      expected summarise  got unknown     whats in the email from the dentist
+      expected summarise  got unknown     what is the latest email about
+      expected summarise  got unknown     what does james want in his email
+      expected summarise  got unknown     give me the main points of the council email
+      expected summarise  got unknown     quick rundown of the email from tom
+      expected summarise  got unknown     key points from the canvas announcement please
+      expected summarise  got unknown     can you give me the short version of this one
+      expected summarise  got read        i dont have time to read the landlord email just summarise it
+      expected read       got unknown     play it back
+      expected read       got unknown     let me hear it
+      expected read       got summarise   play the summary of the email from the recruiter
+      expected read       got unknown     can i hear the email from priya
+      expected read       got unknown     i want to listen to the latest email
+      expected read       got unknown     let me listen to what emma sent
+      expected read       got unknown     play the email from mum
+      expected read       got summarise   can i listen to the summary of the uber email
+      expected draft      got unknown     help me get back to the recruiter
+      expected draft      got unknown     let tom know i can make it on friday
+      expected draft      got unknown     tell the landlord i will pay the rent on monday
+      expected draft      got unknown     say yes to the dinner invite from mum
+      expected draft      got summarise   write a reply to priya summarising what we agreed
+      expected draft      got read        reply to the email i just read
+      expected draft      got read        answer emma and tell her i read her notes
+      expected draft      got summarise   write back to tom thanking him for the summary
+  out-of-scope probes    11/22 = 50.0%   of which wrong dispatches: 11
+      expected unknown    got read        mark this as read
+      expected unknown    got summarise   send the summary to james
+      expected unknown    got draft       open my drafts folder
+      expected unknown    got read        turn off read receipts
+      expected unknown    got draft       forward the reply from james to tom
+      expected unknown    got read        how many unread emails do i have
+      expected unknown    got read        read my calendar for tomorrow
+      expected unknown    got draft       remind me to reply to emma tomorrow
+      expected unknown    got read        stop reading
+      expected unknown    got summarise   copy the summary to my clipboard
+      expected unknown    got draft       delete that draft
+
+  rows with exactly one cue, matching their own label: 27/60
+  rows that are cue-free or carry competing cues:      33/60
+      summarise  cues=none                 whats the email from emma about
+      summarise  cues=none                 what does the library one say
+      summarise  cues=none                 um what is the uber email saying
+      summarise  cues=none                 whats in the email from the dentist
+      summarise  cues=none                 what is the latest email about
+      summarise  cues=none                 what does james want in his email
+      summarise  cues=none                 give me the main points of the council email
+      summarise  cues=none                 quick rundown of the email from tom
+      summarise  cues=none                 key points from the canvas announcement please
+      summarise  cues=none                 can you give me the short version of this one
+      summarise  cues=read,summarise       i dont have time to read the landlord email just summarise it
+      summarise  cues=draft,summarise      give me a summary of the reply from james
+      summarise  cues=draft,summarise      write me a short summary of the email from mum
+      read       cues=read,summarise       read me that summary
+      read       cues=none                 play it back
+      read       cues=none                 let me hear it
+      read       cues=read,summarise       read out the summary please
+      read       cues=read,summarise       can you read the summary of the gym email aloud
+      read       cues=summarise            play the summary of the email from the recruiter
+      read       cues=none                 can i hear the email from priya
+      read       cues=none                 i want to listen to the latest email
+      read       cues=none                 let me listen to what emma sent
+      read       cues=none                 play the email from mum
+      read       cues=draft,read           read the reply from emma out loud
+      read       cues=summarise            can i listen to the summary of the uber email
+      draft      cues=none                 help me get back to the recruiter
+      draft      cues=none                 let tom know i can make it on friday
+      draft      cues=none                 tell the landlord i will pay the rent on monday
+      draft      cues=none                 say yes to the dinner invite from mum
+      draft      cues=draft,summarise      write a reply to priya summarising what we agreed
+      draft      cues=draft,read           reply to the email i just read
+      draft      cues=draft,read           answer emma and tell her i read her notes
+      draft      cues=draft,summarise      write back to tom thanking him for the summary
+
+PASS: 91.7% on the 60-transcript graded set (voice_intents_heldout.csv)
+

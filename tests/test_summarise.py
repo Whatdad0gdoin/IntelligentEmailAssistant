@@ -223,8 +223,8 @@ def test_an_email_with_no_readable_text_fails_clearly(config, stub_llm):
         id = "empty-1"
         subject = ""
         sender_name = ""
-        raw_body = "> only quoted text\n> more quoted text"
-        is_html = False
+        body_text = "> only quoted text\n> more quoted text"
+        body_html = ""
 
     with pytest.raises(EmptyEmailError):
         summarise_email(Empty(), config)

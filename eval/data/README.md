@@ -1,10 +1,22 @@
 # Evaluation dataset (DR-01, DR-02)
 
-Rebuild everything with:
+Rebuild the merged dataset from the curated sources with:
 
 ```bash
-python -m eval.build_dataset --enron --merge --per-category 120
+python -m eval.build_dataset --merge --per-class 94
 ```
+
+That reproduces the committed `dataset.csv` exactly (`tests/test_build_dataset.py`
+checks it). Raise `--per-class` only after verifying more rows for the short
+class: `merge` now refuses to write an unbalanced set, and says which
+`--per-class` would be balanced.
+
+**Do not re-run `--enron` casually.** Until 2026-10-06 it let a freshly sampled
+folder-guess row win an id collision with a human-verified row, and because the
+sampler walks the archive in a fixed order it re-collects exactly the emails
+people already read: the documented command would have replaced all 120
+human-reviewed Work rows and reverted 26 human relabels. Human rows now always
+win, but a rebuild still adds nothing new — it samples the same 12 mailboxes.
 
 ## Schema
 
@@ -36,23 +48,52 @@ reader of the report needs to see. Always report accuracy **broken down by
 
 | Provenance | Source | Licence | Status |
 |---|---|---|---|
-| `enron` | [CMU Enron corpus](https://www.cs.cmu.edu/~enron/), 517k messages | Public, research use | **Built** - 360 rows: Work, Personal, Promotions |
+| `enron` | [CMU Enron corpus](https://www.cs.cmu.edu/~enron/), 517k messages | Public, research use | **Built** - `real_enron.csv`, 383 human-verified rows: Personal 156, Promotions 133, Work 94 |
 | `generated` | Produced by the project's own orchestrator | n/a | **Built** - 120 rows (Studies only) |
 | `huggingface` | [jason23322/high-accuracy-email-classifier](https://huggingface.co/datasets/jason23322/high-accuracy-email-classifier) | Apache-2.0 | **No longer used** - replaced by real Enron Promotions; see the analysis below for why |
 
-Current merged set: **480 rows, all four classes, 120 per class**:
+Current merged set: **376 rows, all four classes, 94 per class** (DR-01 asks
+for 400 = 100 per class; Work is the only class short of verified rows):
 
 | provenance | text_origin | category | label_source | rows |
 |---|---|---|---|---|
-| `enron` | real | Work | `folder_heuristic` | 120 |
-| `enron` | real | Personal | `human` | 120 |
-| `enron` | real | Promotions | `human` | 120 |
-| `generated` | synthetic | Studies | `generation_prompt` | 120 |
+| `enron` | real | Work | `human` | 94 |
+| `enron` | real | Personal | `human` | 94 |
+| `enron` | real | Promotions | `human` | 94 |
+| `generated` | synthetic | Studies | `generation_prompt` | 94 |
 
-**360 real / 120 synthetic.** Report accuracy split on `text_origin`, never
-pooled: `eval/BENCHMARKS.md` records 78.1% on real email against 98.4% on
-synthetic, so a pooled figure is partly the model telling real mail from
-model-written mail, which is not what FR-02 asks.
+**282 real / 94 synthetic.** Report accuracy split on `text_origin`, never
+pooled: `eval/BENCHMARKS.md` run 12, the shipped configuration, records 89.4%
+strict on real email against 98.1% on synthetic (Review counted as a miss), so
+a pooled figure is partly the model telling real mail from model-written mail,
+which is not what FR-02 asks.
+
+**`holdout_unscored.csv` — 123 rows nobody had scored.** The verified rows the
+94-per-class cut leaves out, minus four Promotions rows whose bodies are
+byte-identical to dataset rows (one mass mailing delivered to several
+mailboxes): 62 Personal, 35 Promotions, 26 Studies, no Work, no overlap with
+`dataset.csv` by id or by body. It was scored once in each mode to confirm the
+switch to one email per call (`BENCHMARKS.md`, "Confirmed on data nobody had
+scored"). Keep it for confirming changes chosen on the test split, and note
+that a merge at a higher `--per-class` draws on the same rows: after
+`--per-class 100`, six rows of each of those classes move into the dataset and
+must be dropped from the holdout before it is used again.
+
+> **How "human-verified" was produced.** 382 of the 383 verdicts in the review
+> files accepted the language model's proposed label unchanged, and the review
+> tool shows the proposal before asking. Before adding rows, have a second
+> person label a blind sample (at least 50 rows) and report agreement, so the
+> evaluation cannot drift back toward a model grading its own labels. The tool
+> does both:
+>
+> ```bash
+> python -m eval.review_cli --category Work --file eval/data/review_work.csv --blind --annotator <name>
+> python -m eval.review_cli --category Work --file eval/data/review_work.csv --agreement --annotator <name>
+> ```
+>
+> `--blind` hides the proposal, the folder and the model's reason, makes every
+> answer a deliberate key, and writes to its own column, so the first verdicts
+> are never touched; `--agreement` reports raw agreement and Cohen's kappa.
 
 > **Class and `text_origin` are perfectly confounded.** Studies is the only
 > generated class and the only one no real corpus supplies. Any comparison
@@ -104,14 +145,16 @@ transactional mail and not personal at all. Reading the subjects is the sounder
 measure, and it is less flattering than the domain count.
 
 **Action taken.** `ENRON_FOLDER_LABELS` no longer maps any folder to Personal,
-and the 120 rows were removed from `real_enron.csv`. Enron now contributes
-Work only, which is the one class it supplies reliably.
+and the 120 rows were removed from `real_enron.csv`. At that point Enron
+contributed Work only, which is the one class its folders supply reliably. (It
+now supplies Personal and Promotions too, from the hand-reviewed candidates
+below.)
 
 Real personal correspondence *is* in the corpus -- roughly 20-25 usable rows
 per 120 sampled -- but at a density the folder names cannot find. Recovering it
 needs hand labelling, not a better folder map.
 
-### Filling Personal: in progress, awaiting human review
+### Filling Personal: done (rows reviewed and applied)
 
 Option 1 was taken. The full Enron archive was pulled and scanned with
 `extract_personal_candidates.py`, which selects on **structural** signals only
@@ -137,8 +180,13 @@ measured accuracy comes out too high.
 python -m eval.label_candidates --build  --category Personal
 # fill in the `verified` column, then
 python -m eval.label_candidates --apply  --category Personal
-python -m eval.build_dataset --merge
+python -m eval.build_dataset --merge --per-class 94   # always pass --per-class
 ```
+
+Both review files are now fully verified and applied: `review_personal.csv`
+143/143 and `review_promotions.csv` 120/120. The later Work review
+(`review_work.csv`, 120/120) moved 27 rows out of Work, which is why the set is
+94 per class. Note the caveat above on how "verified" was produced.
 
 #### Selection bias, which must be in the report
 
@@ -158,7 +206,8 @@ board newsletters, industry price bulletins. 120 are staged in
 
 **This has since been done.** The synthetic HuggingFace class was replaced by
 these real messages, moving the merged set from 120 real / 240 synthetic to
-**360 real / 120 synthetic**. The Week 11 deck's "Real emails. Not AI testing
+360 real / 120 synthetic (282 real / 94 synthetic after the Work relabel). The
+Week 11 deck's "Real emails. Not AI testing
 AI." claim is now defensible for three of the four classes, with Studies the
 only generated one -- the position the slide actually argued for.
 

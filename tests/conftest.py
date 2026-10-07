@@ -16,7 +16,9 @@ assertion is always about what the *backend* does with a given model response
 
 import json
 import os
+import re
 import sys
+import threading
 
 import pytest
 from werkzeug.security import generate_password_hash
@@ -54,6 +56,15 @@ def config(monkeypatch, tmp_path):
         json.dumps({TEST_EMAIL: generate_password_hash(TEST_PASSWORD)}),
     )
     monkeypatch.setenv("EMAIL_FIXTURE_DIR", FIXTURE_DIR)
+    # The shipped default classifies one email per model call, several calls
+    # at once (backend/orchestrator/classify.py), while StubLLM.queue() answers
+    # in call order. Tests written against the queue -- one classification
+    # response per inbox load -- keep exactly that meaning under the batched
+    # setting. Tests of the per-email default opt in explicitly, with
+    # config.classify_batch_size = 1 and StubLLM.answer_classification():
+    # tests/test_classify.py, tests/test_classify_per_email.py and
+    # tests/test_inbox.py.
+    monkeypatch.setenv("CLASSIFY_BATCH_SIZE", "20")
     return Config(require_llm=False)
 
 
@@ -101,6 +112,9 @@ def auth_headers(token):
 
 # --- Stub orchestrator client ----------------------------------------------
 
+# How prompts.classify_user() delimits each email in a classification prompt.
+_PROMPT_EMAIL_ID = re.compile(r'<email id="([^"]*)">')
+
 
 class StubLLM:
     """Returns queued responses instead of calling OpenAI.
@@ -108,34 +122,97 @@ class StubLLM:
     Mirrors OrchestratorClient.complete_json only. It does not reimplement the
     retry loop, the budget or the schema handling -- those are production code
     and are tested through the real client where they matter.
+
+    Two ways to answer. queue() hands out responses in call order, which is
+    right for a request that makes one call. Classification makes one call per
+    email, several at once on worker threads, so its call order is whatever the
+    scheduler decides; answer_classification() answers each classification
+    call from the email ids in that call's own prompt instead.
     """
 
     def __init__(self):
         self.responses = []
         self.calls = []
         self.raises = None
+        # Set by answer_classification(). None: classification calls are
+        # answered from the queue like any other call.
+        self.labels_by_id = None
+        # Optional callable(user_prompt), run inside every call before it is
+        # answered -- a barrier or a sleep, for tests about concurrency.
+        self.before_answer = None
+        self.in_flight = 0
+        self.max_in_flight = 0
+        self._lock = threading.Lock()
 
     def queue(self, *responses):
         """Queue one response per expected call, in order."""
         self.responses.extend(responses)
         return self
 
+    def answer_classification(self, labels_by_id):
+        """Answer classification calls by email id rather than by call order.
+
+        `labels_by_id` maps an email id to what the "model" returns for it: a
+        dict of category, confidence and evidence (the id is filled in), or an
+        exception instance, raised by any call whose prompt contains that id --
+        which is how a test fails one call and not the others. An id in the
+        prompt with no entry is left out of the response, which is how a model
+        drops an id.
+
+        Every id found in the prompt is answered, so a body that forges an
+        <email id="..."> delimiter gets the forged id answered as well -- what
+        a model taken in by the forgery would do.
+        """
+        self.labels_by_id = dict(labels_by_id)
+        return self
+
     def complete_json(self, system, user, schema_name, schema, purpose="", session_key=None):
-        self.calls.append({
-            "schema_name": schema_name,
-            "purpose": purpose,
-            "user": user,
-            "system": system,
-            "session_key": session_key,
-        })
-        if self.raises is not None:
-            raise self.raises
-        if not self.responses:
-            raise AssertionError(
-                f"StubLLM received an unexpected call ({schema_name}); "
-                f"{len(self.calls)} call(s) made, no response queued."
-            )
-        return self.responses.pop(0)
+        with self._lock:
+            self.calls.append({
+                "schema_name": schema_name,
+                "purpose": purpose,
+                "user": user,
+                "system": system,
+                "session_key": session_key,
+            })
+            self.in_flight += 1
+            self.max_in_flight = max(self.max_in_flight, self.in_flight)
+        try:
+            if self.before_answer is not None:
+                self.before_answer(user)
+            if self.raises is not None:
+                raise self.raises
+            if schema_name == "email_classification" and self.labels_by_id is not None:
+                return self._classification_for(user)
+            with self._lock:
+                if not self.responses:
+                    raise AssertionError(
+                        f"StubLLM received an unexpected call ({schema_name}); "
+                        f"{len(self.calls)} call(s) made, no response queued."
+                    )
+                return self.responses.pop(0)
+        finally:
+            with self._lock:
+                self.in_flight -= 1
+
+    def _classification_for(self, user):
+        results = []
+        for email_id in _PROMPT_EMAIL_ID.findall(user):
+            answer = self.labels_by_id.get(email_id)
+            if answer is None:
+                continue
+            if isinstance(answer, BaseException):
+                raise answer
+            results.append({"id": email_id, **answer})
+        return {"results": results}
+
+    def classification_batches(self):
+        """The email ids each classification call carried, one list per call."""
+        return [
+            _PROMPT_EMAIL_ID.findall(call["user"])
+            for call in self.calls
+            if call["schema_name"] == "email_classification"
+        ]
 
     @property
     def call_count(self):

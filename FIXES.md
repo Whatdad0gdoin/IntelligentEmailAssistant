@@ -1,12 +1,17 @@
 # Outstanding fixes
 
-Everything still open, ordered by marks-per-hour. Each item says what is wrong,
-why it matters, and what "done" looks like.
+Everything still open, ordered by marks-per-hour, then what has been closed and
+how. Each open item says what is wrong, why it matters, and what "done" looks
+like.
 
 Every figure here was measured, not estimated. Where something is a judgement
 call rather than a task, it says so.
 
-Status at time of writing: **348 backend tests, 84 frontend tests, all passing.**
+Status at time of writing (2026-10-07): **602 backend tests passing (2 skipped,
+8 expected failures), 178 frontend tests passing.**
+
+Item numbers are kept from earlier versions of this file, because code and other
+documents cite them; new items continue from 16.
 
 ---
 
@@ -25,7 +30,8 @@ OAuth token file  = not created yet
 ```
 
 Setup is in `README.md` under *Read a real Gmail inbox*. Needs a Google account,
-so it cannot be automated.
+so it cannot be automated. Set `GMAIL_OWNER` to the login that owns the mailbox,
+or every account that can sign in sees it.
 
 **Do this well before the demo, not on the day.** Things only a live run
 reveals: label-name quirks, unusual MIME in a real message, an account-level
@@ -39,235 +45,184 @@ classified, and Gmail still shows it unread.
 
 ---
 
-### 2. Verify the Work relabel — ~30 minutes
+### 3. Browser smoke test (NFR-02, SR-01) — 15 minutes
 
-120 rows in `eval/data/review_work.csv`, **0 verified**. 27 are staged as not
-Work (13 Personal, 13 Promotions, 1 Studies) — spam, club flyers, fantasy
-football, a message from a spouse.
+**Partly done.** On 2026-10-07 the app was driven in headless Edge, which is
+Chromium: sign-in, the inbox at 1000, 1366 and 1920 pixels wide, a typed command
+end to end against the real model, and Settings scrolling. That check found a
+layout bug no jsdom test could — a long email or an open summary stretched the
+reader past the window and scrolled the whole page — which is fixed in
+`styles.css` and pinned in `styles.test.js`.
 
-```bash
-python -m eval.review_cli --category Work      # 27 contested rows come first
-python -m eval.label_candidates --apply --category Work --source enron
-python -m eval.build_dataset --merge
-```
+**Nobody has opened it in Firefox**, which is not installed on the development
+machine. It has no `SpeechRecognition`, so SR-01's degraded path has still never
+been seen.
 
-**A model must not do this.** The proposals came from a language model, and
-`eval/review_labels.py` explains why promoting them without a human read makes
-the evaluation circular: the emails that confuse the classifier are
-disproportionately the ones that confused the labeller. `--apply` refuses while
-any row is unverified, by design.
-
-**Worth about +2 points** (83.3% → 85.3% indicative). Report it as a
-*measurement correction*, not a better classifier — on 7 of the 10 rows that
-change, the model was already right and was being marked wrong against a bad
-label.
+**Done when:** a screenshot from Chrome and Firefox, and a note that in Firefox
+the capability notice appears, Voice Commands is gone from the sidebar, and the
+command bar still works: "summarise the latest email" opens the newest email and
+summarises it, "read …" reads the summary aloud, and nonsense shows the pick-one
+question.
 
 ---
 
-### 3. Browser smoke test (NFR-02) — 15 minutes
+### 16. Six more verified Work rows, for DR-01's 400 — about 2 hours
 
-The RTM says *"fully functional in Chrome"*; SR-01 says Firefox and Safari must
-degrade gracefully. **Nobody has opened it in Firefox.** No browser-driven test
-exists, so NFR-02 currently rests on manual use and is marked in the README as
-"done by construction, not by test".
+DR-01 asks for 400 emails, 100 per class. The set has 376, 94 per class, because
+the Work relabel found 27 of 120 folder-labelled rows were not Work and the set
+was rebalanced rather than topped up with unverified rows. Six more verified
+Work rows make 100 per class; the other classes already have verified rows to
+spare. 228 Work candidates exist.
 
-Firefox is the interesting one: it has no `SpeechRecognition`, so the SR-01
-capability notice should appear and Voice Commands should vanish from the
-sidebar rather than dead-end.
+```bash
+python -m eval.label_candidates --build --category Work --source enron --out eval/data/review_work_new.csv
+python -m eval.review_cli --category Work --file eval/data/review_work_new.csv
+python -m eval.label_candidates --apply --category Work --review-file eval/data/review_work_new.csv
+python -m eval.build_dataset --merge --per-class 100
+```
 
-**Done when:** a screenshot from each of Chrome, Edge and Firefox, and a note
-of what degraded in Firefox.
+`--build` refuses to overwrite a review file that already holds verdicts, and
+`--apply` skips a candidate that is the same message as a row already in the
+set. **A model must not do the reading**: the proposals come from a language
+model, and promoting them without a human read makes the evaluation circular.
+
+**Done when:** the merge writes 400 rows, the test split is run once and
+recorded as a new run in `eval/BENCHMARKS.md`, and the rows the merge took are
+dropped from `holdout_unscored.csv` (see `eval/data/README.md`).
+
+---
+
+### 17. A second, blind annotator — about 1 hour
+
+382 of the first 383 verdicts accepted the model's proposed label unchanged, on a
+tool that showed the proposal before asking. That is what anchoring looks like.
+
+```bash
+python -m eval.review_cli --category Work --file eval/data/review_work.csv --blind --annotator <name>
+python -m eval.review_cli --category Work --file eval/data/review_work.csv --agreement --annotator <name>
+```
+
+`--blind` hides the proposal, the folder and the model's reason and writes to a
+column of its own; `--agreement` reports raw agreement and Cohen's kappa.
+
+**Done when:** a teammate who did not do the first pass has read at least 50
+rows blind, and the kappa is written into `eval/data/README.md`.
 
 ---
 
 ### 4. Decide FR-07 (translation) — a decision, not a task
 
 In the RTM at LOW priority. Not implemented: no route, no prompt, no schema, no
-UI control. The build spec explicitly descoped it.
+UI control. The build spec explicitly descoped it, and the README says only that
+it was not attempted — a fact, not a justified descoping.
 
 Pick one and write it down: **descoped with justification**, or **built**.
 Leaving it merely absent is the bad option — a marker reads the RTM.
 
 ---
 
+### 14. The product has three names — a decision
+
+**MailKit** is the name in the code and the UI. **InboxIQ** survives only in
+comments in four frontend files; **Inbox AI** (`inboxai.app`) is in the Week 11
+wireframes. Pick one before the demo and the report.
+
+---
+
+### 18. Attachment text in summaries — a decision
+
+Attachments are now listed — name, type and size — and their content still
+never reaches a body, a summary or a model. Reading PDF text for summaries would
+break that promise, which the README and the reading pane both make, so it needs
+a team decision and its own test set before any code. It is new scope beyond the
+RTM.
+
+---
+
 ## Code and data
 
-### 5. FR-05 intent prompt — `read` does not cover summaries
+### 15. `.vscode/settings.json` is still tracked — 1 minute
 
-**Measured: 86.7% (26/30), criterion ≥90% NOT met.**
+It is in `.gitignore` but was committed before that, so edits still show as
+changes. Run `git rm --cached .vscode/settings.json` and commit.
 
-Three of the four errors are one gap. `INTENT_SYSTEM` in
-`backend/orchestrator/prompts.py` defines `read` as *"an email read out loud"*
-and never covers reading out an **existing summary** — which is exactly what the
-app's own summarise-then-read flow produces:
+---
 
-| Transcript | Expected | Got |
+### 19. The IMAP source still downloads every attachment — half a day
+
+`backend/adapters/gmail_source.py` fetches `BODY.PEEK[]`, every byte of every
+attachment, to list names and sizes. The Gmail API source no longer does: it
+asks for `format=full`, which leaves attachments behind as ids and sizes. IMAP
+could do the same with `BODYSTRUCTURE` plus the text parts. It is the fallback
+source, so this can also be left documented, as it is in the adapter's
+docstring.
+
+---
+
+### 20. Seven misheard names still resolve to nothing
+
+`tests/test_voice_resolver.py` pins 16 realistic mishearings ("sara",
+"git hub", "fit three one six four"). Joining split words rescued five; 9 now
+resolve and 7 still do not, each a strict `xfail` that fails the moment a change
+rescues it. Nothing resolves to the **wrong** email, and an unresolved
+reference makes the UI ask, so this is a convenience gap, not an error.
+
+---
+
+### 21. The 0.7 confidence threshold is calibrated for one model
+
+`CLASSIFY_CONFIDENCE_THRESHOLD` was tuned on gpt-4o-mini. Claude Sonnet and Opus
+send about a fifth of emails to Review at the same threshold
+(`eval/data/compare/REPORT.md`), so switching models without re-tuning it on dev
+would read as a worse classifier. Make it per-model configuration, chosen on
+dev, and count misfiled emails as well as strict accuracy when choosing.
+
+---
+
+### 22. Typed commands miss what spoken ones miss
+
+The command bar uses the voice intent classifier, so it declines the same short
+or indirect commands ("let tom know i can make it on friday", "reply please").
+It declines rather than guesses, and shows the pick-one question. A confident
+command that names no email, with none open, makes a fresh intent call when
+re-run; the result is not kept.
+
+---
+
+## Done since the last version of this file
+
+| # | Item | How it was closed |
 |---|---|---|
-| read aloud the summary of the latest email | read | `unknown` |
-| play the summary for the github alert | read | **summarise** (only wrong dispatch) |
-| say the summary out loud | read | `unknown` |
-| whats the enrolment email about | summarise | `unknown` |
+| 2 | Verify the Work relabel | All 120 rows verified; every real label in the set is `human`. The rebuild command that would have overwritten them is fixed: human rows win id collisions, `--merge` refuses an unbalanced set, and the README gives the command that reproduces `dataset.csv` exactly |
+| 5 | FR-05 intent prompt | Route (b). 60 held-out transcripts and 22 probes were written first, then the prompt was fixed: **91.7–95.0% over three runs, no wrong dispatch in 180**. 86.7% stands for the earlier prompt. `eval/BENCHMARKS.md`, FR-05 |
+| 6 | The ≥90% test | Passes with the fixed prompt, and a second gate on the held-out 60 was added. Both run only with `RUN_LLM_EVAL=1`. The threshold was not touched |
+| 7 | FR-02 headline not reproducible | Run 12 recomputes from `test_preds_run12.csv`; `--out` now records the settings in every row and refuses to overwrite an earlier run |
+| 8 | Stale NFR-01 line | Replaced by a measured figure |
+| 9 | `dev_preds.csv` unexplained | Identified in `eval/BENCHMARKS.md` as a run that lost 18 rows |
+| 10 | NFR-01 cold load 8.2 s | One email per call, 25 at once: **median 2.0 s over 8 cold loads of 25 emails, all under 5 s** (`eval/cold_load.py`). The in-process latency window still resets on restart and would understate p95 behind several workers — a limitation, not a bug |
+| 11 | Save `claims_checked` | `evaluate_grounding.py` writes it |
+| 12 | No React component tests | 178 frontend tests in 14 files, including component tests for the inbox, the reading pane, the voice view, the command bar and the shared intent question |
+| 13 | FR-04/05 priority | **HIGH.** The PDF draws an orange MED badge and then a red HIGH badge over the same cell; the rendered slide shows HIGH, and the README now says so |
 
-The fourth is an indirect question with no summarise verb.
+Found in the October review, not previously listed, and fixed:
 
-**Methodological trap, read before fixing.** These 30 transcripts are the
-acceptance set. Tuning the prompt against the failures they exposed and then
-re-measuring on the same set is training on the test set, and the resulting
-number would be optimistic. Two honest routes:
-
-- **(a)** Fix the prompt, re-measure, publish **both** numbers, and state that
-  the fix was informed by these transcripts.
-- **(b)** Write new held-out transcripts first, then fix, then measure on those.
-
-(b) is more rigorous. Either way **86.7% stands as the figure for the shipped
-prompt** — a re-run is a new measurement, not a correction.
-
----
-
-### 6. `test_voice_intent.py` asserts ≥90% and will now fail
-
-`test_thirty_transcripts_dispatch_at_or_above_ninety_percent` asserts
-`rate >= 0.90`. Under `RUN_LLM_EVAL=1` with a real key it now **correctly
-fails** at 86.7%. It is a working test reporting a real result.
-
-Options: leave it red as an honest signal, or `xfail` it carrying the measured
-86.7% and the reason.
-
-**Do not lower the threshold to make it green.** That buries the finding.
-
----
-
-### 7. The FR-02 headline is not reproducible
-
-`eval/BENCHMARKS.md` quotes **run 8: 92.9% coverage / 83.0% accuracy** as the
-shipped-configuration headline. But the only saved prediction file,
-`test_preds_mini.csv`, computes **92.1% / 83.3%** — which is run 9. Run 8's
-per-row predictions are gone or were overwritten.
-
-Verified independently twice.
-
-So the number most likely to appear on a slide cannot be regenerated from the
-repository. Either:
-
-- **quote 83.3%**, which a marker can reproduce from a committed file, or
-- re-run the test split to regenerate run 8's predictions.
-
-The difference is inside the documented noise band (run-to-run spread 0.3), so
-this is about reproducibility, not accuracy.
-
-*Sub-finding:* the per-class table printed under *"Shipped-configuration detail
-(run 8)"* actually matches run 9 exactly. Its confusion matrix is already
-labelled run 9. The `text_origin` breakdown and confusion matrix reproduce
-exactly.
-
----
-
-### 8. `eval/BENCHMARKS.md` line 27 is stale
-
-```
-| NFR-01 latency | p95 | not yet instrumented |
-```
-
-It **is** instrumented now — `GET /api/metrics` exists. But no p95 has been
-recorded against the real model, so the honest wording is **"instrumented, not
-yet measured"**, not a number.
-
-See item 10 for the number that should go there.
-
----
-
-### 9. `dev_preds.csv` matches no recorded run
-
-Computes **82.2% coverage / 78.4% accuracy / 64.5% strict**. The nearest entry
-is run 5, off by −9.4 coverage and +6.0 accuracy — far too large to be a typo,
-and 58 of its 214 predictions differ from `predictions.csv`.
-
-No published figure depends on it and nothing in the notebook uses it, so this
-is data hygiene rather than a wrong result. Either identify which run it came
-from and record it, or delete it. An unexplained prediction file in an
-evaluation directory invites exactly one question at a viva.
-
-*(`predictions.csv` = run 2 and `test_preds.csv` = run 7 both reconcile
-exactly.)*
-
----
-
-### 10. NFR-01 fails on first load — 8.2s against a 5s target
-
-The instrumentation found this on its first live run:
-
-```
-GET /api/inbox   cold: 8218 ms      warm: ~230 ms      target: 5000 ms
-p95_within_target: false
-```
-
-The cold load classifies 8 emails through the model. The per-message cache then
-makes every later load ~0.23s. **The cold load is the one a marker sees.**
-
-Options: warm the classification cache at startup, or report cold and warm
-separately with the cache named as the mitigation. Quoting one pooled number
-hides it.
-
-Then record the measured p95 in `eval/BENCHMARKS.md` (item 8).
-
-> The latency window is per process and resets on restart. Fine for the dev
-> server; it would understate p95 behind multiple WSGI workers. Belongs in the
-> limitations section.
-
----
-
-### 11. `evaluate_grounding.py` does not save `claims_checked`
-
-One-line fix. The script **already computes** claims-checked-per-output in
-order to print it, but `--out` writes only
-`task,id,category,text_origin,grounded,flag_count,flags,subject`.
-
-Consequence: the DR-02 notebook cannot recompute it and has to fall back to a
-lower bound plus a source-side proxy. `BENCHMARKS.md` argues — correctly — that
-a groundedness rate is vacuous without it, since a rate over outputs containing
-nothing checkable reads 100% however badly the model behaved.
-
-Add the column, and the notebook can compute the figure the argument depends on.
-
----
-
-## Smaller, still worth doing
-
-### 12. No React component tests
-
-`frontend/package.json` has **no jsdom, no happy-dom, no Testing Library**, so
-nothing mounts a React tree. The 84 frontend tests cover pure logic
-(`search.js`), the API client, and the stylesheet — real coverage, but "84
-frontend tests" should not be read as UI coverage.
-
-This is the project's largest testing gap. Worth one honest sentence in the
-limitations section even if it is not closed.
-
----
-
-### 13. RTM priority for FR-04 / FR-05 is ambiguous in the source
-
-The Week 11 deck renders their priority cells with `HIGH` and `MED` overlaid in
-the text layer (extracts as `HMIGEDH`). The README currently writes `MED/HIGH`
-with a footnote rather than guessing.
-
-Settle it against the signed RTM and make the deck, the README and the report
-agree.
-
----
-
-### 14. The product has three names
-
-**MailKit** (the code and UI), **Inbox AI** at `inboxai.app` (the Week 11
-wireframes), **InboxIQ** (the original filename). Pick one before the demo and
-the report.
-
----
-
-### 15. `.vscode/settings.json` is untracked
-
-It would be swept in by `git add -A`. Personal editor config: gitignore it, or
-stage files deliberately.
+| Problem | Fix |
+|---|---|
+| Batched classification cost 13 points of strict accuracy and caused the slow cold load | One email per call (runs 11 and 12; confirmed on a holdout nobody had scored, 63.4% → 87.0% strict) |
+| FR-02's "meets 80% on real email" counted only answered emails: 73.9% strictly | Figures quoted strictly, Review counted as a miss: 89.4% on real email now |
+| The README, `BENCHMARKS.md` and the dataset README contradicted the data | Brought in line |
+| The recogniser language followed the browser's UI language | en-AU by default, chosen in Settings |
+| "The latest email" picked the newest Work email | Candidates sent newest first with `received_at`, and re-sorted on the server |
+| "Processed in your browser" was inaccurate | "Our server never receives your audio" |
+| A long inbox lost its newest emails to the 100-candidate cap | The route reads up to 1,000 and keeps the newest 100 |
+| Both Gmail sources downloaded every attachment on every inbox load | The Gmail API source uses `format=full` (IMAP: item 19) |
+| An attached email's text was read into the body, and so reached the model | Body walkers skip an attachment and everything inside it, on both paths |
+| Image-only marketing email cleaned to nothing | Image alt text kept; HTML used when the plain-text part cleans to nothing |
+| The preprocessor cut a marketing email at its first "unsubscribe" line | A footer phrase cuts only when what follows it is footer |
+| The grounding check flagged reformatted dates ("14JUL" → "July 14") | Compared by meaning; narrowed after review so "24/7", "may" and "SAT" vouch for nothing |
+| One hostile email could stall every inbox load (cleaning was quadratic: 48 s for 30,000 "Thanks" lines) | Linear: under a tenth of a second on each case, pinned by tests |
+| An email body could forge the `<email id>` delimiter of a batched prompt | One email per call leaves nothing to pre-empt; it remains possible under `CLASSIFY_BATCH_SIZE=20` |
+| `--build` could overwrite a review file holding verdicts; `--apply` could add a duplicate of a test row | Both refused, with tests |
 
 ---
 
@@ -282,3 +237,7 @@ These look like gaps and are not. Each is a decision with a reason.
 | **IMAP kept alongside the Gmail API** | Plan B if the 7-day OAuth expiry bites on demo day. Needs no Google Cloud project. |
 | **The local SMTP server writes mail to disk** | It is the mail-server tier, not the assistant. `tests/test_mailserver.py` asserts nothing under `backend/` imports it. |
 | **`eval/notebook.ipynb` is ~308 KB** | Outputs are stored deliberately, so a marker reads results without running it. |
+| **One email per call costs 2.5× as much to classify** | US$0.15 per 1,000 emails against US$0.06, for +13.5 points strict and a cold load under 5 s. About 38 users still fit inside the US$5/week budget on the comparison report's usage profile. `CLASSIFY_BATCH_SIZE=20` reverts it. |
+| **Joined words are matched exactly, never fuzzily** | "git hub" must match a sender or subject exactly to count as GitHub. Fuzzy-matching the joins was tried: "read the one from the deals team" joined to "thedeals", 0.82 similar to "techdeals", and an unrelated request went to TechDeals. A wrong email is worse than being asked. A single misheard name is still fuzzy-matched, scored below an exact match. |
+| **A bare "14/7" in an email does not vouch for "July 14"** | A numeric date in the source needs its year, or "24/7" and "1/2" vouch for dates nobody wrote. A false flag is the cheaper mistake. |
+| **Typed commands run without a confirm step** | The same 0.6 confidence floor as voice; the actions are summarise, read and draft, and nothing is ever sent. Typed text cannot be misheard. |

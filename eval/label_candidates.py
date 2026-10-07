@@ -130,7 +130,26 @@ def _candidates(source="candidates"):
         return {int(r["row"]): r for r in csv.DictReader(f)}
 
 
-def build(category, source="candidates"):
+def _has_verdicts(path):
+    """True when a review file already holds any human decision."""
+    if not os.path.exists(path):
+        return False
+    with open(path, encoding="utf-8") as f:
+        return any((r.get("verified") or "").strip() for r in csv.DictReader(f))
+
+
+def build(category, source="candidates", out=None, force=False):
+    path = out or review_path(category)
+    # review_work.csv is also the only record of the 120 Work decisions people
+    # already made. Rebuilding over it silently would erase that record, so a
+    # file with any verdict in it is never overwritten without --force.
+    if _has_verdicts(path) and not force:
+        sys.exit(
+            f"{os.path.relpath(path, ROOT)} already holds human verdicts; refusing to "
+            "overwrite it.\nWrite the new review file elsewhere with --out, e.g.\n"
+            f"  python -m eval.label_candidates --build --category {category} "
+            f"--out eval/data/review_{category.lower()}_new.csv"
+        )
     rows = _candidates(source)
     labels = _labels()
     cap = MAX_PER_SENDER.get(category, DEFAULT_CAP)
@@ -176,7 +195,6 @@ def build(category, source="candidates"):
             "id": candidate["id"],
         })
 
-    path = review_path(category)
     with open(path, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=REVIEW_FIELDS)
         writer.writeheader()
@@ -197,14 +215,15 @@ def build(category, source="candidates"):
     print(f"  distinct senders: {len(per_sender)}")
     print("")
     print("  Fill in `verified` for every row (y | Work | Personal | Promotions | Studies | skip)")
-    print(f"  Then: python -m eval.label_candidates --apply --category {category}")
+    review_flag = f" --review-file {os.path.relpath(path, ROOT)}" if out else ""
+    print(f"  Then: python -m eval.label_candidates --apply --category {category}{review_flag}")
 
 
 VALID = {"Work", "Personal", "Promotions", "Studies"}
 
 
-def apply(category, source="candidates"):
-    path = review_path(category)
+def apply(category, source="candidates", review_file=None):
+    path = review_file or review_path(category)
     if not os.path.exists(path):
         sys.exit(f"{path} does not exist. Run --build first.")
     with open(path, encoding="utf-8") as f:
@@ -241,6 +260,12 @@ def apply(category, source="candidates"):
     with open(ENRON_PATH, encoding="utf-8") as f:
         existing = list(csv.DictReader(f))
     have = {r["id"] for r in existing}
+    # Ids are not the whole story: the candidate pool and real_enron.csv were
+    # extracted at different times, and at least one message sits in both
+    # under different ids (maildir/cash-m/inbox/112. is test row
+    # enron-fdeaab7f7698 and candidate enron-7c1e395467bf). Adding it again
+    # would put one email in the dataset twice, possibly once in each split.
+    have_refs = {r.get("source_ref") for r in existing if r.get("source_ref")}
 
     # A row already in the file is being RE-labelled, not added: the Work
     # review corrects labels that are already there. Updating in place keeps
@@ -257,10 +282,13 @@ def apply(category, source="candidates"):
     if updated:
         print(f"  re-labelled {updated} rows already in the file")
 
-    added = []
+    added, same_message = [], []
     for row_id, category in decisions.items():
         candidate = rows[row_id]
         if candidate["id"] in have:
+            continue
+        if candidate.get("source_ref") and candidate["source_ref"] in have_refs:
+            same_message.append(candidate["id"])
             continue
         added.append({
             "id": candidate["id"],
@@ -282,8 +310,12 @@ def apply(category, source="candidates"):
     for row in added:
         tally[row["category"]] = tally.get(row["category"], 0) + 1
     print(f"  added {len(added)} human-verified rows: {tally}")
+    if same_message:
+        print(f"  skipped {len(same_message)} already in the dataset as the same message "
+              f"under another id: {', '.join(same_message)}")
     print(f"  real_enron.csv now holds {len(combined)} rows")
-    print("  Now re-merge:  python -m eval.build_dataset --merge")
+    print("  Now re-merge with an explicit size, e.g. "
+          "python -m eval.build_dataset --merge --per-class 100 (merge refuses an unbalanced set)")
 
 
 def main():
@@ -296,11 +328,18 @@ def main():
                         choices=["candidates", "enron"],
                         help="'enron' reviews the folder-heuristic rows already "
                              "in real_enron.csv")
+    parser.add_argument("--out", default=None,
+                        help="--build: write the review file here instead of "
+                             "eval/data/review_<category>.csv")
+    parser.add_argument("--review-file", default=None,
+                        help="--apply: read verdicts from this file")
+    parser.add_argument("--force", action="store_true",
+                        help="--build: overwrite a review file that already holds verdicts")
     args = parser.parse_args()
     if args.build:
-        build(args.category, args.source)
+        build(args.category, args.source, out=args.out, force=args.force)
     elif args.apply:
-        apply(args.category, args.source)
+        apply(args.category, args.source, review_file=args.review_file)
     else:
         parser.print_help()
 

@@ -9,7 +9,10 @@ something the suite fails on.
 
 import base64
 import json
+import re
+from email import policy
 from email.message import EmailMessage
+from email.parser import BytesParser
 from email.utils import format_datetime
 from datetime import datetime, timedelta, timezone
 
@@ -89,10 +92,60 @@ class _Messages(_Guard):
             record = self._gmail.by_id[id]
             if format == "raw":
                 return {"id": id, "labelIds": record["labelIds"], "raw": record["raw"]}
-            headers = [{"name": n, "value": v} for n, v in record["headers"].items()
-                       if n in (metadataHeaders or [])]
+            if format == "full":
+                message = BytesParser(policy=policy.default).parsebytes(_unb64(record["raw"]))
+                payload = _gmail_tree(message, "", self._gmail.decoded_headers,
+                                      record.get("out_of_line", ()))
+                return {"id": id, "labelIds": record["labelIds"], "payload": payload}
+            # metadata: Gmail matches the requested names without regard to
+            # case and returns each header under the name the message used.
+            wanted = {n.lower() for n in (metadataHeaders or [])}
+            headers = [{"name": n, "value": v} for n, v in record["headers"]
+                       if n.lower() in wanted]
             return {"id": id, "labelIds": record["labelIds"], "payload": {"headers": headers}}
         return _Request(run)
+
+
+def _unb64(raw):
+    return base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4))
+
+
+def _gmail_tree(part, part_id, decoded_headers, out_of_line):
+    """The format=full payload Gmail builds from one MIME part.
+
+    Modelled on Gmail's documented behaviour: header values as they appear in
+    the message (unfolded), text parts without a file name carry their bytes
+    inline as body.data, anything named or binary is an attachment -- an
+    attachmentId and a size, never data -- and an attached message/rfc822
+    nests the forwarded message's own tree. `out_of_line` lists body types to
+    push out of line as well, to exercise the adapter's raw fallback.
+    """
+    content_type = part.get_content_type()
+    if decoded_headers:
+        headers = [{"name": n, "value": str(v)} for n, v in part.items()]
+    else:
+        headers = [{"name": n, "value": re.sub(r"\r?\n(?=[ \t])", "", str(v))}
+                   for n, v in part.raw_items()]
+    node = {"partId": part_id, "mimeType": content_type,
+            "filename": part.get_filename() or "", "headers": headers}
+    child_id = (lambda i: f"{part_id}.{i}" if part_id else str(i))
+    if content_type == "message/rfc822":
+        inner = part.get_payload(0)
+        node["body"] = {"size": len(inner.as_bytes())}
+        node["parts"] = [_gmail_tree(inner, child_id(0), decoded_headers, out_of_line)]
+    elif part.is_multipart():
+        node["body"] = {"size": 0}
+        node["parts"] = [_gmail_tree(c, child_id(i), decoded_headers, out_of_line)
+                         for i, c in enumerate(part.get_payload())]
+    else:
+        data = part.get_payload(decode=True) or b""
+        inline = (not node["filename"] and content_type in ("text/plain", "text/html")
+                  and content_type not in out_of_line)
+        if inline:
+            node["body"] = {"size": len(data), "data": base64.urlsafe_b64encode(data).decode()}
+        else:
+            node["body"] = {"attachmentId": f"ANG-{part_id or 'root'}", "size": len(data)}
+    return node
 
 
 class _Labels(_Guard):
@@ -124,6 +177,10 @@ class FakeGmail(_Guard):
         self.get_calls = []
         self.batches = 0
         self.list_error = None
+        # False: header values come back as they appear in the message, encoded
+        # words and all. True: already decoded. Gmail is not documented either
+        # way, so the adapter is tested against both.
+        self.decoded_headers = False
 
     def users(self):
         return _Users(self)
@@ -142,12 +199,21 @@ class FakeGmail(_Guard):
         for name, value in (extra_headers or {}).items():
             message[name] = value
         message.set_content(body)
+        return self.add_message(gid, message, unread=unread, labels=labels,
+                                msgid=msgid or gid + "@mail.example.org")
+
+    def add_message(self, gid, message, unread=True, labels=("INBOX",), msgid=None,
+                    out_of_line=()):
+        """Store any EmailMessage, attachments and all."""
         raw = base64.urlsafe_b64encode(message.as_bytes()).decode().rstrip("=")
         label_ids = list(labels) + (["UNREAD"] if unread else [])
+        wanted = ("message-id", "from", "subject", "date")
         record = {
             "id": gid, "raw": raw, "labelIds": label_ids,
-            "msgid": (msgid or gid + "@mail.example.org"),
-            "headers": {k: message[k] for k in ("Message-ID", "From", "Subject", "Date")},
+            "msgid": msgid or str(message.get("Message-ID", "")).strip("<>"),
+            # Kept under the names the message itself used, as Gmail does.
+            "headers": [(n, str(v)) for n, v in message.items() if n.lower() in wanted],
+            "out_of_line": tuple(out_of_line),
         }
         self.messages.append(record)
         self.by_id[gid] = record
@@ -267,7 +333,7 @@ def test_a_headerless_message_is_skipped():
     gmail.add("g1", "Real")
     gmail.messages.append({"id": "g2", "labelIds": ["INBOX"],
                            "raw": base64.urlsafe_b64encode(b"\r\n\r\njust a body").decode(),
-                           "msgid": "", "headers": {}})
+                           "msgid": "", "headers": []})
     gmail.by_id["g2"] = gmail.messages[-1]
     assert [e.subject for e in _source(gmail).list_emails()] == ["Real"]
 
@@ -291,8 +357,8 @@ def test_get_email_downloads_one_body_only():
     gmail.get_calls.clear()
 
     _source(gmail).get_email(target)
-    raw_fetches = [c for c in gmail.get_calls if c[1] == "raw"]
-    assert len(raw_fetches) == 1, gmail.get_calls
+    body_fetches = [c for c in gmail.get_calls if c[1] in ("full", "raw")]
+    assert body_fetches == [(body_fetches[0][0], "full")], gmail.get_calls
 
 
 def test_get_email_finds_a_message_whose_id_was_sanitised():
@@ -327,7 +393,7 @@ def test_metadata_ids_match_full_parse_ids():
     for gid in ("g1", "g2", "g3"):
         meta = gmail.users().messages().get(userId="me", id=gid, format="metadata",
                                            metadataHeaders=["Message-ID", "From", "Subject", "Date"]).execute()
-        subject = gmail.by_id[gid]["headers"]["Subject"]
+        subject = dict(gmail.by_id[gid]["headers"])["Subject"]
         assert source._id_from_metadata(meta) == full[subject]
 
 
@@ -470,3 +536,163 @@ def test_the_api_source_needs_no_imap_password(monkeypatch):
     monkeypatch.delenv("GMAIL_USER", raising=False)
     monkeypatch.delenv("GMAIL_APP_PASSWORD", raising=False)
     Config(require_llm=False)   # must not raise
+
+
+# --- format=full: attachments stay on Google's side -----------------------------
+
+
+def _report(gid="a1", subject="Report attached", message_id=None):
+    message = EmailMessage()
+    message["From"] = "Grace Hopper <grace@example.org>"
+    message["To"] = "project@gmail.com"
+    message["Subject"] = subject
+    message["Message-ID"] = f"<{message_id or gid + '@mail.example.org'}>"
+    message["Date"] = format_datetime(datetime(2026, 9, 2, tzinfo=timezone.utc))
+    message.set_content("The figures are in the PDF.")
+    message.add_alternative("<p>The figures are in the PDF.</p>", subtype="html")
+    message.add_attachment(b"%PDF-1.4 " + b"x" * 5000, maintype="application",
+                           subtype="pdf", filename="Q3 figures.pdf")
+    message.add_attachment("ATTACHMENT-BODY-MARKER", filename="notes.txt")
+    return message
+
+
+def test_the_inbox_never_downloads_an_attachment():
+    """format=raw carries every attachment inline; the inbox must never use it
+    when the body text came back with the message."""
+    gmail = FakeGmail()
+    gmail.add_message("a1", _report())
+    gmail.add("g2", "Plain one")
+    emails = _source(gmail).list_emails()
+
+    assert {fmt for _gid, fmt in gmail.get_calls} == {"full"}
+    report = next(e for e in emails if e.subject == "Report attached")
+    assert [(a.filename, a.content_type, a.size) for a in report.attachments] == [
+        ("Q3 figures.pdf", "application/pdf", 5009),
+        ("notes.txt", "text/plain", len("ATTACHMENT-BODY-MARKER") + 1),
+    ]
+    assert "ATTACHMENT-BODY-MARKER" not in report.body_text + report.body_html
+    assert "The figures are in the PDF." in report.body_text
+
+
+def _sample_messages():
+    """Shapes worth proving format=full and format=raw agree on."""
+    plain = EmailMessage()
+    plain["From"] = "Ada Lovelace <ada@example.org>"
+    plain["To"] = "project@gmail.com"
+    plain["Subject"] = "Plain"
+    plain["Message-ID"] = "<plain@example.org>"
+    plain["Date"] = format_datetime(datetime(2026, 9, 1, tzinfo=timezone.utc))
+    plain.set_content("Just text.")
+
+    accented = EmailMessage()
+    accented["From"] = "Zoë Müller <zoe@example.org>"
+    accented["To"] = "project@gmail.com"
+    accented["Subject"] = "Réunion à 10h, café inclus"
+    accented["Message-ID"] = "<accent@example.org>"
+    accented["Date"] = format_datetime(datetime(2026, 9, 3, tzinfo=timezone.utc))
+    accented["References"] = "<root@example.org> <parent@example.org>"
+    accented.set_content("Le café est prêt.", charset="iso-8859-1")
+    accented.add_alternative("<p>Le café est prêt.</p>", subtype="html")
+
+    embedded = EmailMessage()
+    embedded["From"] = "News <news@example.org>"
+    embedded["Subject"] = "Banner"
+    embedded["Message-ID"] = "<banner@example.org>"
+    embedded["Date"] = format_datetime(datetime(2026, 9, 4, tzinfo=timezone.utc))
+    embedded.set_content("Text version.")
+    embedded.add_alternative('<p><img src="cid:b1"> HTML version.</p>', subtype="html")
+    embedded.get_payload()[1].add_related(b"\x89PNG", maintype="image", subtype="png",
+                                         cid="<b1>", filename="banner.png", disposition="inline")
+
+    inner = EmailMessage()
+    inner["From"] = "boss@example.org"
+    inner["Subject"] = "Original"
+    inner.set_content("Forwarded words.")
+    inner.add_attachment(b"PK", maintype="application", subtype="zip", filename="inner.zip")
+    forwarded = EmailMessage()
+    forwarded["From"] = "Ada Lovelace <ada@example.org>"
+    forwarded["Subject"] = "Fwd: Original"
+    forwarded["Message-ID"] = "<fwd@example.org>"
+    forwarded["Date"] = format_datetime(datetime(2026, 9, 5, tzinfo=timezone.utc))
+    forwarded.set_content("See below.")
+    forwarded.add_attachment(inner)
+
+    no_id = EmailMessage()
+    no_id["From"] = "Ada Lovelace <ada@example.org>"
+    no_id["Subject"] = "No Message-ID here"
+    no_id["Date"] = format_datetime(datetime(2026, 9, 6, tzinfo=timezone.utc))
+    no_id.set_content("Hashed id.")
+
+    return [plain, accented, embedded, _report(), forwarded, no_id]
+
+
+@pytest.mark.parametrize("decoded_headers", [False, True],
+                         ids=["headers-as-sent", "headers-decoded"])
+def test_full_and_raw_build_the_same_email(decoded_headers):
+    """format=full is only a cheaper way to download the same message. If any
+    field differed from the raw parse, an email could change id between the
+    inbox and the reading pane, or lose text."""
+    for index, message in enumerate(_sample_messages()):
+        gmail = FakeGmail()
+        gmail.decoded_headers = decoded_headers
+        gmail.add_message("m", message)
+        via_full = _source(gmail).list_emails()[0]
+        raw = gmail.users().messages().get(userId="me", id="m", format="raw").execute()
+        via_raw = GmailApiSource._to_source_email(raw)
+        assert vars(via_full) == vars(via_raw), f"sample {index} ({message['Subject']})"
+
+
+def test_an_attached_email_is_listed_never_read_into_the_body():
+    """Gmail nests a forwarded message's own parts under its message/rfc822
+    part. A walk that checked each part alone read that message's text as
+    this one's body, on both paths alike -- which is why the equality test
+    above could not catch it."""
+    forwarded = next(m for m in _sample_messages() if m["Subject"] == "Fwd: Original")
+    gmail = FakeGmail()
+    gmail.add_message("f1", forwarded)
+    via_full = _source(gmail).list_emails()[0]
+    raw = gmail.users().messages().get(userId="me", id="f1", format="raw").execute()
+    for email in (via_full, GmailApiSource._to_source_email(raw)):
+        assert "Forwarded words." not in email.body_text + email.body_html
+        assert email.body_text.strip() == "See below."
+        assert [a.content_type for a in email.attachments] == ["message/rfc822"]
+
+
+def test_body_text_gmail_keeps_out_of_line_is_fetched_whole():
+    gmail = FakeGmail()
+    gmail.add_message("o1", _report(gid="o1", subject="Long text"), out_of_line=("text/plain",))
+    gmail.add("g2", "Ordinary")
+    emails = {e.subject: e for e in _source(gmail).list_emails()}
+
+    assert "The figures are in the PDF." in emails["Long text"].body_text
+    assert [a.filename for a in emails["Long text"].attachments] == ["Q3 figures.pdf", "notes.txt"]
+    assert ("o1", "raw") in gmail.get_calls
+    assert ("g2", "raw") not in gmail.get_calls   # only the one that needed it
+
+
+def test_get_email_falls_back_to_raw_only_when_it_must():
+    gmail = FakeGmail()
+    gmail.add_message("o1", _report(gid="o1", subject="Long text"), out_of_line=("text/plain",))
+    target = _source(gmail).list_emails()[0].id
+    gmail.get_calls.clear()
+    found = _source(gmail).get_email(target)
+    assert found is not None and "The figures are in the PDF." in found.body_text
+    assert [fmt for _gid, fmt in gmail.get_calls if fmt != "metadata"] == ["full", "raw"]
+
+
+def test_a_message_id_header_in_any_case_still_opens():
+    """Senders write "Message-Id" as often as "Message-ID". The inbox (format=full)
+    and the reading pane's lookup (format=metadata) must agree on the id either
+    way, or clicking the email would find nothing."""
+    message = EmailMessage()
+    message["From"] = "Ada Lovelace <ada@example.org>"
+    message["Subject"] = "Lower-case id header"
+    message["Message-Id"] = "<CAF+mixed=case@mail.example.org>"
+    message["Date"] = format_datetime(datetime(2026, 9, 7, tzinfo=timezone.utc))
+    message.set_content("Hello.")
+    gmail = FakeGmail()
+    gmail.add_message("c1", message, msgid="CAF+mixed=case@mail.example.org")
+    listed = _source(gmail).list_emails()[0]
+    assert listed.id == "CAF_mixed_case@mail.example.org"   # '+' and '=' sanitised
+    opened = _source(gmail).get_email(listed.id)
+    assert opened is not None and opened.subject == "Lower-case id header"

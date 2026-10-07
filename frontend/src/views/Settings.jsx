@@ -1,5 +1,6 @@
 /**
- * Settings (section 5.5): voice on/off, browser capability status, cache clear.
+ * Settings (section 5.5): voice on/off, recognition language, browser
+ * capability status, cache clear.
  *
  * Deliberately small. The FIT3163 wireframe also listed default reply tone and
  * translation language; tone now lives on the draft itself where it applies,
@@ -13,6 +14,7 @@ import { ChevronRight, Mic, RefreshCw, Volume2 } from "lucide-react";
 
 import { useSpeech } from "../hooks/useSpeech.jsx";
 import { capabilities } from "../lib/capabilities.js";
+import { SPEECH_LANGS } from "../lib/constants.js";
 
 function Row({ label, detail, children }) {
   return (
@@ -35,7 +37,15 @@ function Status({ ok, children }) {
   );
 }
 
-export default function Settings({ voiceEnabled, setVoiceEnabled, onReloadInbox, reloading, onBack }) {
+export default function Settings({
+  voiceEnabled,
+  setVoiceEnabled,
+  speechLang,
+  setSpeechLang,
+  onReloadInbox,
+  reloading,
+  onBack,
+}) {
   const speech = useSpeech();
 
   return (
@@ -70,6 +80,28 @@ export default function Settings({ voiceEnabled, setVoiceEnabled, onReloadInbox,
             <span className="toggle-text">{voiceEnabled ? "On" : "Off"}</span>
           </button>
         </Row>
+
+        {/* Only where it can apply: with voice off, or no recogniser in this
+            browser, a language choice would change nothing. */}
+        {voiceEnabled && capabilities.stt && (
+          <Row
+            label="Recognition language"
+            detail="The English your voice commands listen for. Pick the accent closest to yours: the browser's own language setting is often not the one you speak."
+          >
+            {/* A native select gives keyboard and screen reader support for
+                free; .setting-select only matches it to the other controls. */}
+            <select
+              className="setting-select"
+              aria-label="Recognition language"
+              value={speechLang}
+              onChange={(event) => setSpeechLang(event.target.value)}
+            >
+              {SPEECH_LANGS.map(({ key, label }) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </Row>
+        )}
       </section>
 
       <section className="setting-group">

@@ -1,0 +1,169 @@
+{
+  "note": "Measured 2026-10-07 with the script that became eval/cold_load.py, 25-email fixture inbox from the test split, gpt-4o-mini, Flask test client, one laptop on a home connection.",
+  "model": "gpt-4o-mini",
+  "inbox_emails": 25,
+  "trials": 5,
+  "target_seconds": 5.0,
+  "settings": {
+    "b1c25": {
+      "classify_batch_size": 1,
+      "classify_concurrency": 25
+    },
+    "b1c16": {
+      "classify_batch_size": 1,
+      "classify_concurrency": 16
+    },
+    "b1c8": {
+      "classify_batch_size": 1,
+      "classify_concurrency": 8
+    }
+  },
+  "first_trial_includes_connection_setup": "no: an untimed warm-up load ran first (first_load)",
+  "first_load": {
+    "setting": "b1c25",
+    "cold_s": 4.24
+  },
+  "results": {
+    "b1c25": [
+      {
+        "trial": 1,
+        "status": 200,
+        "cold_s": 1.688,
+        "reload_s": 0.095,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 2,
+        "status": 200,
+        "cold_s": 1.963,
+        "reload_s": 0.092,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 3,
+        "status": 200,
+        "cold_s": 2.199,
+        "reload_s": 0.086,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 4,
+        "status": 200,
+        "cold_s": 1.961,
+        "reload_s": 0.106,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 5,
+        "status": 200,
+        "cold_s": 1.858,
+        "reload_s": 0.087,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      }
+    ],
+    "b1c16": [
+      {
+        "trial": 1,
+        "status": 200,
+        "cold_s": 2.95,
+        "reload_s": 0.074,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 2,
+        "status": 200,
+        "cold_s": 3.154,
+        "reload_s": 0.094,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 3,
+        "status": 200,
+        "cold_s": 3.067,
+        "reload_s": 0.099,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 4,
+        "status": 200,
+        "cold_s": 4.01,
+        "reload_s": 0.099,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 5,
+        "status": 200,
+        "cold_s": 3.016,
+        "reload_s": 0.078,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      }
+    ],
+    "b1c8": [
+      {
+        "trial": 1,
+        "status": 200,
+        "cold_s": 4.911,
+        "reload_s": 0.114,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 2,
+        "status": 200,
+        "cold_s": 4.718,
+        "reload_s": 0.086,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 3,
+        "status": 200,
+        "cold_s": 5.522,
+        "reload_s": 0.11,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 4,
+        "status": 200,
+        "cold_s": 5.124,
+        "reload_s": 0.082,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 5,
+        "status": 200,
+        "cold_s": 29.305,
+        "reload_s": 0.095,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      }
+    ]
+  }
+}

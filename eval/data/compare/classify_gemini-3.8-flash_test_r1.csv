@@ -1,0 +1,216 @@
+id,split,provenance,text_origin,label_source,expected,predicted,correct,raw_category,raw_confidence,evidence_ok,reason,batch,subject
+enron-0452049916fa,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,Christmas party December 16th
+enron-0c46f4281958,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,RE: Christmas
+enron-0d3815dc2f15,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,Check out AOL Local Guide: Houston - What's Going On - Kingwood Cove Golf Cou
+enron-0e2651538daf,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,drallion
+enron-0e8a95e47904,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,The beginning of the end!!!!!!!!!!!!!!!!
+enron-1221d9e85cef,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,email addresses
+enron-15c652b6770d,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,0,Continental Schedule IAH SJU  1st class
+enron-197dd9a9ed67,test,enron,real,human,Personal,Personal,True,Personal,0.9,True,,0,Personal Message
+enron-21eac3eb68b3,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,trip
+enron-22caaa78f9e8,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,thanks!
+enron-22ef170ac354,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,0,Wine Cellar Software
+enron-2398be6852eb,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,Hey Beast-Barracks-Buddy...!!!
+enron-250af7a7cabe,test,enron,real,human,Personal,Personal,True,Personal,0.9,True,,0,Curriculum
+enron-2d070229a8db,test,enron,real,human,Personal,Personal,True,Personal,0.9,True,,0,A Reflection on Memorial Day
+enron-311cbe086e0a,test,enron,real,human,Personal,Personal,True,Personal,0.85,True,,0,Re: Shinwa
+enron-38cd9886c87e,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,0,Cirque-Drallion
+enron-3d943f18ebf1,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,0,FW: Winter in Texas: Kidventure Holiday Camp!
+enron-3fba0fa12b3d,test,enron,real,human,Personal,Personal,True,Personal,0.9,True,,0,Commissioner.COM Transaction Request
+enron-45d6d33f9240,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,0,15 degrees here
+enron-4616a13dd5a1,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,0,New position - Happy New Year
+enron-486464478725,test,enron,real,human,Personal,Work,False,Work,0.85,True,,1,Perspective
+enron-49cb1ce918f7,test,enron,real,human,Personal,Personal,True,Personal,0.9,True,,1,Hello from a long lost friend
+enron-4c0921061268,test,enron,real,human,Personal,Personal,True,Personal,0.8,True,,1,Message
+enron-4cc2ebbea0d5,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,1,Wif Reminder
+enron-53c2b7317973,test,enron,real,human,Personal,Personal,True,Personal,0.98,True,,1,Texas Tailgate!
+enron-5d9b252d0b75,test,enron,real,human,Personal,Personal,True,Personal,0.98,True,,1,Hello from UT
+enron-5f3ac1f050fa,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,1,Christmas
+enron-6384816c1f15,test,enron,real,human,Personal,Personal,True,Personal,0.85,True,,1,Grand Opening
+enron-68002ec90023,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,1,"Contributions, jobs, etc."
+enron-69f55199eca0,test,enron,real,human,Personal,Personal,True,Personal,0.7,True,,1,Fw: Photos 1 of 3
+enron-6bb7ff946523,test,enron,real,human,Personal,Personal,True,Personal,0.75,True,,1,My Resume
+enron-6ebf6a15729b,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,1,Cita
+enron-71f9cf184ca3,test,enron,real,human,Personal,Personal,True,Personal,0.8,True,,1,Re: POS Book Fair
+enron-7636aef82997,test,enron,real,human,Personal,Personal,True,Personal,0.8,True,,1,FW: Fw: Packing My Parachute
+enron-78258907283d,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,1,Just wanted you both to know that we are...
+enron-7f868087409e,test,enron,real,human,Personal,Personal,True,Personal,0.85,True,,1,Fwd: How to Live a Happy Life
+enron-825d500933b5,test,enron,real,human,Personal,Work,False,Work,0.9,True,,1,"FW: Aegean Capital Transaction Confirmation, XID: 2775515"
+enron-826bac719237,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,1,Re: reply to ernie
+enron-83308249a490,test,enron,real,human,Personal,Personal,True,Personal,1.0,True,,1,(no subject)
+enron-8ab2c462a3fe,test,enron,real,human,Personal,Personal,True,Personal,0.75,True,,1,Laura Bush
+enron-8f212c1df9ed,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,2,Re: lunch
+enron-93abd8f54dbf,test,enron,real,human,Personal,Studies,False,Studies,0.85,True,,2,UH Rec Center
+enron-93fb6e09e702,test,enron,real,human,Personal,Personal,True,Personal,0.9,True,,2,Gore a la Mastercard
+enron-94904999e1fa,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,2,Fwd: FW: Remember to Vote
+enron-96bb28b1e643,test,enron,real,human,Personal,Personal,True,Personal,0.9,True,,2,Fw: 2nd attempt - Halloween invitation
+enron-a074613f9f50,test,enron,real,human,Personal,Personal,True,Personal,0.95,True,,2,We just want to say... - from Haley and Wil
+enron-a16853adc3ec,test,enron,real,human,Personal,Personal,True,Personal,0.8,True,,2,"Endurance, Encouragement, Hope and Bring Home Good Fruit"
+enron-a1b0d6ce6aa9,test,enron,real,human,Personal,Personal,True,Personal,0.98,True,,2,Colleen from the Seattle Maktub show on the 4th
+enron-0044e7eaebff,test,enron,real,human,Promotions,Promotions,True,Promotions,0.95,True,,2,"Enerfax Gas, Oil, Liquids,Derivatives' prices & info (text) Crude Oil Futures Rise as US Urges Tighter Controls on Iraq"
+enron-00ecb971440c,test,enron,real,human,Promotions,Promotions,True,Promotions,0.98,True,,2,Expand Your Business!                                                   [m6apa]
+enron-02761b49b55b,test,enron,real,human,Promotions,Promotions,True,Promotions,0.98,True,,2,Something EVERY Business Needs!                                                   [10vh6l]
+enron-0537d7d93ffe,test,enron,real,human,Promotions,Promotions,True,Promotions,0.98,True,,2,Free Vacation
+enron-07a248e756fd,test,enron,real,human,Promotions,Promotions,True,Promotions,0.98,True,,2,Home Loan Center... Tremendous Savings!
+enron-07b69ad0557c,test,enron,real,human,Promotions,Promotions,True,Promotions,0.98,True,,2,Pill to Increase Your Ejaculation by 581%
+enron-0f94d1b29059,test,enron,real,human,Promotions,Promotions,True,Promotions,0.9,True,,2,"Earn an instant $1k+ weekly, from home!"
+enron-1109ae9dd613,test,enron,real,human,Promotions,Promotions,True,Promotions,0.7,True,,2,Fwd: Vacation Savings
+enron-141c403a0ed1,test,enron,real,human,Promotions,Promotions,True,Promotions,0.98,True,,2,Your children's future...                             QJ
+enron-1e609ebe6755,test,enron,real,human,Promotions,Promotions,True,Promotions,0.75,True,,2,Fwd: The Motley Fool Registration
+enron-21646d7fcefb,test,enron,real,human,Promotions,Promotions,True,Promotions,0.98,True,,2,Stressed with Debt? We Can Help!
+enron-234f073d8013,test,enron,real,human,Promotions,Promotions,True,Promotions,0.98,True,,2,Something EVERY Business Needs!                                                   [6q4pg]
+enron-2542653d1476,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,Be in shape and look great In ONE HOUR . . .
+enron-2973aedad6e6,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,Make $231 Reading 20 eMails! Time:6:04:57 AM
+enron-2a47b353c369,test,enron,real,human,Promotions,Promotions,True,Promotions,0.95,True,,3,"Fwd: Your opinion could be Worth......$1,000!"
+enron-31f1b0f96ea1,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,Enerfax Daily's free gas & power prices & info text Problems
+enron-33cd370441d6,test,enron,real,human,Promotions,Promotions,True,Promotions,0.85,True,,3,Financial Assistance
+enron-3c44ea47cbde,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,"$250,000 Life Insurance Policy $6.95 per month"
+enron-3cc04200ae27,test,enron,real,human,Promotions,Promotions,True,Promotions,0.9,True,,3,PIRA's API Weekly Comment 11/27/01
+enron-459c6a0788aa,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,Special                         3108
+enron-4bb5436f1b02,test,enron,real,human,Promotions,Promotions,True,Promotions,0.9,True,,3,Fwd: To MBA Or Not To MBA: Vault.com's Weekly Career Update
+enron-4e5722d69a76,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,"Enerfax Gas, Oil, Liquids,Derivatives' prices & info (text) Crude Oil Futures Slip Amid Profit Taking"
+enron-4ea39a6e7f4f,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,"Are You Living in Debt, Paycheck to Paycheck?14822"
+enron-4f9c8ff3f639,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,Copy any DVD Movie for FREE!
+enron-502c5b40a1c5,test,enron,real,human,Promotions,Promotions,True,Promotions,0.8,True,,3,November 23 edition
+enron-569698ac2f2e,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,"Are You Living in Debt, Paycheck to Paycheck?2068"
+enron-5816eac53b1e,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,We Run Background and Asset Searches!!
+enron-5e1de0536c74,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,75% off on printer ink. 100% guaranteed!
+enron-6222338a0236,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,Discover what factors (Corporate Money Lenders)
+enron-63aa47565d77,test,enron,real,human,Promotions,Promotions,True,Promotions,0.95,True,,3,Earn a Degree based on your Life Experience
+enron-66591c7b267e,test,enron,real,human,Promotions,Promotions,True,Promotions,0.9,True,,3,Retail Energy: Market Launch in January Could Make or Break Movement Toward Retail Competition - CERA Private Report
+enron-6a16d7b63136,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,3,Have tax problems?                                                   [cib5h]
+enron-6c235e0b6786,test,enron,real,human,Promotions,Studies,False,Studies,0.95,True,,4,Fwd: SDA Bocconi - Masters Division
+enron-7065e017df0a,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,4,Experience the excitement of online casinos!LDI
+enron-70e3cc88f832,test,enron,real,human,Promotions,Promotions,True,Promotions,0.95,True,,4,Oregon Law Journal:  June 2001 Issue
+enron-81bfa185819d,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,4,COPY ANY DVD MOVIE - FOR FREE!
+enron-8423b2abedb4,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,4,Email Marketing Works! Cheap & Effective!
+enron-84ac5e556af2,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,4,Online Gambling and Betting                      QEPXW
+enron-87fb1e7c2784,test,enron,real,human,Promotions,Personal,False,Personal,0.75,True,,4,Demand Ken Lay Donate Proceeds from Enron Stock Sales
+enron-896f9905f881,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,4,Natural Bust - Amazing Breast Enhancing Capsules!
+enron-90ed6593805b,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,4,The Perfect Gift For DVD Movie Users!                   PU
+enron-9147476a4d34,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,4,Texas Energy Report
+enron-a0091f2c756b,test,enron,real,human,Promotions,Promotions,True,Promotions,0.85,True,,4,Assemblyman Richman dinner with Arnold Schwarzenegger
+enron-a389c8de7d66,test,enron,real,human,Promotions,Promotions,True,Promotions,0.8,True,,4,Fwd:
+enron-a44124b64068,test,enron,real,human,Promotions,Promotions,True,Promotions,0.9,True,,4,Fwd: Double Miles and Travel Award Sale
+enron-ad3be7c07802,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,4,Adult Industry Secrets Revealed!                         14859
+enron-ae1084c5c6e4,test,enron,real,human,Promotions,Personal,False,Personal,0.75,True,,4,Demand Ken Lay Donate Proceeds from Enron Stock Sales
+enron-b05226a281ed,test,enron,real,human,Promotions,Promotions,True,Promotions,1.0,True,,4,We Run Background and Asset Searches!
+generated-03ddea97bdf0,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,1.0,True,,4,Update on Placement Application Status
+generated-05ab934e247b,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,1.0,True,,4,Urgent: Special Consideration Outcome Notification
+generated-0b3214c4a7e4,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,1.0,True,,4,Upcoming Thesis Supervision Meeting
+generated-0c7e527b7167,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,4,Feedback on Your Draft
+generated-11d612b3d367,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Exam Timetable Release Notification
+generated-1308bb55599c,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Release of Exam Timetable for Semester 2
+generated-1ce2ffca4e2d,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Change in Assignment Deadline for SCI101
+generated-23b1d7692f37,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Urgent: Course Plan Advice Needed Before Friday
+generated-23ee63925c92,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Thesis Supervision Meeting Confirmation
+generated-27851cb15950,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Feedback on Your Draft Submission
+generated-28fe54141bce,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Urgent: Change in Assignment Deadline for LIB101
+generated-2d8ee16c1ee9,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.98,True,,5,Urgent: Research Ethics Approval Needed by October 15
+generated-2e7836efedae,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Change of Tutorial Room for Upcoming Sessions
+generated-2f7adbc4e64c,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.98,True,,5,Group Project Coordination
+generated-2f98054a022a,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.98,True,,5,Urgent: Lab Safety Induction Required Before Next Week
+generated-2fa4381ca26d,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.98,True,,5,Library Loan Recall Notification
+generated-3070765705c7,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,5,Urgent: Scholarship Application Outcome
+generated-32d6b85e2690,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Reminder: Academic Integrity Module Completion
+generated-350281a02042,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Urgent: Coordination Needed for Group Project Submission
+generated-361d02cd089f,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Graduation Application Confirmation
+generated-40273a023e99,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Update on Textbook List for Next Semester
+generated-447d3905963f,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.98,True,,5,Urgent: Feedback Needed on Draft Before Friday
+generated-4778236720ef,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Change in Assignment Deadline for Unit XYZ101
+generated-486cb9e49869,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.99,True,,5,Update on Supervisor Feedback for Your Draft
+generated-54a3c645249c,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Urgent: Practical Class Swap Request Needed by October 5th
+generated-58bf74c73636,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Exciting News: Exam Timetable is Out!
+generated-5bbd7f10d7f2,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Thesis Supervision Meeting Reminder
+generated-5bddfc887b9c,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,"Release of Exam Timetable for Semester 2, 2023"
+generated-5bf180a952f3,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Request for Practical Class Swap - URGENT
+generated-6745af500122,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Reminder: Graduation Application Deadline Approaching
+generated-6f756a1e5a15,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.9,True,,6,Change in Lab Safety Induction Schedule
+generated-70010826b3b6,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Urgent: Coordination for Group Project Submission
+generated-707a4c24e33d,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Graduation Application Process
+generated-7273fcfd7eb6,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Request for Practical Class Swap
+generated-76aa6514988f,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.85,True,,6,Reminder: Student Society AGM Scheduled for March 15
+generated-778258d50277,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Urgent: Special Consideration Outcome
+generated-7a5d6852f116,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Update on Your Scholarship Application Outcome
+generated-7bc16f1ca99e,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Research Ethics Approval Notification
+generated-7be6988a7376,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Urgent: Graduation Application Deadline Approaching
+generated-7c688bc58992,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.85,True,,6,Change of Date for Student Society AGM
+generated-812bce17c218,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Request to Swap Practical Class
+generated-86ed92eb24cc,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Course Plan Adjustment
+generated-8ab2d7412ed8,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Graduation Application Reminder
+generated-8d0c43eb7d6e,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,6,Reminder: Complete Your Academic Integrity Module
+generated-930311569ead,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,7,Urgent: Library Loan Recall Notice
+generated-93dceb44c7f5,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,7,Urgent: Correction Needed for Unit Guide
+generated-9697448577c8,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,7,Lecture Recording Unavailable
+generated-98c35adad25b,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,7,Course Plan Advice for Your Upcoming Semester
+generated-9c53e83a876e,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.9,True,,7,Update on Your Placement Application
+generated-a15ce1532f4f,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,7,Update on Research Ethics Approval Process
+generated-a3e99f30eed7,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,7,Scholarship Application Outcome
+generated-a6354f0ded09,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,7,Change of Tutorial Room for Our Next Session
+generated-b43a799f1545,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.95,True,,7,Lecture Recording Unavailable for Week 5
+generated-c2e27ebff570,test,generated,synthetic,generation_prompt,Studies,Studies,True,Studies,0.85,True,,7,Urgent: Conference Travel Funding Application Deadline Approaching
+enron-01381c3e85c6,test,enron,real,human,Work,Work,True,Work,0.95,True,,7,Sampling & Pigging
+enron-08d24e9ef5aa,test,enron,real,human,Work,Work,True,Work,0.9,True,,7,RE: BADGE
+enron-094771a0b5fe,test,enron,real,human,Work,Work,True,Work,0.95,True,,7,RE: ISAS Meeting Agenda 2/14&15/2002
+enron-0ad83856a4a6,test,enron,real,human,Work,Work,True,Work,0.95,True,,7,FW: Greatest Savings
+enron-1000f717ae1b,test,enron,real,human,Work,Work,True,Work,0.8,True,,7,RE: BADGE
+enron-1c03255b2c0f,test,enron,real,human,Work,Work,True,Work,0.95,True,,7,Enron/Dynegy Merger; Antitrust Issues
+enron-258a1efde235,test,enron,real,human,Work,Work,True,Work,0.9,True,,7,RE: Expense Receipts
+enron-25b7ba6a4437,test,enron,real,human,Work,Work,True,Work,0.8,True,,7,Enron employees leaving Houston
+enron-29793e616bac,test,enron,real,human,Work,Work,True,Work,0.95,True,,7,Y/E PRC and Contractual Bonus Targets
+enron-2ab526e2e803,test,enron,real,human,Work,Promotions,False,Promotions,0.9,True,,7,Ken's Back!
+enron-351a39cf4e8c,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,"Re: FW: EPMI et al., Docket No. ER01-753"
+enron-37dbfedf577a,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,Weekend Outage Report for 8-24-01 through 8-27-01
+enron-3f4194353f95,test,enron,real,human,Work,Work,True,Work,0.9,True,,8,Enter to Win Two Free Airline Tickets!
+enron-3fe8558fc993,test,enron,real,human,Work,Personal,False,Personal,0.95,True,,8,RE: Partial Day Recall Filing
+enron-440ee77cf3e9,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,E-Tag 1.7 Functionality Test Procedure
+enron-4cd84732b140,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,RE: WP-02 Data Responses SL-SP:001 through SL-SP:006
+enron-4dbbbcff5afc,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,"RE: Sharon Davis EEOC Charge -- Jenks, Oklahoma"
+enron-4f09b337928f,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,RE: Clayton Energy
+enron-4f78d73a7291,test,enron,real,human,Work,Work,True,Work,0.75,True,,8,FW: Mid-C Seminar
+enron-5b1f766bd69b,test,enron,real,human,Work,Work,True,Work,0.9,True,,8,Re: Corrected Dinner Invitation
+enron-644660de1d8d,test,enron,real,human,Work,Work,True,Work,0.9,True,,8,Enron Response to San Diego Request for Gas Price Caps
+enron-676cea1ee2cf,test,enron,real,human,Work,Work,True,Work,0.7,True,,8,Dell & Enron Order Confirmation
+enron-67ce62b6cd9e,test,enron,real,human,Work,Review,False,Work,0.6,True,low_confidence,8,FW: Pool example
+enron-718ec5a9cf45,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,info/catch up/ RPS predictions
+enron-722fdaed341d,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,EPPI Schedules
+enron-741f5bea8fa7,test,enron,real,human,Work,Work,True,Work,0.9,True,,8,Presentation Announcement
+enron-78d4d0466e91,test,enron,real,human,Work,Personal,False,Personal,0.9,True,,8,"FW: Congratulations on Your Promotion from Rick White, USMA 84"
+enron-7b8c48b0a963,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,Draft Letter to ISO
+enron-8098a1b5cd3b,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,"NOTIFICATION:  Outlook Outage - Friday, December 28, 2001"
+enron-80ff3792064a,test,enron,real,human,Work,Work,True,Work,0.95,True,,8,RE: E-Tag 1.7 Testing - OATI
+enron-838a2d446d96,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,RE: ISAS Meeting Agenda 2/14&15/2002
+enron-8864127f7375,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,FW: Syncrude
+enron-89f50ab7c398,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,11/19/01 FINAL Violation Memos
+enron-8bb13394d406,test,enron,real,human,Work,Promotions,False,Promotions,0.95,True,,9,Enron in Action 10.29.01
+enron-8d54cbe02f84,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,Midwest RTO rehearing summary
+enron-8f485e4b9b83,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,BCP Seat Assignments
+enron-987726d0017c,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,FW: Access to TAGG
+enron-9c2f00e6890b,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,Remote Access Pilot List
+enron-9e5fc3a3fc36,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,ISAS Meeting Agenda 2/14&15/2002
+enron-9f38f0fcda9c,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,REVIEW THIS ONE:  NEW PRESS RELEASE DRAFT -- NEED APPROVAL
+enron-a299e445c36d,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,FW: Employee Transfer
+enron-acdaa74967d0,test,enron,real,human,Work,Work,True,Work,0.9,True,,9,Security Bulletin
+enron-afb4102fd701,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,Critical Business Applications for Customer Communications and Transactions
+enron-b5a9e98633f2,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,Response to FERC Data Request for Bulk Power Investigation
+enron-baa868205b97,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,Access to UBSWenergy Production Environment
+enron-bc769224dc0f,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,Daily Summary of Risk Data 12/21
+enron-bd12063b5b52,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,FW: Org Charts
+enron-c495bbf86533,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,CEO Diversity Rountable Speaking Points for Ken Lay
+enron-c7507c55e14a,test,enron,real,human,Work,Work,True,Work,0.85,True,,9,"NYISO - MIS Outage - October 31, 2001 - Reminder Notice"
+enron-c8f3b48bb2a1,test,enron,real,human,Work,Work,True,Work,0.95,True,,9,RE:
+enron-d22363ab3b91,test,enron,real,human,Work,Work,True,Work,0.95,True,,10,DALLAS TRIP TO MEET WITH RICHARDSON & AQUILA
+enron-d331a52c44d7,test,enron,real,human,Work,Promotions,False,Promotions,0.85,True,,10,Holiday Terms for NEXT DAY Strip (N.A. Natural Gas)
+enron-d4cd177cefc1,test,enron,real,human,Work,Work,True,Work,0.95,True,,10,Account Receivables
+enron-d96d69d53d70,test,enron,real,human,Work,Work,True,Work,0.95,True,,10,Daily Summary of Risk Data 12/26
+enron-d9b4c6a262f9,test,enron,real,human,Work,Work,True,Work,0.75,True,,10,FW: Reliant Entex-Tennessee Pipeline
+enron-dce88c471a19,test,enron,real,human,Work,Personal,False,Personal,0.8,True,,10,Re: Life After Enron
+enron-e30c4b328352,test,enron,real,human,Work,Work,True,Work,0.95,True,,10,Draft 10Q Release
+enron-e3b7f10eab55,test,enron,real,human,Work,Promotions,False,Promotions,0.85,True,,10,Price Reservations 23 October 2001 Real-Time and Hour-Ahead Markets and 24 October 2001 Day-Ahead Market
+enron-f1a5ecd8cc62,test,enron,real,human,Work,Work,True,Work,0.85,True,,10,RE: Badge Access
+enron-f428df3916da,test,enron,real,human,Work,Work,True,Work,0.95,True,,10,Immigration
+enron-f4686408945c,test,enron,real,human,Work,Work,True,Work,0.95,True,,10,Re: APS and Enron
+enron-f52bc2b60ddc,test,enron,real,human,Work,Work,True,Work,0.9,True,,10,ERCOT-Austin Parking
+enron-f55a500b409c,test,enron,real,human,Work,Work,True,Work,0.95,True,,10,Re: NJ Index plus
+enron-f63c893fc48a,test,enron,real,human,Work,Work,True,Work,0.85,True,,10,Re: WP-02 Data Response
+enron-fdeaab7f7698,test,enron,real,human,Work,Work,True,Work,0.95,True,,10,Revised Section 3.4B

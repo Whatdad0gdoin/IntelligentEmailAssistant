@@ -22,12 +22,85 @@ log = logging.getLogger(__name__)
 
 # --- HTML ------------------------------------------------------------------
 
-_SCRIPT_STYLE = re.compile(r"(?is)<(script|style)\b.*?</\1>")
+_SCRIPT_OR_STYLE = re.compile(r"(?i)<(script|style)\b")
 _LINE_BREAK = re.compile(r"(?i)<(?:br|hr)\s*/?>")
-_BLOCK_END = re.compile(r"(?i)</(?:p|div|tr|li|h[1-6]|ul|ol|table|blockquote)\s*>")
+_BLOCKS = r"(?:p|div|tr|h[1-6]|ul|ol|table|blockquote)"
+_BLOCK_END = re.compile(r"(?i)</(?:" + _BLOCKS + r"|li)\s*>")
+# A block starts a line as well as ending one. Without this, an image or a link
+# followed by <p>Unsubscribe...</p> came out as one line, and a footer phrase
+# that is not at the start of a line is not recognised as one.
+_BLOCK_START = re.compile(r"(?i)<" + _BLOCKS + r"\b[^>]*>")
+# Where one block closes and the next opens, that is still one line break.
+# Counting it twice put a blank line between Outlook-style <div> header lines
+# ("From:", "Sent:", ...), and the quoted-history marker needs them adjacent.
+_BLOCK_BOUNDARY = re.compile(r"(?i)</(?:" + _BLOCKS + r"|li)\s*>\s*<" + _BLOCKS + r"\b[^>]*>")
 _LIST_ITEM = re.compile(r"(?i)<li\b[^>]*>")
 _TAG = re.compile(r"(?s)<[^>]+>")
 _LOOKS_LIKE_HTML = re.compile(r"(?i)<(?:html|body|div|p|table|br|span)\b")
+
+# An image's alt text is the only wording some marketing emails have: the offer
+# is a picture, and its alt attribute says what the picture says. Dropping it
+# with the other tags left those emails with no text at all. It is kept as
+# "[image: ...]" so a reader can tell it was not prose. alt="" marks a
+# decorative image or a tracking pixel by convention, and gives nothing.
+_IMG = re.compile(r"(?is)<img\b[^>]*>")
+# One attribute at a time, left to right, a quoted value read whole -- so an
+# "alt=" inside another attribute's value (a Firebase or Cloud Storage URL ends
+# "?alt=media&token=...") is never taken for the image's own alt text.
+_ATTRIBUTE = re.compile(r"""([^\s"'<>/=]+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s"'>]+))?""")
+_MAX_ALT_CHARS = 200
+
+
+def _alt_value(tag):
+    """The alt attribute of an <img ...> tag, or None."""
+    for attribute in _ATTRIBUTE.finditer(tag, 4):   # past "<img"
+        if attribute.group(1).lower() == "alt":
+            value = attribute.group(2) or ""
+            return value[1:-1] if value[:1] in ("'", '"') else value
+    return None
+
+
+def _alt_text(match):
+    value = _alt_value(match.group(0))
+    if value is None:
+        return " "
+    value = re.sub(r"\s+", " ", _html.unescape(value)).strip()[:_MAX_ALT_CHARS]
+    if not any(ch.isalnum() for ch in value):
+        return " "
+    # Escaped again because the tag stripper runs next and the whole text is
+    # unescaped once at the end: a literal "<" in the alt text must not be
+    # taken for the start of a tag and eat the words after it.
+    return f" [image: {_html.escape(value, quote=False)}] "
+
+
+_CLOSING = {"script": re.compile(r"(?i)</script\s*>"), "style": re.compile(r"(?i)</style\s*>")}
+
+
+def _drop_scripts_and_styles(text):
+    """Remove <script> and <style> elements, contents included, in one pass.
+
+    The regex this replaces searched to the end of the text for a closing tag
+    from every opening one that had none, so ten thousand unclosed tags took
+    several seconds. Here each kind is searched for at most once after it is
+    found unclosed. An unclosed one is left for the tag stripper, as before:
+    dropping everything after it would lose the email's text with the junk.
+    """
+    kept, position, unclosed = [], 0, set()
+    while True:
+        opening = _SCRIPT_OR_STYLE.search(text, position)
+        if opening is None:
+            kept.append(text[position:])
+            break
+        name = opening.group(1).lower()
+        closing = None if name in unclosed else _CLOSING[name].search(text, opening.end())
+        if closing is None:
+            unclosed.add(name)
+            kept.append(text[position:opening.end()])
+            position = opening.end()
+            continue
+        kept.append(text[position:opening.start()] + " ")
+        position = closing.end()
+    return "".join(kept)
 
 
 def html_to_text(raw):
@@ -41,11 +114,20 @@ def html_to_text(raw):
     """
     if not raw:
         return ""
-    text = _SCRIPT_STYLE.sub(" ", raw)
+    text = _drop_scripts_and_styles(raw)
+    # Every tag pattern below needs a closing ">". After the last one in the
+    # text no "<" can start a tag, and leaving the patterns to find that out
+    # from each "<" in turn is quadratic: 100 KB of "<" took eight seconds, on
+    # every inbox load. So tags are only looked for up to the last ">".
+    last = text.rfind(">")
+    text, rest = text[:last + 1], text[last + 1:]
+    text = _IMG.sub(_alt_text, text)
     text = _LINE_BREAK.sub("\n", text)
+    text = _BLOCK_BOUNDARY.sub("\n", text)
     text = _LIST_ITEM.sub("\n- ", text)
+    text = _BLOCK_START.sub("\n", text)
     text = _BLOCK_END.sub("\n", text)
-    text = _TAG.sub(" ", text)
+    text = _TAG.sub(" ", text) + rest
     text = _html.unescape(text)
     text = text.replace(" ", " ")
     text = re.sub(r"[ \t]+", " ", text)
@@ -117,6 +199,19 @@ _FOOTER_PHRASES = re.compile(
     r")"
 )
 
+# Words only footers use. Legal and list-management prose keeps using them
+# after its opening phrase ("confidential", "intended recipient", "update your
+# preferences"); an offer, a digest or a reply does not.
+_FOOTER_VOCABULARY = re.compile(
+    r"(?i)(?:\b(?:unsubscribe\w*|opt[- ]?(?:out|in)|subscri(?:be|bed|ber|bers|ption|ptions)|"
+    r"mailing (?:list|address)|preferences|privacy|confidential\w*|privileged|"
+    r"intended (?:solely|only|recipient)|addressee|disclos\w*|prohibited|"
+    r"rights reserved|copyright|receiving this|notify the sender)\b|©)"
+)
+# Text after a footer phrase at least this long, and free of that vocabulary,
+# is the message carrying on, not its footer.
+_FOOTER_CONTENT_CHARS = 60
+
 _SIGNOFF = re.compile(
     r"(?im)^[ \t]*(?:best regards|kind regards|warm regards|warmest regards|"
     r"best wishes|regards|best|thanks(?: again)?|thank you|many thanks|cheers|"
@@ -128,11 +223,58 @@ _SIGNOFF = re.compile(
 # a few short lines and then the end of the message.
 _MAX_SIGNATURE_LINES = 5
 _MAX_SIGNATURE_LINE_CHARS = 90
+_NON_EMPTY_LINE = re.compile(r"(?m)^[ \t]*\S")
 
 
 def _cut_at(text, pattern):
     match = pattern.search(text)
     return text[: match.start()] if match else text
+
+
+def _cut_footer(text):
+    """Cut at the first footer phrase that the rest of the message bears out.
+
+    The phrase alone is not enough. Marketing mail opens with "View this email
+    in your browser" and puts "Unsubscribe | Privacy policy" in a bar above the
+    offer, and cutting at the first such line threw the whole email away. So a
+    phrase starts the footer only when what follows it -- up to the next footer
+    phrase, or the end -- is footer too: short, or written in footer
+    vocabulary. When real content follows instead, only the phrase's own line
+    is dropped.
+
+    Phrase lines with nothing but blank lines between them are judged as one
+    run, by what follows the last of them: a header bar is often two such lines
+    ("View this email in your browser", then "Unsubscribe | Preferences"), and
+    judging the first by the second alone would cut the offer beneath both.
+
+    This never keeps less than cutting at the first phrase did: the cut can
+    only move later, and every dropped line sits before it.
+    """
+    def line_end(position):
+        end = text.find("\n", position)
+        return len(text) if end == -1 else end
+
+    matches = list(_FOOTER_PHRASES.finditer(text))
+    kept, start, cut = [], 0, len(text)
+    i = 0
+    while i < len(matches):
+        last = i
+        run_end = line_end(matches[i].end())
+        while last + 1 < len(matches) and not text[run_end:matches[last + 1].start()].strip():
+            last += 1
+            run_end = line_end(matches[last].end())
+        following_end = matches[last + 1].start() if last + 1 < len(matches) else len(text)
+        following = text[run_end:following_end]
+        if (len(following.strip()) >= _FOOTER_CONTENT_CHARS
+                and not _FOOTER_VOCABULARY.search(following)):
+            kept.append(text[start:matches[i].start()])
+            start = run_end
+            i = last + 1
+            continue
+        cut = matches[i].start()
+        break
+    kept.append(text[start:cut])
+    return "".join(kept)
 
 
 def strip_signature(text):
@@ -146,9 +288,15 @@ def strip_signature(text):
     if not text:
         return ""
     text = _cut_at(text, _SIG_DELIMITER)
-    text = _cut_at(text, _FOOTER_PHRASES)
+    text = _cut_footer(text)
 
-    for match in _SIGNOFF.finditer(text):
+    # A sign-off counts only with at most _MAX_SIGNATURE_LINES lines beneath
+    # it, so it can only be one of the last few lines. Searching from there
+    # finds the same one, and keeps a body of thirty thousand "Thanks" lines
+    # from taking most of a minute.
+    starts = [line.start() for line in _NON_EMPTY_LINE.finditer(text)]
+    window = starts[-(_MAX_SIGNATURE_LINES + 1)] if len(starts) > _MAX_SIGNATURE_LINES else 0
+    for match in _SIGNOFF.finditer(text, window):
         tail = text[match.end():]
         lines = [line.strip() for line in tail.splitlines() if line.strip()]
         if len(lines) <= _MAX_SIGNATURE_LINES and all(
@@ -233,6 +381,29 @@ def preprocess(raw_body, budget_chars, is_html=None, label=""):
         final_chars=len(text),
         truncated=truncated,
     )
+
+
+def preprocess_email(email, budget_chars, label=""):
+    """Clean the body a reader would see: the plain-text part, or the HTML part
+    when the plain text is empty -- before cleaning or after it.
+
+    Marketing mail often pairs its HTML with a one-line text/plain stub ("View
+    this email in your browser: <link>"). The stub is not empty, so it was the
+    part chosen, and cleaning then removed it as a footer: the email reached
+    the classifier, the summariser and the inbox snippet as nothing at all,
+    while the HTML and its image alt text were never looked at.
+
+    `email` is anything with `body_text` and `body_html` (a SourceEmail).
+    """
+    text = email.body_text or ""
+    html = email.body_html or ""
+    if text.strip():
+        cleaned = preprocess(text, budget_chars, is_html=False, label=label)
+        if not cleaned.is_empty or not html.strip():
+            return cleaned
+        log.info("preprocess%s: plain-text part empty once cleaned; using the HTML part",
+                 f" [{label}]" if label else "")
+    return preprocess(html, budget_chars, is_html=True, label=label)
 
 
 def snippet(text, max_chars):

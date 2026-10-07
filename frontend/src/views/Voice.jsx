@@ -1,15 +1,20 @@
 /**
  * Voice Commands view (FR-05, spec section 6.3). Calls POST /api/voice/intent.
  *
- * Recognition runs in the browser; only the transcript is sent. The audio never
- * reaches the server, which is why no audio format appears anywhere in this
- * codebase.
+ * Recognition is the browser's Web Speech API, and only its transcript is sent
+ * to our server, so the server never receives audio and no audio format
+ * appears anywhere in this codebase. That is not the same as the audio staying
+ * on the device: Chrome's recogniser sends it to Google unless on-device
+ * recognition is in use, and Edge's sends it to Microsoft. The page says so,
+ * because "processed in the browser" was a promise the app cannot keep.
  *
  * Section 6.3 is explicit about the failure mode and it is implemented here
  * rather than papered over: on `unknown`, or on confidence below the backend's
  * threshold, the app does NOT dispatch a best guess. It shows the transcript
  * back and asks the user to pick. Acting on a low-confidence intent is how a
- * voice feature ends up summarising the wrong email.
+ * voice feature ends up summarising the wrong email. The question is
+ * components/IntentChoice.jsx, shared with the typed command bar so the two
+ * paths ask in the same words at the same threshold.
  *
  * Response: { intent, target_email_id, confidence }
  */
@@ -18,23 +23,20 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronRight, Mic, Square } from "lucide-react";
 
 import * as api from "../api/client.js";
-
-// Mirrors INTENT_CONFIDENCE_THRESHOLD in backend/.env.example. Below this the
-// UI asks instead of acting.
-const CONFIDENCE_FLOOR = 0.6;
-
-const ACTION_LABEL = {
-  summarise: "Summarise it",
-  read: "Read it aloud",
-  draft: "Draft a reply",
-};
+import IntentChoice, {
+  ACTION_LABEL,
+  NO_TARGET_MESSAGE,
+  intentCandidates,
+  isConfident,
+} from "../components/IntentChoice.jsx";
+import { DEFAULT_SPEECH_LANG } from "../lib/constants.js";
 
 const Recognition =
   typeof window !== "undefined"
     ? window.SpeechRecognition || window.webkitSpeechRecognition
     : undefined;
 
-export default function Voice({ emails, onRun, onBack }) {
+export default function Voice({ emails, speechLang = DEFAULT_SPEECH_LANG, onRun, onBack }) {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [result, setResult] = useState(null);
@@ -53,12 +55,9 @@ export default function Voice({ emails, onRun, onBack }) {
     try {
       // Sender names and subjects go with the transcript so the backend can
       // resolve "the one from Sarah" onto a real id deterministically. Ids are
-      // parsed data and never go near the model.
-      const payload = await api.voiceIntent(
-        text,
-        emails.map((e) => ({ id: e.apiId, sender_name: e.from, subject: e.subject })),
-        alternatives
-      );
+      // parsed data and never go near the model. The list is newest first and
+      // carries each date, because "the latest email" is the first entry.
+      const payload = await api.voiceIntent(text, intentCandidates(emails), alternatives);
       setResult(payload);
     } catch (err) {
       setError(err.message);
@@ -70,9 +69,12 @@ export default function Voice({ emails, onRun, onBack }) {
   const start = () => {
     if (!supported || listening) return;
     const recognition = new Recognition();
-    // Locale matters more than anything else here: the default is the browser
-    // UI language, and a US model mis-hears Australian vowels constantly.
-    recognition.lang = navigator.language || "en-AU";
+    // Locale matters more than anything else here, so it is set explicitly
+    // from Settings (en-AU unless changed) and never from navigator.language.
+    // That is the browser's menu language: an Indonesian Chrome would get an
+    // Indonesian recogniser for English commands, and a US model mis-hears
+    // Australian vowels constantly.
+    recognition.lang = speechLang;
     recognition.interimResults = false;
     // The engine ranks its guesses, and the top one is often not the one that
     // contains the name. Asking for several lets the backend pick whichever
@@ -118,7 +120,7 @@ export default function Voice({ emails, onRun, onBack }) {
     ? emails.find((e) => e.apiId === result.target_email_id)
     : null;
 
-  const confident = result && result.intent !== "unknown" && result.confidence >= CONFIDENCE_FLOOR;
+  const confident = isConfident(result);
 
   return (
     <div className="feature-wrap">
@@ -132,9 +134,11 @@ export default function Voice({ emails, onRun, onBack }) {
         <div className="feature-icon"><Mic size={22} strokeWidth={2.2} /></div>
         <div>
           <h1 className="main-title">Voice Commands</h1>
+          <p className="main-sub">Say something like “summarise the email from Sarah”.</p>
           <p className="main-sub">
-            Say something like “summarise the email from Sarah”. Your voice is processed
-            in the browser - only the text is sent.
+            Our server never receives your audio, only the text recognised from it. Your
+            browser's speech service may: Chrome sends it to Google unless on-device
+            recognition is used, and Edge sends it to Microsoft.
           </p>
         </div>
       </header>
@@ -178,7 +182,7 @@ export default function Voice({ emails, onRun, onBack }) {
               className="primary-btn"
               onClick={() => {
                 if (!onRun(result.intent, result.target_email_id ?? null)) {
-                  setError("I could not tell which email you meant. Open one first, then try again.");
+                  setError(NO_TARGET_MESSAGE);
                 }
               }}
             >
@@ -186,30 +190,13 @@ export default function Voice({ emails, onRun, onBack }) {
             </button>
           </div>
         ) : (
-          /* Section 6.3: show the transcript back and let the user choose. */
-          <div className="feature-card">
-            <p className="intent-line">
-              {result.intent === "unknown"
-                ? "I couldn't tell what you wanted."
-                : <>I'm not confident enough to act on that ({Math.round(result.confidence * 100)}%).</>}
-              {" "}Pick one:
-            </p>
-            <div className="reader-actions">
-              {Object.entries(ACTION_LABEL).map(([intent, label]) => (
-                <button
-                  key={intent}
-                  className="action-btn"
-                  onClick={() => {
-                    if (!onRun(intent, result?.target_email_id ?? null)) {
-                      setError("I could not tell which email you meant. Open one first, then try again.");
-                    }
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+          /* Section 6.3: the transcript is shown above; let the user choose. */
+          <IntentChoice
+            result={result}
+            onChoose={(intent) => {
+              if (!onRun(intent, result.target_email_id ?? null)) setError(NO_TARGET_MESSAGE);
+            }}
+          />
         )
       )}
     </div>

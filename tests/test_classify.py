@@ -6,10 +6,25 @@ and assert it routes to Review."
 The stub supplies the model response; every assertion is about what the backend
 does with it. That is the behaviour under test -- whether a fabricated evidence
 span is caught, not whether a model produces one.
+
+Every test here runs the shipped default, one email per model call (the
+`per_email` fixture below; conftest pins the batched setting for tests written
+against the call-ordered queue). The per-email transport itself -- ordering,
+concurrency, failure isolation, the session budget -- is pinned down in
+tests/test_classify_per_email.py.
 """
+
+import pytest
 
 from backend.orchestrator.classify import classify_emails
 from backend.orchestrator.schemas import CATEGORIES, REVIEW_CATEGORY
+
+
+@pytest.fixture(autouse=True)
+def per_email(config):
+    config.classify_batch_size = 1
+    return config
+
 
 EMAILS = [{
     "id": "e1",
@@ -116,40 +131,77 @@ def test_category_outside_the_enum_routes_to_review(config, stub_llm):
 
 
 # --- Batch behaviour -------------------------------------------------------
+#
+# The design these replace sent the whole inbox in one call ("section 3:
+# classification is batched"). One email per call was measured better on the
+# held-out split -- see the classify.py docstring -- so the contract is now:
+# one call per email by default, CLASSIFY_BATCH_SIZE emails per call when set.
 
 
-def test_a_whole_batch_costs_one_api_call(config, stub_llm):
-    """Section 3: classification is batched, not per email."""
-    emails = [
+def _work_emails(count):
+    return [
         {"id": f"e{n}", "subject": f"Subject {n}", "body": f"Body number {n} about work."}
-        for n in range(6)
+        for n in range(count)
     ]
-    stub_llm.queue({"results": [
-        {"id": f"e{n}", "category": "Work", "confidence": 0.9, "evidence": f"Body number {n}"}
-        for n in range(6)
-    ]})
-    results = classify_emails(emails, config)
-    assert len(results) == 6
-    assert stub_llm.call_count == 1
+
+
+def _work_labels(count):
+    return {
+        f"e{n}": {"category": "Work", "confidence": 0.9, "evidence": f"Body number {n}"}
+        for n in range(count)
+    }
+
+
+def test_each_email_is_its_own_api_call(config, stub_llm):
+    stub_llm.answer_classification(_work_labels(6))
+    results = classify_emails(_work_emails(6), config)
+    assert [r["category"] for r in results] == ["Work"] * 6
+    assert stub_llm.call_count == 6
+    assert sorted(stub_llm.classification_batches()) == [[f"e{n}"] for n in range(6)]
+
+
+def test_batch_size_20_still_sends_the_batch_in_one_call(config, stub_llm):
+    """The one-line revert (CLASSIFY_BATCH_SIZE=20) restores the old transport."""
+    config.classify_batch_size = 20
+    stub_llm.answer_classification(_work_labels(6))
+    results = classify_emails(_work_emails(6), config)
+    assert [r["category"] for r in results] == ["Work"] * 6
+    assert stub_llm.classification_batches() == [[f"e{n}" for n in range(6)]]
+
+
+def test_a_batch_larger_than_the_batch_size_is_split_in_order(config, stub_llm):
+    config.classify_batch_size = 20
+    stub_llm.answer_classification(_work_labels(45))
+    results = classify_emails(_work_emails(45), config)
+    assert [r["id"] for r in results] == [f"e{n}" for n in range(45)]
+    # Calls may finish in any order; each chunk is a contiguous run of the input.
+    assert sorted(stub_llm.classification_batches()) == sorted([
+        [f"e{n}" for n in range(0, 20)],
+        [f"e{n}" for n in range(20, 40)],
+        [f"e{n}" for n in range(40, 45)],
+    ])
 
 
 def test_results_come_back_in_input_order(config, stub_llm):
     emails = [{"id": f"e{n}", "subject": "s", "body": f"Body number {n} here."} for n in range(3)]
-    stub_llm.queue({"results": [
-        {"id": "e2", "category": "Work", "confidence": 0.9, "evidence": "Body number 2"},
-        {"id": "e0", "category": "Personal", "confidence": 0.9, "evidence": "Body number 0"},
-        {"id": "e1", "category": "Studies", "confidence": 0.9, "evidence": "Body number 1"},
-    ]})
-    assert [r["id"] for r in classify_emails(emails, config)] == ["e0", "e1", "e2"]
+    stub_llm.answer_classification({
+        "e2": {"category": "Work", "confidence": 0.9, "evidence": "Body number 2"},
+        "e0": {"category": "Personal", "confidence": 0.9, "evidence": "Body number 0"},
+        "e1": {"category": "Studies", "confidence": 0.9, "evidence": "Body number 1"},
+    })
+    results = classify_emails(emails, config)
+    assert [r["id"] for r in results] == ["e0", "e1", "e2"]
+    assert [r["category"] for r in results] == ["Personal", "Studies", "Work"]
 
 
 def test_an_email_the_model_skipped_still_gets_an_answer(config, stub_llm):
     emails = [{"id": "e1", "subject": "s", "body": "Some content here."},
               {"id": "e2", "subject": "s", "body": "Other content here."}]
-    stub_llm.queue({"results": [
-        {"id": "e1", "category": "Work", "confidence": 0.9, "evidence": "Some content here"},
-    ]})
+    stub_llm.answer_classification({
+        "e1": {"category": "Work", "confidence": 0.9, "evidence": "Some content here"},
+    })
     results = {r["id"]: r for r in classify_emails(emails, config)}
+    assert results["e1"]["category"] == "Work"
     assert results["e2"]["category"] == REVIEW_CATEGORY
 
 

@@ -33,9 +33,28 @@ export function matchesQuery(email, query) {
   });
 }
 
-/** Newest first, matching how the adapter orders the mailbox. */
+/** Milliseconds since the epoch, or null for a missing or unparseable date. */
+function receivedTime(email) {
+  const time = Date.parse(email?.received_at);
+  return Number.isNaN(time) ? null : time;
+}
+
+/**
+ * Comparator: newest first, matching how the adapter orders the mailbox.
+ *
+ * An email with no usable date sorts after every dated one. Subtracting two
+ * Dates returned NaN for it, and a comparator that answers NaN is not a
+ * consistent order: the engine reads NaN as "equal", so where an undated email
+ * landed in the flat "All" view depended on what it happened to be compared
+ * with. Ties, undated ones included, keep their input order
+ * (Array.prototype.sort is stable). Dashboard orders the voice and command
+ * candidates with this too, so the inbox and "the latest email" agree.
+ */
 export function newestFirst(a, b) {
-  return new Date(b.received_at) - new Date(a.received_at);
+  const ta = receivedTime(a);
+  const tb = receivedTime(b);
+  if (ta === null || tb === null) return (ta === null) - (tb === null);
+  return tb - ta;
 }
 
 /** Filter and order a list of emails for display. */

@@ -12,7 +12,7 @@
  */
 
 import { useState } from "react";
-import { AlertCircle, Inbox as InboxIcon, Search, X } from "lucide-react";
+import { AlertCircle, Inbox as InboxIcon, Paperclip, Search, X } from "lucide-react";
 
 import ReadingPane from "../components/ReadingPane.jsx";
 import { CATEGORIES, REVIEW_CATEGORY } from "../lib/constants.js";
@@ -48,6 +48,7 @@ function InboxSkeleton() {
 function MailRow({ email, selected, onSelect, index }) {
   const color = COLOR_BY_LABEL[email.category] || REVIEW_CATEGORY.color;
   const initials = (email.sender_name || email.sender || "?").slice(0, 2).toUpperCase();
+  const attachmentCount = Array.isArray(email.attachments) ? email.attachments.length : 0;
   return (
     <button
       className={`mail-row ${email.unread ? "unread" : ""} ${selected ? "sel" : ""}`}
@@ -62,6 +63,16 @@ function MailRow({ email, selected, onSelect, index }) {
         </div>
         <div className="mail-line2">
           <span className="mail-subject">{email.subject}</span>
+          {attachmentCount > 0 && (
+            <span
+              className="mail-clip"
+              role="img"
+              aria-label={`${attachmentCount} ${attachmentCount === 1 ? "attachment" : "attachments"}`}
+              title={`${attachmentCount} ${attachmentCount === 1 ? "attachment" : "attachments"}`}
+            >
+              <Paperclip size={13} strokeWidth={2.2} aria-hidden="true" />
+            </span>
+          )}
         </div>
         <p className="mail-preview">{email.snippet}</p>
       </div>

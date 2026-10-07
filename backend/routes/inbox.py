@@ -11,13 +11,17 @@ and returns a label; it is never asked who sent the message or when.
 Classification runs as one batch for the whole inbox on this call -- one round
 trip on login, not one per email as the list renders (section 3, NFR-01).
 Results are cached per email id, so a re-fetch costs no API calls.
+
+Each email also carries `attachments`: a list of {filename, content_type, size}
+parsed from MIME structure by the adapter. It describes attachments without
+containing them -- no attachment content is read, returned or sent to a model.
 """
 
 from flask import Blueprint, jsonify
 
 from backend.adapters.email_source import get_email_source
 from backend.orchestrator.classify import classify_emails
-from backend.orchestrator.preprocess import preprocess, snippet
+from backend.orchestrator.preprocess import preprocess_email, snippet
 from backend.orchestrator.schemas import CATEGORIES, REVIEW_CATEGORY
 from backend.routes.support import (
     EmailNotFound,
@@ -47,12 +51,7 @@ def inbox():
     # need the cleaned text, and an earlier version computed it twice per
     # email per page load, with is_html passed to one call and not the other.
     cleaned_by_id = {
-        m.id: preprocess(
-            m.raw_body,
-            settings.token_budget_chars,
-            is_html=m.is_html,
-            label=f"inbox {m.id[:12]}",
-        )
+        m.id: preprocess_email(m, settings.token_budget_chars, label=f"inbox {m.id[:12]}")
         for m in messages
     }
 
@@ -95,6 +94,7 @@ def inbox():
             "snippet": snippet(cleaned.text, settings.snippet_chars),
             "category": category,
             "category_confidence": label.get("confidence", 0.0),
+            "attachments": [a.as_dict() for a in message.attachments],
         })
 
     return jsonify({"groups": groups}), 200
@@ -119,12 +119,7 @@ def inbox_message(email_id):
     if message is None:
         raise EmailNotFound(f"No email with id {email_id}.")
 
-    cleaned = preprocess(
-        message.raw_body,
-        settings.token_budget_chars,
-        is_html=message.is_html,
-        label=f"read {message.id[:12]}",
-    )
+    cleaned = preprocess_email(message, settings.token_budget_chars, label=f"read {message.id[:12]}")
 
     return jsonify({
         "id": message.id,
@@ -135,4 +130,5 @@ def inbox_message(email_id):
         "received_at": message.received_at,
         "unread": message.unread,
         "body": cleaned.text,
+        "attachments": [a.as_dict() for a in message.attachments],
     }), 200

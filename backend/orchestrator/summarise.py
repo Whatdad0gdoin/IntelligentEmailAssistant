@@ -23,7 +23,7 @@ from backend.orchestrator.cache import SUMMARY_CACHE
 from backend.orchestrator.client import LLMError, get_client
 from backend.orchestrator.provenance import locate
 from backend.orchestrator.grounding import check_grounding
-from backend.orchestrator.preprocess import preprocess
+from backend.orchestrator.preprocess import preprocess_email
 from backend.orchestrator.schemas import (
     SUMMARY_MAX_SENTENCES,
     SUMMARY_MIN_SENTENCES,
@@ -170,12 +170,7 @@ def summarise_email(email, config, session_key=None, user=None, use_cache=True):
             log.info("summarise %s: cache hit, no API call", email.id)
             return cached
 
-    cleaned = preprocess(
-        email.raw_body,
-        config.token_budget_chars,
-        is_html=email.is_html,
-        label=f"summarise {email.id[:12]}",
-    )
+    cleaned = preprocess_email(email, config.token_budget_chars, label=f"summarise {email.id[:12]}")
     if cleaned.is_empty:
         raise EmptyEmailError(
             "This email has no readable text to summarise once quoted replies "

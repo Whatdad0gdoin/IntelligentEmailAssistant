@@ -192,6 +192,21 @@ describe("reader layout", () => {
     const last = matches[matches.length - 1][1];
     expect(last).toMatch(/overflow-y:\s*auto/);
   });
+
+  it("the split's row is bounded, so that overflow-y actually takes effect", () => {
+    // Measured in Chromium: with the default auto row, an open summary grew the
+    // reader to its content (912px in a 527px pane) and the whole page
+    // scrolled; the reader's own overflow-y never engaged. jsdom does no
+    // layout, so the rule that prevents it is what can be pinned here.
+    const rows = [...css.matchAll(/\.inbox-split\s*\{([^}]*)\}/g)]
+      .map((m) => m[1].match(/grid-template-rows:\s*([^;]+)/))
+      .filter(Boolean)
+      .map((m) => m[1].trim());
+    // Declared once in the base rule; the narrow-screen override changes only
+    // the columns, so it must not redeclare the rows as anything else.
+    expect(rows.length).toBeGreaterThan(0);
+    for (const value of rows) expect(value).toMatch(/^minmax\(\s*0\s*,\s*1fr\s*\)$/);
+  });
 });
 
 describe("the selected row is not clipped", () => {

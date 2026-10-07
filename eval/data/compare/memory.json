@@ -1,0 +1,20 @@
+{
+  "openai": {
+    "interpreter_mb": 21.6640625,
+    "rss_after_mb": 61.62890625,
+    "delta_mb": 39.953125,
+    "cold_start_s": 4.224711399991065
+  },
+  "anthropic": {
+    "interpreter_mb": 21.765625,
+    "rss_after_mb": 66.8203125,
+    "delta_mb": 45.0234375,
+    "cold_start_s": 4.063984999898821
+  },
+  "google-genai": {
+    "interpreter_mb": 21.68359375,
+    "rss_after_mb": 88.5859375,
+    "delta_mb": 66.90234375,
+    "cold_start_s": 5.997477600118145
+  }
+}

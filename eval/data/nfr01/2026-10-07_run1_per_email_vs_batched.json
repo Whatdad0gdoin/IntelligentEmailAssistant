@@ -1,0 +1,79 @@
+{
+  "note": "Measured 2026-10-07 with the script that became eval/cold_load.py, 25-email fixture inbox from the test split, gpt-4o-mini, Flask test client, one laptop on a home connection.",
+  "model": "gpt-4o-mini",
+  "inbox_emails": 25,
+  "trials": 3,
+  "target_seconds": 5.0,
+  "settings": {
+    "per_email": {
+      "classify_batch_size": 1,
+      "classify_concurrency": 8
+    },
+    "batch20": {
+      "classify_batch_size": 20,
+      "classify_concurrency": 8
+    }
+  },
+  "first_trial_includes_connection_setup": "yes: trial 1 of per_email was the process's first load, before warm-up loads existed in the script; it is left out of eval/BENCHMARKS.md's table",
+  "first_load": null,
+  "results": {
+    "per_email": [
+      {
+        "trial": 1,
+        "status": 200,
+        "cold_s": 8.762,
+        "reload_s": 0.108,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 2,
+        "status": 200,
+        "cold_s": 5.802,
+        "reload_s": 0.114,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      },
+      {
+        "trial": 3,
+        "status": 200,
+        "cold_s": 4.969,
+        "reload_s": 0.093,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 0
+      }
+    ],
+    "batch20": [
+      {
+        "trial": 1,
+        "status": 200,
+        "cold_s": 13.468,
+        "reload_s": 0.106,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 2
+      },
+      {
+        "trial": 2,
+        "status": 200,
+        "cold_s": 14.916,
+        "reload_s": 0.093,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 2
+      },
+      {
+        "trial": 3,
+        "status": 200,
+        "cold_s": 11.349,
+        "reload_s": 0.088,
+        "reload_status": 200,
+        "emails": 25,
+        "review": 2
+      }
+    ]
+  }
+}

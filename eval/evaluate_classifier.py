@@ -31,12 +31,37 @@ and eval/data/README.md says the same thing.
     python -m eval.evaluate_classifier                 # full run, needs a key
     python -m eval.evaluate_classifier --limit 40      # cheap smoke run
     python -m eval.evaluate_classifier --out preds.csv # save per-row predictions
+
+TWO DIFFERENT BATCH SIZES
+
+--batch-size is how many rows this script hands to classify_emails per loop.
+It is not how many emails go into one model call: classify_emails decides that
+itself, from CLASSIFY_BATCH_SIZE (emails per call, default 1) and
+CLASSIFY_CONCURRENCY (calls in flight at once, default 25) -- the same settings
+/api/inbox runs with, so this measures what the inbox does. With the default
+--batch-size 20, a loop is 20 single-email calls, all in flight at once; with
+CLASSIFY_BATCH_SIZE=20 it is one 20-email call, which is how runs 1-10 in
+eval/BENCHMARKS.md were made:
+
+    CLASSIFY_BATCH_SIZE=20 python -m eval.evaluate_classifier --split test
+
+Both settings are printed at the start and written into every row of --out,
+so a predictions file says which configuration produced it.
+
+A FAILED CALL IS NOT AN ABSTENTION
+
+classify_emails routes the emails of a failed call (a rate limit that outlasted
+the client's retry, say) to Review, which is right for the inbox and wrong for
+a measurement: scored as Review, an outage reads as caution. Those rows are
+re-sent up to REATTEMPTS times; each row's re-attempts and its Review reason
+are written to --out, and any row still unanswered is reported loudly.
 """
 
 import argparse
 import collections
 import csv
 import hashlib
+import math
 import os
 import sys
 import time
@@ -50,12 +75,23 @@ load_dotenv(os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "backend", ".env"))
 
 from backend.config import Config  # noqa: E402
-from backend.orchestrator.classify import classify_emails
-from backend.orchestrator.schemas import CATEGORIES, REVIEW_CATEGORY
-from eval.build_dataset import DATA, ROOT
+from backend.orchestrator.classify import (  # noqa: E402
+    REASON_CALL_FAILED,
+    REASON_NOT_SENT,
+    classify_emails,
+)
+from backend.orchestrator.client import LLMUnavailable  # noqa: E402
+from backend.orchestrator.schemas import CATEGORIES, REVIEW_CATEGORY  # noqa: E402
+from eval.build_dataset import DATA, ROOT  # noqa: E402
 
 DATASET = os.path.join(DATA, "dataset.csv")
 CLASSES = list(CATEGORIES)
+
+# For measurement completeness only; every re-attempt is recorded per row.
+REATTEMPTS = 3
+REATTEMPT_WAIT_SECONDS = 20
+# Review reasons that mean "never answered", not "declined to answer".
+_UNANSWERED = {REASON_CALL_FAILED, REASON_NOT_SENT}
 
 
 DEV_FRACTION = 40   # percent of rows reserved for tuning
@@ -158,23 +194,77 @@ def _print_confusion(pairs):
         print(f"  {true:<{width - 2}}{cells}")
 
 
+def _classify_loop(rows, config):
+    """Classify one loop's rows, re-sending any whose call failed.
+
+    Returns ({id: result}, {id: Review reason}, {id: re-attempts}).
+    """
+    results, reasons = {}, {}
+    reattempts = {row["id"]: 0 for row in rows}
+    todo = list(rows)
+    for attempt in range(1 + REATTEMPTS):
+        if attempt:
+            print(f"    {len(todo)} row(s) unanswered; re-attempt {attempt}/{REATTEMPTS} "
+                  f"in {REATTEMPT_WAIT_SECONDS}s", flush=True)
+            time.sleep(REATTEMPT_WAIT_SECONDS)
+            for row in todo:
+                reattempts[row["id"]] += 1
+        found = {}
+        try:
+            # use_cache=False: a cached label from an earlier run would make
+            # this measure the cache, not the classifier. session_key=None: the
+            # per-session cap guards a login, and this is not one.
+            answered = classify_emails(
+                [{"id": r["id"], "subject": r["subject"], "body": r["body"],
+                  "sender": r.get("sender", "")} for r in todo],
+                config,
+                session_key=None,
+                user=None,
+                use_cache=False,
+                review_reasons=found,
+            )
+        except LLMUnavailable:
+            # Every call in the loop failed: classify_emails reports an outage
+            # rather than an all-Review answer, so nothing came back to keep.
+            for row in todo:
+                reasons[row["id"]] = REASON_CALL_FAILED
+            continue
+        for result in answered:
+            results[result["id"]] = result
+            reasons.pop(result["id"], None)
+        reasons.update(found)
+        todo = [r for r in todo if found.get(r["id"]) in _UNANSWERED]
+        if not todo:
+            break
+    return results, reasons, reattempts
+
+
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--dataset", default=DATASET)
     parser.add_argument("--split", choices=["dev", "test", "all"], default="all",
                         help="dev to tune against, test for the reported number")
     parser.add_argument("--limit", type=int, default=None,
                         help="score a balanced subset, for a cheap smoke run")
     parser.add_argument("--batch-size", type=int, default=20,
-                        help="emails per model call")
+                        help="rows handed to classify_emails per loop. Emails per "
+                             "MODEL CALL is CLASSIFY_BATCH_SIZE; see the docstring")
     parser.add_argument("--delay", type=float, default=0.0,
-                        help="seconds to pause between batches; a stronger model "
+                        help="seconds to pause between loops; a stronger model "
                              "usually has a lower rate limit than the mini tier")
     parser.add_argument("--out", default=None, help="write per-row predictions to a CSV")
+    parser.add_argument("--force", action="store_true",
+                        help="allow --out to replace an existing file")
     args = parser.parse_args()
 
     if not os.path.exists(args.dataset):
         sys.exit(f"Missing {args.dataset}. Run: python -m eval.build_dataset --merge")
+    if args.out and os.path.exists(args.out) and not args.force:
+        # Checked before any model call. Run 9's predictions were lost when
+        # run 10 reused its path (eval/BENCHMARKS.md).
+        sys.exit(f"Refusing to overwrite {args.out}: it may be the only record of an "
+                 f"earlier run. Choose a new --out, or pass --force.")
 
     try:
         config = Config(require_llm=True, require_auth=False)
@@ -188,34 +278,37 @@ def main():
         )
 
     rows = _load(args.dataset, args.limit, args.split)
-    batches = (len(rows) + args.batch_size - 1) // args.batch_size
-    print(f"Scoring {len(rows)} emails ({args.split} split) in {batches} "
-          f"batches of {args.batch_size}.")
-    if batches > config.max_requests_per_session:
-        print(f"  WARNING: {batches} calls exceeds MAX_REQUESTS_PER_SESSION "
-              f"({config.max_requests_per_session}); the run will stop early.")
+    loops = math.ceil(len(rows) / args.batch_size)
+    calls = sum(math.ceil(len(rows[i:i + args.batch_size]) / config.classify_batch_size)
+                for i in range(0, len(rows), args.batch_size))
+    # The run's configuration, written into every output row as well: a file
+    # that cannot say what produced it is how dev_preds.csv became unusable.
+    settings = {
+        "model": config.openai_model,
+        "classify_batch_size": config.classify_batch_size,
+        "classify_concurrency": config.classify_concurrency,
+        "loop_size": args.batch_size,
+    }
+    print(f"Scoring {len(rows)} emails ({args.split} split) with {config.openai_model}.")
+    print(f"  {loops} loops of up to {args.batch_size} rows (--batch-size); "
+          f"CLASSIFY_BATCH_SIZE={config.classify_batch_size} emails per model call, "
+          f"CLASSIFY_CONCURRENCY={config.classify_concurrency} calls at once: "
+          f"{calls} model calls.")
 
-    predictions = {}
+    predictions, reasons, reattempts = {}, {}, {}
     started = time.perf_counter()
     for index in range(0, len(rows), args.batch_size):
         batch = rows[index:index + args.batch_size]
-        # use_cache=False: a cached label from an earlier run would make this
-        # measure the cache, not the classifier.
-        results = classify_emails(
-            [{"id": r["id"], "subject": r["subject"], "body": r["body"],
-              "sender": r.get("sender", "")} for r in batch],
-            config,
-            session_key=None,
-            user=None,
-            use_cache=False,
-        )
-        for result in results:
-            predictions[result["id"]] = result
+        results, loop_reasons, loop_reattempts = _classify_loop(batch, config)
+        predictions.update(results)
+        reasons.update(loop_reasons)
+        reattempts.update(loop_reattempts)
         print(f"  {min(index + args.batch_size, len(rows))}/{len(rows)}", flush=True)
         if args.delay and index + args.batch_size < len(rows):
             time.sleep(args.delay)
 
     elapsed = time.perf_counter() - started
+    unanswered = sorted(i for i, reason in reasons.items() if reason in _UNANSWERED)
 
     pairs, by_provenance, by_origin, by_source = [], {}, {}, {}
     for row in rows:
@@ -228,8 +321,20 @@ def main():
 
     overall = _score(pairs)
     print("\n" + "=" * 72)
+    print("  " + "  ".join(f"{key}={value}" for key, value in settings.items()))
     _print_metrics("OVERALL", overall)
-    print(f"  {elapsed:.1f}s for {len(rows)} emails ({elapsed / max(1, len(rows)):.2f}s each)")
+    # Wall time, with up to CLASSIFY_CONCURRENCY calls overlapping: a
+    # throughput figure, not a per-email latency.
+    print(f"  {elapsed:.1f}s wall time for {len(rows)} emails")
+
+    print("\nWhy rows went to Review")
+    for reason, count in collections.Counter(reasons.values()).most_common():
+        print(f"  {reason:38}{count:>5}")
+    print(f"  rows re-sent after a failed call: {sum(1 for n in reattempts.values() if n)}")
+    if unanswered:
+        print(f"\n  WARNING: {len(unanswered)} rows were never answered after {REATTEMPTS} "
+              f"re-attempts and are scored as Review. This run is incomplete; do not "
+              f"quote it as a measurement of the classifier.")
 
     print("\nPer class (over covered rows)")
     print(f"  {'class':14}{'support':>9}{'precision':>11}{'recall':>9}{'F1':>8}")
@@ -247,10 +352,13 @@ def main():
     print("is the model telling real mail from generated mail, not FR-02.")
 
     if args.out:
+        # The first nine columns are the format runs 1-10 were saved in, so
+        # files compare column for column; the rest were added for run 11.
         with open(args.out, "w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=[
                 "id", "provenance", "text_origin", "label_source",
-                "expected", "predicted", "correct", "confidence", "subject"])
+                "expected", "predicted", "correct", "confidence", "subject",
+                "review_reason", "reattempts", *settings])
             writer.writeheader()
             for row in rows:
                 result = predictions.get(row["id"], {})
@@ -262,6 +370,9 @@ def main():
                     "correct": row["category"] == predicted,
                     "confidence": result.get("confidence", 0.0),
                     "subject": row["subject"][:120],
+                    "review_reason": reasons.get(row["id"], ""),
+                    "reattempts": reattempts.get(row["id"], 0),
+                    **settings,
                 })
         print(f"\nPer-row predictions -> {os.path.relpath(args.out, ROOT)}")
 

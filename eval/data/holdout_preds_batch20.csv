@@ -1,0 +1,124 @@
+id,provenance,text_origin,label_source,expected,predicted,correct,confidence,subject,review_reason,reattempts,model,classify_batch_size,classify_concurrency,loop_size
+enron-a277a4fb34f9,enron,real,human,Personal,Work,False,0.9,AUMC,,0,gpt-4o-mini,20,8,20
+enron-a3c75d221cfd,enron,real,human,Personal,Personal,True,0.9,vbs rsvp,,0,gpt-4o-mini,20,8,20
+enron-a3fda5768eec,enron,real,human,Personal,Review,False,0.9,This coming week.....,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-a4daaed67a96,enron,real,human,Personal,Work,False,0.8,Week 10 Transaction,,0,gpt-4o-mini,20,8,20
+enron-a6782d081164,enron,real,human,Personal,Personal,True,0.7,Resume 2,,0,gpt-4o-mini,20,8,20
+enron-a6b142146306,enron,real,human,Personal,Personal,True,0.9,What's up?,,0,gpt-4o-mini,20,8,20
+enron-a7e4382aa736,enron,real,human,Personal,Personal,True,0.8,Pelican Schedule,,0,gpt-4o-mini,20,8,20
+enron-a8dc0cfe35b4,enron,real,human,Personal,Personal,True,0.9,phone,,0,gpt-4o-mini,20,8,20
+enron-a909b0ed8069,enron,real,human,Personal,Promotions,False,0.9,Commissioner.COM E-Reports for Big E '01 1/1/02,,0,gpt-4o-mini,20,8,20
+enron-a985b3d6960e,enron,real,human,Personal,Personal,True,0.7,Gas Prices,,0,gpt-4o-mini,20,8,20
+enron-ac0e4060c070,enron,real,human,Personal,Review,False,0.8,where to test suspecious letters in Houston?,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-ac48e8c8926d,enron,real,human,Personal,Review,False,0.0,FW: eBay Request total for Item#1301501330 (4 Big 12 Championship Tickets (Lower Level)),missing_from_model_response,0,gpt-4o-mini,20,8,20
+enron-ace0fc0f6c69,enron,real,human,Personal,Review,False,0.0,"Re: hey kids,",missing_from_model_response,0,gpt-4o-mini,20,8,20
+enron-ad40fad1e6ac,enron,real,human,Personal,Personal,True,0.9,Re: Hey,,0,gpt-4o-mini,20,8,20
+enron-aea437756f58,enron,real,human,Personal,Work,False,0.8,Outta here,,0,gpt-4o-mini,20,8,20
+enron-af38f9cffc50,enron,real,human,Personal,Work,False,0.9,Hang in There,,0,gpt-4o-mini,20,8,20
+enron-b17db3d17bf6,enron,real,human,Personal,Work,False,0.9,Receipt,,0,gpt-4o-mini,20,8,20
+enron-b26ec297f658,enron,real,human,Personal,Personal,True,0.9,Moving,,0,gpt-4o-mini,20,8,20
+enron-b27734d26540,enron,real,human,Personal,Review,False,0.6,Fw: Be careful...this one is true!,low_confidence,0,gpt-4o-mini,20,8,20
+enron-b8ce58cdacad,enron,real,human,Personal,Promotions,False,0.7,Cougars to I-AA,,0,gpt-4o-mini,20,8,20
+enron-c000bb1a9cc6,enron,real,human,Personal,Personal,True,0.9,Fed Ex,,0,gpt-4o-mini,20,8,20
+enron-c2ed0282905c,enron,real,human,Personal,Promotions,False,0.9,PETITION TO REINSTATE PRAYER IN PUBLIC SCHOOLS,,0,gpt-4o-mini,20,8,20
+enron-c2f67f4bab9b,enron,real,human,Personal,Promotions,False,0.8,Fwd: [Fwd: Chicken Soup for the Beer Drinkers Soul],,0,gpt-4o-mini,20,8,20
+enron-c5480ff5124d,enron,real,human,Personal,Work,False,0.7,FW: PeeWee National League Draft,,0,gpt-4o-mini,20,8,20
+enron-c5f23d34b28f,enron,real,human,Personal,Personal,True,0.9,"Re: FW: Greetings from Houston, TX",,0,gpt-4o-mini,20,8,20
+enron-c62b93ca38be,enron,real,human,Personal,Personal,True,0.9,e-mail update,,0,gpt-4o-mini,20,8,20
+enron-c655ac89e20f,enron,real,human,Personal,Personal,True,0.9,Thanks for the Good Times,,0,gpt-4o-mini,20,8,20
+enron-c8e6b449d696,enron,real,human,Personal,Personal,True,0.9,Hi!,,0,gpt-4o-mini,20,8,20
+enron-c95b8e6d1cbf,enron,real,human,Personal,Promotions,False,0.8,40th Birthday Party for Joe Elder,,0,gpt-4o-mini,20,8,20
+enron-c96c4e56bc3a,enron,real,human,Personal,Personal,True,0.9,Plane flight,,0,gpt-4o-mini,20,8,20
+enron-cb60f5f5f98c,enron,real,human,Personal,Personal,True,0.9,Zeta Phi Beta,,0,gpt-4o-mini,20,8,20
+enron-cbcbe658439b,enron,real,human,Personal,Promotions,False,0.8,BE SOMEBODY.....,,0,gpt-4o-mini,20,8,20
+enron-ce55d85ec29b,enron,real,human,Personal,Personal,True,0.9,What's up?,,0,gpt-4o-mini,20,8,20
+enron-cf416f77d6b8,enron,real,human,Personal,Work,False,0.8,Port O'Connor Country Club,,0,gpt-4o-mini,20,8,20
+enron-d0984569a259,enron,real,human,Personal,Promotions,False,0.9,Party information,,0,gpt-4o-mini,20,8,20
+enron-d144a7bbdd7f,enron,real,human,Personal,Personal,True,0.8,Re: Golf in BFE!,,0,gpt-4o-mini,20,8,20
+enron-d168848a25a7,enron,real,human,Personal,Work,False,0.8,Re: Directions revised,,0,gpt-4o-mini,20,8,20
+enron-d18fc83e3363,enron,real,human,Personal,Personal,True,0.9,Re: Guest List for Shower,,0,gpt-4o-mini,20,8,20
+enron-d1bdd891e4c5,enron,real,human,Personal,Personal,True,0.9,RE: Thanks,,0,gpt-4o-mini,20,8,20
+enron-d23063b21e53,enron,real,human,Personal,Personal,True,0.9,Sammy Happy Hour,,0,gpt-4o-mini,20,8,20
+enron-d382823c8fdd,enron,real,human,Personal,Review,False,0.5,FW: Ebay auction,low_confidence,0,gpt-4o-mini,20,8,20
+enron-d658b81a7a89,enron,real,human,Personal,Personal,True,0.9,New email,,0,gpt-4o-mini,20,8,20
+enron-d69339305e54,enron,real,human,Personal,Personal,True,0.9,Fw: practice tonight,,0,gpt-4o-mini,20,8,20
+enron-d81249bf464e,enron,real,human,Personal,Personal,True,0.8,Re: NS50,,0,gpt-4o-mini,20,8,20
+enron-dc039f0bd39a,enron,real,human,Personal,Personal,True,0.9,Re: Fwd: [Fwd: FW:],,0,gpt-4o-mini,20,8,20
+enron-de297f30ca1e,enron,real,human,Personal,Personal,True,0.8,Re: directions,,0,gpt-4o-mini,20,8,20
+enron-e691a3dcd8f7,enron,real,human,Personal,Review,False,0.5,Fw: Photos 2 of 3,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-ea2b1b331cba,enron,real,human,Personal,Personal,True,0.9,Receipt for your records,,0,gpt-4o-mini,20,8,20
+enron-eab28761b862,enron,real,human,Personal,Studies,False,0.8,Re: Curriculum,,0,gpt-4o-mini,20,8,20
+enron-eaf4b50d7a31,enron,real,human,Personal,Personal,True,0.8,AVID - stereo guys,,0,gpt-4o-mini,20,8,20
+enron-ebb522cbd6b8,enron,real,human,Personal,Personal,True,0.9,Hendrix Regards,,0,gpt-4o-mini,20,8,20
+enron-ecafd265344a,enron,real,human,Personal,Personal,True,0.9,Re: (no subject),,0,gpt-4o-mini,20,8,20
+enron-ed08cc10ca2f,enron,real,human,Personal,Work,False,0.8,FFL Playoffs,,0,gpt-4o-mini,20,8,20
+enron-efb0ad7637a4,enron,real,human,Personal,Personal,True,0.9,Re: Hero,,0,gpt-4o-mini,20,8,20
+enron-f0f08e81d2c3,enron,real,human,Personal,Personal,True,0.8,RE:,,0,gpt-4o-mini,20,8,20
+enron-f1275317f583,enron,real,human,Personal,Personal,True,0.9,Tom Padron Wedding,,0,gpt-4o-mini,20,8,20
+enron-f275fc306c55,enron,real,human,Personal,Personal,True,0.9,The coming trip on May 29th,,0,gpt-4o-mini,20,8,20
+enron-f397c46cfb2f,enron,real,human,Personal,Promotions,False,0.8,"Suz, Katie and Kourtney's Housewarming Party",,0,gpt-4o-mini,20,8,20
+enron-f700d1e37a3f,enron,real,human,Personal,Studies,False,0.8,Gradeworks Website,,0,gpt-4o-mini,20,8,20
+enron-f9af91c1a48b,enron,real,human,Personal,Personal,True,0.9,RE:,,0,gpt-4o-mini,20,8,20
+enron-fef3aba32475,enron,real,human,Personal,Personal,True,0.9,Keeping the Faith,,0,gpt-4o-mini,20,8,20
+enron-ff09176079c8,enron,real,human,Personal,Personal,True,0.9,RE: RE: Whats up!!!!!,,0,gpt-4o-mini,20,8,20
+enron-b0d3f8cc8754,enron,real,human,Promotions,Promotions,True,0.9,HYPERIA NEW YEARS -  TONIGHTS THE NIGHT!!!!!!!  Champagne toast at midnight!,,0,gpt-4o-mini,20,8,20
+enron-b0f047c54cdf,enron,real,human,Promotions,Promotions,True,0.9,Way too many bills?                R,,0,gpt-4o-mini,20,8,20
+enron-b875e28815c9,enron,real,human,Promotions,Promotions,True,0.9,MARKET TRADING ALERT (8223oIaS0-731mEwR69@18),,0,gpt-4o-mini,20,8,20
+enron-b924f504907c,enron,real,human,Promotions,Promotions,True,0.9,Got Debt?  Cut Your Bills in HALF!,,0,gpt-4o-mini,20,8,20
+enron-ba0e28501c77,enron,real,human,Promotions,Promotions,True,0.9,National Background and Asset Searches!,,0,gpt-4o-mini,20,8,20
+enron-bfb4d0afc6f7,enron,real,human,Promotions,Promotions,True,0.9,CAN YOU HELP ME? ---  Rob Benson,,0,gpt-4o-mini,20,8,20
+enron-c688b5ade879,enron,real,human,Promotions,Promotions,True,0.9,Ring in the New Year with Style,,0,gpt-4o-mini,20,8,20
+enron-c6ea50e923a4,enron,real,human,Promotions,Review,False,0.5,Fw: Adventure Health & Fitness (stadium investors),low_confidence,0,gpt-4o-mini,20,8,20
+enron-c721360b4ba5,enron,real,human,Promotions,Promotions,True,0.9,Something EVERY Business Needs!                                                   [tnnpr],,0,gpt-4o-mini,20,8,20
+enron-ccc562b32be5,enron,real,human,Promotions,Promotions,True,0.9,"Increase Sales, Accept Credit Cards!                                                   [b5b2l]",,0,gpt-4o-mini,20,8,20
+enron-cd700ab061f3,enron,real,human,Promotions,Review,False,0.5,FW: Market Insight: Economic Recovery to the Rescue,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-d00f6c04c1ee,enron,real,human,Promotions,Promotions,True,0.9,Got a Mortgage?   5.85% Fixed Rate Mortgage,,0,gpt-4o-mini,20,8,20
+enron-d062d32bd895,enron,real,human,Promotions,Promotions,True,0.9,Save up to 70% on your Life Insurance!,,0,gpt-4o-mini,20,8,20
+enron-d156459a5792,enron,real,human,Promotions,Promotions,True,0.9,All you need is one big play,,0,gpt-4o-mini,20,8,20
+enron-d806da38eb1a,enron,real,human,Promotions,Promotions,True,0.9,HAVING TROUBLE GETTING APPROVED ON LOANS,,0,gpt-4o-mini,20,8,20
+enron-d822b6baa373,enron,real,human,Promotions,Review,False,0.5,Fwd: [FreeFootballPicks] Week 10 Free Football Picks,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-d898ff8cc803,enron,real,human,Promotions,Promotions,True,0.9,Hope you Had a Merry Christmas                         28809,,0,gpt-4o-mini,20,8,20
+enron-dd40c26991cf,enron,real,human,Promotions,Promotions,True,0.9,Make 36% Yearly Fully Secured!,,0,gpt-4o-mini,20,8,20
+enron-ddb07a0363f8,enron,real,human,Promotions,Review,False,0.9,Bob Hillman in California,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-deccd00317d1,enron,real,human,Promotions,Studies,False,0.9,April Issue/Oregon Law Journal,,0,gpt-4o-mini,20,8,20
+enron-def660d8f348,enron,real,human,Promotions,Review,False,0.5,Fwd: Can You Have It All?,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-df1afdf7f301,enron,real,human,Promotions,Review,False,0.5,Fwd: Analyzing Financial Analysis,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-e5157cd69bf4,enron,real,human,Promotions,Review,False,0.5,Fwd: What Is Accreditation?,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-e7221b4f8466,enron,real,human,Promotions,Promotions,True,0.9,PAYMENT OVERDUE Consolidate your bills!           FAMR,,0,gpt-4o-mini,20,8,20
+enron-e7da382f90cb,enron,real,human,Promotions,Promotions,True,0.9,DVD Movie Lovers..Check It Out!             KVFDGCHLPNGL,,0,gpt-4o-mini,20,8,20
+enron-e7f33ca1b116,enron,real,human,Promotions,Review,False,0.5,FW: Information You Requested,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-e9ae8ef73ff6,enron,real,human,Promotions,Promotions,True,0.9,Escape the Ordinary......New Opportunity for you............,,0,gpt-4o-mini,20,8,20
+enron-ec26be774500,enron,real,human,Promotions,Promotions,True,0.9,Top Airline Executive declares                       FCG,,0,gpt-4o-mini,20,8,20
+enron-ed2f6137c7eb,enron,real,human,Promotions,Promotions,True,0.9,See web sites now,,0,gpt-4o-mini,20,8,20
+enron-f728d8c9e7ef,enron,real,human,Promotions,Promotions,True,0.9,"MARK, Instant Pleasures revealed",,0,gpt-4o-mini,20,8,20
+enron-fa806b921b16,enron,real,human,Promotions,Review,False,0.5,Fwd: International Gift Giving,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-fb5e30d41bea,enron,real,human,Promotions,Review,False,0.5,Fwd: Friends Fly Free on Ski Vacations,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-fc2ad9f2e99a,enron,real,human,Promotions,Promotions,True,0.9,Are you in debt?                                                   [dn47q],,0,gpt-4o-mini,20,8,20
+enron-fc8c6849aad8,enron,real,human,Promotions,Review,False,0.5,Fwd: DOZEN ROSES & CHOCOLATES ONLY $29.99! By FedEx!,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+enron-fd8db663b4e1,enron,real,human,Promotions,Review,False,0.9,Free Florida Vacation,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+generated-c3518a7b6103,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Textbook List Submission for Next Semester,,0,gpt-4o-mini,20,8,20
+generated-c4c1db1b462a,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Change in Exam Timetable,,0,gpt-4o-mini,20,8,20
+generated-c5f7b11c5445,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Lab Safety Induction Reminder,,0,gpt-4o-mini,20,8,20
+generated-c757e9ad7b3d,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Correction to Unit Guide for SCI101,,0,gpt-4o-mini,20,8,20
+generated-c8c84a1d6861,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Update on Exam Timetable Release,,0,gpt-4o-mini,20,8,20
+generated-d06bb63d79b7,generated,synthetic,generation_prompt,Studies,Personal,False,0.8,Let's Coordinate Our Group Project!,,0,gpt-4o-mini,20,8,20
+generated-d35d0951668a,generated,synthetic,generation_prompt,Studies,Work,False,0.8,Correction Needed for Unit Guide,,0,gpt-4o-mini,20,8,20
+generated-d3cfda3d56b7,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Conference Travel Funding Application Update,,0,gpt-4o-mini,20,8,20
+generated-d4af9abf3277,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Course Plan Guidance for Your Academic Journey,,0,gpt-4o-mini,20,8,20
+generated-d665517ac391,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Lecture Recording Unavailable for Review,,0,gpt-4o-mini,20,8,20
+generated-deaf207af30e,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Upcoming Lab Safety Induction,,0,gpt-4o-mini,20,8,20
+generated-dfe4154f92c3,generated,synthetic,generation_prompt,Studies,Review,False,0.9,Update on Lecture Recording Availability,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+generated-e2a0414f9e16,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Coordination for Group Project Submission,,0,gpt-4o-mini,20,8,20
+generated-e5b704ce2aa5,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Change of Tutorial Room for Unit XYZ101,,0,gpt-4o-mini,20,8,20
+generated-e7222b3c3447,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Correction to Your Unit Guide for PSY101,,0,gpt-4o-mini,20,8,20
+generated-eb3d818908b5,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Unit Enrolment Issue - Action Required,,0,gpt-4o-mini,20,8,20
+generated-ebc0e15e15ca,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Change of Tutorial Room for Upcoming Session,,0,gpt-4o-mini,20,8,20
+generated-ed008a383d35,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Research Ethics Approval Required by October 15th,,0,gpt-4o-mini,20,8,20
+generated-eef33fff707b,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Action Required for Unit Enrolment Issue,,0,gpt-4o-mini,20,8,20
+generated-ef63e32cca7b,generated,synthetic,generation_prompt,Studies,Promotions,False,0.7,Friendly Reminder: Upcoming Fee Due Date,,0,gpt-4o-mini,20,8,20
+generated-ef6efb3f1645,generated,synthetic,generation_prompt,Studies,Promotions,False,0.7,Notice of Student Society AGM,,0,gpt-4o-mini,20,8,20
+generated-f08be9bd59f6,generated,synthetic,generation_prompt,Studies,Review,False,0.9,Lecture Recording Unavailability Notification,evidence_not_in_source,0,gpt-4o-mini,20,8,20
+generated-f717de589bba,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Change of Tutorial Room for Upcoming Session,,0,gpt-4o-mini,20,8,20
+generated-f7edf0b7241c,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Exam Timetable Release,,0,gpt-4o-mini,20,8,20
+generated-fc84fdc62fd7,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Reminder: Completion of Academic Integrity Module,,0,gpt-4o-mini,20,8,20
+generated-fdb6a7ed199b,generated,synthetic,generation_prompt,Studies,Studies,True,0.9,Urgent: Academic Integrity Module Completion Required,,0,gpt-4o-mini,20,8,20

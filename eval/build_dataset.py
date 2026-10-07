@@ -221,15 +221,15 @@ def build_enron(per_category=120, scan_limit=250_000):
     # 263 of them on a rebuild, which is only recoverable because the review
     # files still existed. They are carried across instead.
     existing_path = os.path.join(DATA, "real_enron.csv")
-    preserved = []
+    existing = []
     if os.path.exists(existing_path):
         with open(existing_path, encoding="utf-8") as f:
-            preserved = [r for r in csv.DictReader(f) if r.get("label_source") == "human"]
-    if preserved:
-        fresh = {r["id"] for r in rows}
-        preserved = [r for r in preserved if r["id"] not in fresh]
-        rows.extend(preserved)
-        print(f"  preserved {len(preserved)} human-labelled rows already in the file")
+            existing = list(csv.DictReader(f))
+    rows, gave_way = keep_human_rows(rows, existing)
+    kept = sum(1 for r in rows if r.get("label_source") == "human")
+    if kept:
+        print(f"  kept all {kept} human-labelled rows already in the file; "
+              f"{gave_way} freshly sampled row(s) were the same messages and gave way to them")
 
     print(f"  scanned {scanned} archive entries")
     print(f"  collected {counts} across {len(per_mailbox)} mailboxes "
@@ -239,6 +239,23 @@ def build_enron(per_category=120, scan_limit=250_000):
 
 
 # --------------------------------------------------------------- huggingface
+
+
+def keep_human_rows(fresh_rows, existing_rows):
+    """Merge a fresh archive sample with the rows already on disk.
+
+    Returns (rows, gave_way). Every human-labelled existing row survives with
+    its human label. A freshly sampled row with the same id is the same
+    message, and it gives way: the sampler walks the archive in a fixed order,
+    so a rebuild re-collects exactly the emails people have already read and
+    relabelled. Letting the fresh copy win -- as this code once did -- swapped
+    120 verified Work rows back to the folder guess and quietly reverted 26
+    human relabels while reporting that it had "preserved" the rest.
+    """
+    human = [r for r in existing_rows if r.get("label_source") == "human"]
+    human_ids = {r["id"] for r in human}
+    fresh = [r for r in fresh_rows if r["id"] not in human_ids]
+    return fresh + human, len(fresh_rows) - len(fresh)
 
 
 def build_huggingface(source=None, per_category=120):
@@ -501,7 +518,7 @@ def _quality_rank(row):
     return (origin, source, confidence, row.get("id", ""))
 
 
-def merge(per_class=120):
+def merge(per_class=120, allow_unbalanced=False):
     rows = []
     for name in ("real_enron.csv", "real_huggingface.csv", "generated.csv"):
         path = os.path.join(DATA, name)
@@ -517,6 +534,19 @@ def merge(per_class=120):
     by_category = {}
     for row in rows:
         by_category.setdefault(row["category"], []).append(row)
+
+    # A class short of per_class used to produce a warning and an unbalanced
+    # file anyway -- exactly the artefact the comment above warns about, and a
+    # quiet change to what every benchmark run is measured against. It now
+    # refuses, and says which per_class would be balanced.
+    short = {c: len(items) for c, items in by_category.items() if len(items) < per_class}
+    if short and not allow_unbalanced:
+        largest = min(len(items) for items in by_category.values())
+        sys.exit(
+            f"  Refusing to write an unbalanced dataset: {short} short of {per_class}/class.\n"
+            f"  Use --per-class {largest} for a balanced set, verify more rows for the short "
+            f"class, or pass --allow-unbalanced if you really mean it."
+        )
 
     balanced, dropped = [], {}
     for category, items in sorted(by_category.items()):
@@ -559,6 +589,8 @@ def main():
     parser.add_argument("--per-category", type=int, default=120)
     parser.add_argument("--per-class", type=int, default=120,
                         help="rows per category in the merged dataset")
+    parser.add_argument("--allow-unbalanced", action="store_true",
+                        help="write the merged dataset even if a class is short of --per-class")
     parser.add_argument("--categories", default="Studies")
     args = parser.parse_args()
 
@@ -577,7 +609,7 @@ def main():
         build_generated(args.per_category, [c.strip() for c in args.categories.split(",")])
     if args.merge:
         print("Merge:")
-        merge(args.per_class)
+        merge(args.per_class, allow_unbalanced=args.allow_unbalanced)
 
 
 if __name__ == "__main__":

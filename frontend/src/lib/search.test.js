@@ -74,6 +74,41 @@ describe("ordering", () => {
   });
 });
 
+describe("ordering mail with no usable date", () => {
+  // The bug: subtracting two Dates gave NaN for an undated email, the engine
+  // reads NaN as "equal", and the undated email stayed wherever it started.
+  const UNDATED = { id: "u", subject: "No date", received_at: "" };
+
+  it("an undated email sorts after every dated one", () => {
+    expect([UNDATED, ...EMAILS].sort(newestFirst).map((e) => e.id)).toEqual(["2", "3", "1", "u"]);
+  });
+
+  it("lands last wherever it starts in the list", () => {
+    for (let at = 0; at <= EMAILS.length; at += 1) {
+      const list = [...EMAILS];
+      list.splice(at, 0, UNDATED);
+      expect(list.sort(newestFirst).map((e) => e.id), `inserted at ${at}`).toEqual(["2", "3", "1", "u"]);
+    }
+  });
+
+  it("treats a missing, null or unparseable date alike, keeping their order (stable)", () => {
+    const list = [
+      { id: "missing" },
+      { id: "old", received_at: "2026-08-20T08:00:00+10:00" },
+      { id: "garbage", received_at: "not a date" },
+      { id: "new", received_at: "2026-08-26T08:00:00+10:00" },
+      { id: "null", received_at: null },
+    ];
+    expect(list.sort(newestFirst).map((e) => e.id)).toEqual(["new", "old", "missing", "garbage", "null"]);
+  });
+
+  it("the flat All view lists undated mail last", () => {
+    const groups = { Work: [EMAILS[1], UNDATED], Personal: [EMAILS[0]] };
+    const v = selectView({ groups, order: ["Work", "Personal"], filter: "all", query: "" });
+    expect(v.list.map((e) => e.id)).toEqual(["2", "1", "u"]);
+  });
+});
+
 describe("robustness", () => {
   it("a missing field does not throw", () => {
     expect(matchesQuery({ subject: "hello" }, "hello")).toBe(true);

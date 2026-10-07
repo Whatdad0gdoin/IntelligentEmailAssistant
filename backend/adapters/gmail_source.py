@@ -43,6 +43,16 @@ NFR-03 IS UNCHANGED
 Messages are fetched per request and held for the life of that request. Nothing
 is written to disk and no body is logged -- only counts and UIDs. Gmail is the
 mail server here, occupying the position the fixture directory occupied.
+
+ATTACHMENTS: A KNOWN COST
+-------------------------
+BODY.PEEK[] downloads whole messages, attachments included. Only their names,
+types and sizes are kept (headers.attachment_of); the bytes are dropped with
+the request. The Gmail API source avoids the download altogether
+(format=full). Doing the same here means fetching BODYSTRUCTURE and then only
+the text sections, which is the riskiest code in the adapter to get wrong
+without a real IMAP server to test against -- and this source is the demo-day
+fallback, where reliability matters more than bandwidth. So it is left as is.
 """
 
 import imaplib

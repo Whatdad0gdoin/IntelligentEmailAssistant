@@ -71,6 +71,34 @@ export const API_TO_KEY = {
 };
 
 /**
+ * Speech recognition languages (FR-05): which English the recogniser listens
+ * for. Chosen in Settings, defaulting to en-AU.
+ *
+ * It is deliberately never navigator.language. That is the language of the
+ * browser's menus, not the language the user speaks: an Indonesian Chrome would
+ * hand the recogniser id-ID for commands spoken in English, and a US-English
+ * Chrome would get a US model for an Australian accent. The user is the only
+ * one who knows which accent they have, so they are asked.
+ */
+export const DEFAULT_SPEECH_LANG = "en-AU";
+
+export const SPEECH_LANGS = [
+  { key: "en-AU", label: "English (Australia)" },
+  { key: "en-GB", label: "English (UK)" },
+  { key: "en-US", label: "English (US)" },
+  { key: "en-IN", label: "English (India)" },
+];
+
+/**
+ * The stored choice if it is still on offer, otherwise the default. A stored
+ * preference can be stale or hand-edited, and the recogniser should never be
+ * handed a language this list does not contain.
+ */
+export function speechLangOrDefault(value) {
+  return SPEECH_LANGS.some((lang) => lang.key === value) ? value : DEFAULT_SPEECH_LANG;
+}
+
+/**
  * Reply tones (FR-06). Mirrors TONES in backend/orchestrator/schemas.py.
  *
  * "Default" is the neutral option and is not the same as Professional: it

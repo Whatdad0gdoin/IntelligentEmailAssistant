@@ -1,0 +1,100 @@
+model gpt-4o-mini, temperature 0.0, INTENT_SYSTEM sha256 c9fd6e5fbcba
+
+Graded set voice_intents.csv: summarise / read / draft (30 transcripts)
+------------------------------------------------------------------------------
+  ok    summarise  (conf 0.90)  summarise the email from david
+  ok    summarise  (conf 0.90)  can you summarize the latest email
+  ok    summarise  (conf 0.90)  give me a quick summary of the message from sarah
+  ok    summarise  (conf 0.90)  sum up the last email for me
+  ok    summarise  (conf 0.90)  brief me on the github security alert
+  ok    summarise  (conf 0.90)  summarise this one please
+  ok    summarise  (conf 0.90)  uh give me the gist of the flash sale email
+  ok    summarise  (conf 0.90)  condense the message from david robinson
+  ok    summarise  (conf 0.90)  whats the enrolment email about
+  ok    summarise  (conf 0.90)  short summary of the feedback from dr ford
+  ok    read       (conf 0.90)  read the email from sarah out loud
+  ok    read       (conf 0.90)  read this one to me
+  ok    read       (conf 0.90)  read aloud the summary of the latest email
+  ok    read       (conf 0.90)  can you read me the message from dr ford
+  ok    read       (conf 0.90)  play the summary for the github alert
+  ok    read       (conf 0.90)  read out the enrolment email
+  ok    read       (conf 0.90)  read it to me please
+  ok    read       (conf 0.90)  start reading the message from david
+  ok    read       (conf 0.90)  say the summary out loud
+  ok    read       (conf 0.90)  um read that last one to me
+  ok    draft      (conf 0.90)  draft a reply to david
+  ok    draft      (conf 0.90)  write a response to sarah saying i can make it
+  ok    draft      (conf 0.90)  reply to the enrolment email
+  ok    draft      (conf 0.90)  compose an answer to dr ford
+  ok    draft      (conf 0.90)  draft a polite decline to the dinner invitation
+  ok    draft      (conf 0.90)  write back to david robinson confirming friday
+  ok    draft      (conf 0.90)  start a reply to the last email
+  ok    draft      (conf 0.90)  can you draft a response for me
+  ok    draft      (conf 0.90)  answer the message from sarah um saying thanks
+  ok    draft      (conf 0.90)  prepare a reply to the github alert
+------------------------------------------------------------------------------
+  correct: 30/30 = 100.0%  (threshold 90%)
+  95% CI (Wilson): [88.6%, 100.0%]   one transcript = 3.3%
+
+  errors by cost to the user:
+    wrong dispatch (acted on the wrong intent)   0/30 = 0.0%
+    declined to guess (returned unknown)         0/30 = 0.0%
+
+  per intent (support = true label, predicted = times chosen):
+    intent     support  pred  precision  recall     F1
+    draft           10    10    100.0% 100.0%  1.000
+    read            10    10    100.0% 100.0%  1.000
+    summarise       10    10    100.0% 100.0%  1.000
+    macro-F1 over the 3 intents present: 1.000
+
+  confusion (expected -> actual):
+    draft      -> draft       10
+    read       -> read        10
+    summarise  -> summarise   10
+
+Out-of-scope probes voice_intents_unknown.csv: must return unknown (8 transcripts)
+------------------------------------------------------------------------------
+  ok    unknown    (conf 0.00)  whats the weather like today
+  ok    unknown    (conf 0.00)  delete all my emails
+  ok    unknown    (conf 0.00)  mark this as unread
+  ok    unknown    (conf 0.00)  forward this to my supervisor
+  ok    unknown    (conf 0.00)  archive the promotions folder
+  ok    unknown    (conf 0.00)  call david robinson
+  ok    unknown    (conf 0.00)  set a reminder for friday afternoon
+  ok    unknown    (conf 0.00)  uh
+------------------------------------------------------------------------------
+  correct: 8/8 = 100.0%  (threshold 0%)
+  95% CI (Wilson): [67.6%, 100.0%]   one transcript = 12.5%
+
+  errors by cost to the user:
+    wrong dispatch (acted on the wrong intent)   0/8 = 0.0%
+    declined to guess (returned unknown)         0/8 = 0.0%
+
+  per intent (support = true label, predicted = times chosen):
+    intent     support  pred  precision  recall     F1
+    unknown          8     8    100.0% 100.0%  1.000
+    macro-F1 over the 1 intents present: 1.000
+
+  confusion (expected -> actual):
+    unknown    -> unknown      8
+
+per-transcript results: eval/data/voice_intent_runs/2026-10-06_fixed_original.csv (38 rows)
+
+Dataset-difficulty probe: keyword baseline, no model (0 API calls)
+  graded: voice_intents.csv   probes: voice_intents_unknown.csv
+------------------------------------------------------------------------------
+  graded set             28/30 = 93.3%   of which wrong dispatches: 1
+      expected summarise  got unknown     whats the enrolment email about
+      expected read       got summarise   play the summary for the github alert
+  out-of-scope probes    7/8 = 87.5%   of which wrong dispatches: 1
+      expected unknown    got read        mark this as unread
+
+  rows with exactly one cue, matching their own label: 26/30
+  rows that are cue-free or carry competing cues:      4/30
+      summarise  cues=none                 whats the enrolment email about
+      read       cues=read,summarise       read aloud the summary of the latest email
+      read       cues=summarise            play the summary for the github alert
+      read       cues=read,summarise       say the summary out loud
+
+PASS: 100.0% on the 30-transcript graded set (voice_intents.csv)
+

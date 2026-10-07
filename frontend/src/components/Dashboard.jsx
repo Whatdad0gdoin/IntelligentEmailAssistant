@@ -8,19 +8,26 @@
  * Voice can be switched off in Settings. That hides the microphone and speaker
  * controls and nothing else: every voice action already has a click equivalent
  * (SR-01), so the app loses no capability, only two buttons.
+ *
+ * A command bar sits above every destination, in every browser and whatever
+ * the voice setting. Typed text goes to the same intent route as speech and is
+ * dispatched through the same runVoiceAction, so a browser that never gets the
+ * Voice Commands destination (no speech recognition) can still give commands.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LogOut, Settings as SettingsIcon } from "lucide-react";
 
+import CommandBar from "./CommandBar.jsx";
 import SideItem from "./SideItem.jsx";
 import InboxView from "../views/Inbox.jsx";
 import SettingsView from "../views/Settings.jsx";
 import VoiceView from "../views/Voice.jsx";
 import { useInbox } from "../hooks/useInbox.jsx";
 import { usePreference } from "../hooks/usePreference.jsx";
-import { FEATURES } from "../lib/constants.js";
+import { DEFAULT_SPEECH_LANG, FEATURES, speechLangOrDefault } from "../lib/constants.js";
 import { capabilities, voiceLimitation } from "../lib/capabilities.js";
+import { newestFirst } from "../lib/search.js";
 
 const INBOX_FEATURE = FEATURES.find((f) => f.id === "inbox");
 const VOICE_FEATURE = FEATURES.find((f) => f.id === "voice");
@@ -31,6 +38,8 @@ export default function Dashboard({ user, onLogout }) {
   const [selected, setSelected] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
   const [voiceEnabled, setVoiceEnabled] = usePreference("voiceEnabled", true);
+  const [storedSpeechLang, setSpeechLang] = usePreference("speechLang", DEFAULT_SPEECH_LANG);
+  const speechLang = speechLangOrDefault(storedSpeechLang);
 
   const inbox = useInbox(true);
   const { loadBody } = inbox;
@@ -54,15 +63,35 @@ export default function Dashboard({ user, onLogout }) {
   }, [active, voiceAvailable]);
 
   const allEmails = Object.values(inbox.groups).flat();
-  const voiceEmails = allEmails.map((e) => ({
-    apiId: e.id,
-    from: e.sender_name || e.sender,
-    subject: e.subject,
-  }));
+  // The candidates for a command, spoken or typed: one list, built once, for
+  // the Voice view and the command bar alike.
+  //
+  // Newest first, because the backend reads the first candidate as "the latest
+  // email" and keeps only the first 100. The inbox arrives grouped by category,
+  // and flattening the groups put the newest *Work* email first: "summarise the
+  // latest email" summarised that, and a long inbox lost whole later categories
+  // to the cap. newestFirst keeps ties in inbox order and puts an email with no
+  // usable date last rather than guessing it into place. received_at goes too,
+  // so the backend can check the order itself rather than trust it (it re-sorts
+  // whenever the dates are supplied).
+  const voiceEmails = useMemo(
+    () =>
+      Object.values(inbox.groups)
+        .flat()
+        .sort(newestFirst)
+        .map((e) => ({
+          apiId: e.id,
+          from: e.sender_name || e.sender,
+          subject: e.subject,
+          receivedAt: e.received_at,
+        })),
+    [inbox.groups]
+  );
 
-  // A recognised intent selects its target and hands the action to the reader.
-  // Returns false when the target cannot be determined: section 6.3 says ask,
-  // never guess, so nothing falls back to "the first email".
+  // A recognised intent, spoken or typed, selects its target and hands the
+  // action to the reader. Returns false when the target cannot be determined:
+  // section 6.3 says ask, never guess, so nothing falls back to "the first
+  // email".
   const runVoiceAction = (intent, targetEmailId) => {
     const target = targetEmailId || selected;
     if (!target) return false;
@@ -77,12 +106,21 @@ export default function Dashboard({ user, onLogout }) {
 
   let main;
   if (active === "voice") {
-    main = <VoiceView emails={voiceEmails} onRun={runVoiceAction} onBack={() => setActive("inbox")} />;
+    main = (
+      <VoiceView
+        emails={voiceEmails}
+        speechLang={speechLang}
+        onRun={runVoiceAction}
+        onBack={() => setActive("inbox")}
+      />
+    );
   } else if (active === "settings") {
     main = (
       <SettingsView
         voiceEnabled={voiceEnabled}
         setVoiceEnabled={setVoiceEnabled}
+        speechLang={speechLang}
+        setSpeechLang={setSpeechLang}
         onReloadInbox={inbox.reload}
         reloading={inbox.loading}
         onBack={() => setActive("inbox")}
@@ -140,10 +178,17 @@ export default function Dashboard({ user, onLogout }) {
         </div>
       </aside>
 
-      <main className="dash-main">
+      {/* The inbox fills the height left under the notice and the command bar
+          (dash-fill), so neither pushes the bottom of the list and the reader
+          off screen. The other views are pages that scroll as before. */}
+      <main className={active === "inbox" ? "dash-main dash-fill" : "dash-main"}>
         {/* SR-01: persistent, non-blocking, and never gates a feature. */}
         {voiceNotice && <div className="voice-notice" role="status">{voiceNotice}</div>}
-        {main}
+        {/* Outside the voice switch and the capability check on purpose: it
+            needs neither a microphone nor a recogniser, so it is the command
+            path every browser keeps. */}
+        <CommandBar emails={voiceEmails} onRun={runVoiceAction} />
+        <div className="dash-view">{main}</div>
       </main>
     </div>
   );

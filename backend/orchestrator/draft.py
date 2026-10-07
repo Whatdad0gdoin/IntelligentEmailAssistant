@@ -23,7 +23,7 @@ import logging
 from backend.orchestrator import prompts
 from backend.orchestrator.client import LLMError, get_client
 from backend.orchestrator.grounding import check_grounding
-from backend.orchestrator.preprocess import preprocess
+from backend.orchestrator.preprocess import preprocess_email
 from backend.orchestrator.schemas import DEFAULT_TONE, DRAFT_SCHEMA, TONES
 
 log = logging.getLogger(__name__)
@@ -52,12 +52,7 @@ def draft_reply(email, instruction, config, session_key=None, user_email=None,
     instruction = (instruction or "").strip()[:MAX_INSTRUCTION_CHARS]
     tone = tone if tone in TONES else DEFAULT_TONE
 
-    cleaned = preprocess(
-        email.raw_body,
-        config.token_budget_chars,
-        is_html=email.is_html,
-        label=f"draft {email.id[:12]}",
-    )
+    cleaned = preprocess_email(email, config.token_budget_chars, label=f"draft {email.id[:12]}")
     if cleaned.is_empty:
         raise EmptyEmailError(
             "This email has no readable text to reply to once quoted replies "

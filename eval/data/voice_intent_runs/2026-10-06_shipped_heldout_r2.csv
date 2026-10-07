@@ -1,0 +1,83 @@
+set,transcript,expected,actual,confidence,source,model,prompt_sha256
+graded,summarise the latest one,summarise,summarise,1.0,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,please summarize the message from the recruiter,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,can you sum up the email from priya,summarise,summarise,0.95,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,um give me a summary of the bank email,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,summarise it,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,could you summarise the gym newsletter please,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,summary of the email from professor nguyen,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,whats the email from emma about,summarise,unknown,0.8,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,what does the library one say,summarise,unknown,0.7,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,um what is the uber email saying,summarise,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,whats in the email from the dentist,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,what is the latest email about,summarise,unknown,0.7,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,what does james want in his email,summarise,unknown,0.5,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,give me the main points of the council email,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,quick rundown of the email from tom,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,key points from the canvas announcement please,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,can you give me the short version of this one,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,i dont have time to read the landlord email just summarise it,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,give me a summary of the reply from james,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,write me a short summary of the email from mum,summarise,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,read me the email from james,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,read out the newest email,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,could you read the bank email to me please,read,read,0.95,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,um read this out,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,read aloud whatever the council sent,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,read the email from the landlord,read,read,1.0,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,read me that summary,read,unknown,0.2,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,play it back,read,unknown,0.0,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,let me hear it,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,read out the summary please,read,unknown,0.5,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,can you read the summary of the gym email aloud,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,play the summary of the email from the recruiter,read,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,can i hear the email from priya,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,i want to listen to the latest email,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,let me listen to what emma sent,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,say it out loud for me,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,play the email from mum,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,i am driving can you read me the email from tom,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,read the reply from emma out loud,read,read,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,can i listen to the summary of the uber email,read,summarise,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,reply to james,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,write back to priya and say thanks,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,respond to the email from the bank,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,draft a response to whatever emma sent,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,um can you write a reply to the dentist confirming tuesday,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,reply please,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,lets reply to the latest one,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,help me get back to the recruiter,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,let tom know i can make it on friday,draft,unknown,0.2,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,tell the landlord i will pay the rent on monday,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,say yes to the dinner invite from mum,draft,unknown,0.2,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,put together a response to professor nguyen,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,can you help me answer the email from the gym,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,write a reply to priya summarising what we agreed,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,reply to the email i just read,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,answer emma and tell her i read her notes,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,write back to tom thanking him for the summary,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,compose a polite no to the party invite from james,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,draft something for the library saying i returned the book,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+graded,respond to this one,draft,draft,0.9,voice_intents_heldout.csv,gpt-4o-mini,899a1ccdab1b
+probe,mark this as read,unknown,unknown,0.5,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,send the summary to james,unknown,unknown,0.5,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,open my drafts folder,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,turn off read receipts,unknown,unknown,0.2,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,forward the reply from james to tom,unknown,unknown,0.5,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,delete the newsletter from the gym,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,archive everything from the council,unknown,unknown,0.5,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,translate the email from priya into english,unknown,unknown,0.5,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,search for emails from the landlord,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,schedule a meeting with tom on thursday,unknown,unknown,0.2,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,unsubscribe me from this mailing list,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,send it,unknown,unknown,0.1,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,how many unread emails do i have,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,read my calendar for tomorrow,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,remind me to reply to emma tomorrow,unknown,unknown,0.2,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,stop reading,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,play some music,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,block this sender,unknown,unknown,0.2,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,copy the summary to my clipboard,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,delete that draft,unknown,unknown,0.0,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,the email from james,unknown,unknown,0.5,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b
+probe,um can you do the bank one,unknown,unknown,0.7,voice_intents_heldout_unknown.csv,gpt-4o-mini,899a1ccdab1b

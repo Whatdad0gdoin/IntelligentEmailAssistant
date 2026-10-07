@@ -9,6 +9,10 @@
  * Reply tone (FR-06) is here too, on the draft rather than in a settings
  * screen, because it changes the draft in front of you.
  *
+ * Attachments are listed by name, type and size, and nothing more: the
+ * backend never reads their content, so there is nothing to open, preview or
+ * send to the AI, and the pane says so rather than offering a dead link.
+ *
  * Two things deliberately stay out of this pane:
  *  - Translation (FR-07) is not implemented in this build.
  *  - Voice Commands (FR-05) is inbox-wide, not a property of one email, so it
@@ -17,7 +21,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft, Check, Loader2, MessageSquareReply, RefreshCw, Sparkles, Square, Volume2, X,
+  ArrowLeft, Check, File as FileIcon, FileImage, FileText, Loader2, Mail, MessageSquareReply,
+  RefreshCw, Sparkles, Square, Volume2, X,
 } from "lucide-react";
 
 import * as api from "../api/client.js";
@@ -25,7 +30,16 @@ import { useSpeech } from "../hooks/useSpeech.jsx";
 import GroundingNotice from "./GroundingNotice.jsx";
 import { CATEGORIES, TONES } from "../lib/constants.js";
 import { segment, toParagraphs } from "../lib/highlight.js";
-import { formatReceivedLong } from "../lib/format.js";
+import { attachmentLabel, formatBytes, formatReceivedLong } from "../lib/format.js";
+
+function AttachmentIcon({ type }) {
+  const t = type || "";
+  let Icon = FileIcon;
+  if (t.startsWith("image/")) Icon = FileImage;
+  else if (t === "message/rfc822") Icon = Mail;
+  else if (t === "application/pdf" || t.startsWith("text/") || /word|document/.test(t)) Icon = FileText;
+  return <Icon size={14} strokeWidth={2.2} aria-hidden="true" />;
+}
 
 export default function ReadingPane({ email, body, bodyLoading, pendingAction, onActionConsumed, onBack, voiceEnabled = true }) {
   const [summary, setSummary] = useState(null);
@@ -140,6 +154,7 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
 
   const speaking = speech.speakingId === email.id;
   const initials = (email.sender_name || email.sender || "?").slice(0, 2).toUpperCase();
+  const attachments = Array.isArray(email.attachments) ? email.attachments : [];
 
   return (
     <div className="reader" key={email.id}>
@@ -165,6 +180,26 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
             <span className="reader-time">{formatReceivedLong(email.received_at)}</span>
           </div>
         </div>
+        {attachments.length > 0 && (
+          <div className="reader-attachments">
+            <ul
+              className="att-list"
+              aria-label={`${attachments.length} ${attachments.length === 1 ? "attachment" : "attachments"}`}
+            >
+              {attachments.map((attachment, i) => {
+                const size = formatBytes(attachment.size);
+                return (
+                  <li className="att-chip" key={`${i}-${attachment.filename}`} title={attachmentLabel(attachment)}>
+                    <AttachmentIcon type={attachment.content_type} />
+                    <span className="att-name">{attachmentLabel(attachment)}</span>
+                    {size && <span className="att-size">{size}</span>}
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="att-note">Listed only: attachments are not opened or sent to the AI.</p>
+          </div>
+        )}
       </div>
 
       <div className="reader-body">

@@ -66,7 +66,12 @@ def summarise():
 @bp.post("/classify")
 @handle_errors
 def classify():
-    """FR-02. Batch endpoint: one call for the inbox, not one per email.
+    """FR-02. Batch endpoint: one HTTP request for the inbox, not one per email.
+
+    How the batch is split into model calls is classify_emails' business: one
+    call per email by default, concurrently (CLASSIFY_BATCH_SIZE,
+    CLASSIFY_CONCURRENCY). The session budget is charged per 20 emails either
+    way, so a full MAX_BATCH costs 5 units however it is sent.
 
     Takes bodies in the request rather than ids so the evaluation notebook can
     score the classifier over a labelled dataset (DR-01) without that dataset

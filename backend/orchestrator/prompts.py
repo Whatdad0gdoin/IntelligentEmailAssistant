@@ -40,7 +40,9 @@ anything.
 - Promotions: bulk mail sent to a list rather than to a person. Marketing,
   offers, sales, subscription newsletters and industry bulletins, price
   circulars, anything with an unsubscribe link. A newsletter stays Promotions
-  even when its subject matter is job-related.
+  even when its subject matter is job-related. Spam and scams belong here too:
+  unsolicited mail from strangers selling something, promising a prize, or
+  asking for money or account details, whatever it claims to be.
 - Studies: education. Coursework, enrolment, exams, tuition, supervisors,
   research administration, academic institutions.
 
@@ -64,10 +66,12 @@ Copy each `id` back exactly as given. Return one result per email, no more."""
 
 
 def classify_user(items):
-    """Build the batch payload.
+    """Build the payload for one classification call.
 
-    One request for the whole inbox rather than one per email: it is a single
-    round trip instead of N (NFR-01), and it costs a fraction as much.
+    The same format serves one email or many. classify_emails sends one email
+    per call by default (CLASSIFY_BATCH_SIZE=1), which measured more accurate
+    than a whole inbox in one request; CLASSIFY_BATCH_SIZE=20 restores the
+    batched design, which is one round trip and costs less.
     """
     blocks = []
     for item in items:
@@ -193,17 +197,37 @@ def draft_user(subject, sender_name, body, instruction, tone="neutral"):
 
 # --- Voice intent (FR-05) --------------------------------------------------
 
+# `read` is defined by what the app does, not by the word: ReadingPane's
+# readAloud() only ever speaks an email's summary. The first version defined
+# read as "an email read out loud", which left "read me the summary" belonging
+# to neither action -- three of the four misses on the 30-transcript acceptance
+# set, and missed by seven to nine of nine models, so a prompt gap rather than
+# a model one. Results on that set and on a held-out set written before this
+# wording are in eval/BENCHMARKS.md (FR-05). Every word here moves those
+# numbers; re-measure after any edit (`python -m eval.intent_harness` prints
+# the hash of this text).
 INTENT_SYSTEM = """You map a spoken command about an email inbox onto one action.
 
-- summarise: the user wants an email summarised or condensed.
-- read: the user wants an email read out loud to them.
-- draft: the user wants a reply written.
+The app can do three things with an email:
+- summarise: show a short summary of it on screen. Use this when the user
+  wants to know what an email says or is about, whether they ask it as a
+  question or give an instruction.
+- read: speak it aloud. What the app speaks is always the email's summary,
+  never its full text, so any request to hear an email or its summary is
+  `read`, whether the user asks for it to be read, played or spoken, or asks
+  to listen to it.
+- draft: write a reply to it for the user to review.
 - unknown: anything else, including commands you are unsure about.
+
+Decide by what the user wants to happen, not by which words appear. Words such
+as "summary", "reply" and "read" do not decide the action by themselves: they
+often name or describe the thing being acted on.
 
 `unknown` is a correct and expected answer. The interface handles it by showing
 the user what was heard and asking them to choose, which is a good outcome. A
 wrong action performed confidently is a bad one. Do not stretch a command to
-fit one of the three actions.
+fit one of the three actions: anything the app cannot do is `unknown`, even
+when it mentions an email, a summary or a reply.
 
 The transcript comes from speech recognition, so expect mishearings, filler
 words and clipped sentences.

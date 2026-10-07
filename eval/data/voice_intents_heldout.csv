@@ -1,0 +1,61 @@
+transcript,expected_intent
+summarise the latest one,summarise
+please summarize the message from the recruiter,summarise
+can you sum up the email from priya,summarise
+um give me a summary of the bank email,summarise
+summarise it,summarise
+could you summarise the gym newsletter please,summarise
+summary of the email from professor nguyen,summarise
+whats the email from emma about,summarise
+what does the library one say,summarise
+um what is the uber email saying,summarise
+whats in the email from the dentist,summarise
+what is the latest email about,summarise
+what does james want in his email,summarise
+give me the main points of the council email,summarise
+quick rundown of the email from tom,summarise
+key points from the canvas announcement please,summarise
+can you give me the short version of this one,summarise
+i dont have time to read the landlord email just summarise it,summarise
+give me a summary of the reply from james,summarise
+write me a short summary of the email from mum,summarise
+read me the email from james,read
+read out the newest email,read
+could you read the bank email to me please,read
+um read this out,read
+read aloud whatever the council sent,read
+read the email from the landlord,read
+read me that summary,read
+play it back,read
+let me hear it,read
+read out the summary please,read
+can you read the summary of the gym email aloud,read
+play the summary of the email from the recruiter,read
+can i hear the email from priya,read
+i want to listen to the latest email,read
+let me listen to what emma sent,read
+say it out loud for me,read
+play the email from mum,read
+i am driving can you read me the email from tom,read
+read the reply from emma out loud,read
+can i listen to the summary of the uber email,read
+reply to james,draft
+write back to priya and say thanks,draft
+respond to the email from the bank,draft
+draft a response to whatever emma sent,draft
+um can you write a reply to the dentist confirming tuesday,draft
+reply please,draft
+lets reply to the latest one,draft
+help me get back to the recruiter,draft
+let tom know i can make it on friday,draft
+tell the landlord i will pay the rent on monday,draft
+say yes to the dinner invite from mum,draft
+put together a response to professor nguyen,draft
+can you help me answer the email from the gym,draft
+write a reply to priya summarising what we agreed,draft
+reply to the email i just read,draft
+answer emma and tell her i read her notes,draft
+write back to tom thanking him for the summary,draft
+compose a polite no to the party invite from james,draft
+draft something for the library saying i returned the book,draft
+respond to this one,draft

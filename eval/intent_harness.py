@@ -15,6 +15,16 @@ punctuation, lowercase, filler words).
     python -m eval.intent_harness                  # the graded run, ~38 calls
     python -m eval.intent_harness --baseline-only  # dataset difficulty, 0 calls
 
+    # the held-out sets (82 calls), keeping every per-transcript answer
+    python -m eval.intent_harness --graded eval/data/voice_intents_heldout.csv \
+        --probes eval/data/voice_intents_heldout_unknown.csv --out results.csv
+
+With no options it measures exactly the 30 + 8 it always has, so the
+documented command still produces the number quoted against it. --graded and
+--probes exist because the 30 are no longer a clean test of a prompt fixed
+after reading their failures (FIXES.md item 5): a held-out set has to be
+measured by the same code, or the two numbers are not comparable.
+
 `unknown` is scored differently in the two sets, deliberately. On the graded 30
 every command *is* one of the three actions, so an `unknown` there is a miss
 against the criterion -- the criterion says "dispatched to the correct action",
@@ -28,27 +38,61 @@ non-zero below the threshold so it can gate CI.
 
 import argparse
 import csv
+import hashlib
 import math
 import os
 import re
 import sys
 from collections import Counter
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
 
 from dotenv import load_dotenv  # noqa: E402
 
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                         "backend", ".env"))
-
 from backend.config import Config  # noqa: E402
+from backend.orchestrator import prompts  # noqa: E402
 from backend.orchestrator.intent import UNKNOWN, classify_intent  # noqa: E402
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 GRADED = os.path.join(DATA_DIR, "voice_intents.csv")
 UNKNOWN_PROBES = os.path.join(DATA_DIR, "voice_intents_unknown.csv")
+ENV_FILE = os.path.join(ROOT, "backend", ".env")
 
 PASS_THRESHOLD = 0.90
+
+# One row per transcript in an --out file. The first five match what
+# eval/compare_models.py writes for its intent runs, so the two kinds of saved
+# result can be read by the same code.
+RESULT_FIELDS = (
+    "set", "transcript", "expected", "actual", "confidence",
+    "source", "model", "prompt_sha256",
+)
+
+
+def load_settings_file():
+    """Read backend/.env into the environment -- from main(), never at import.
+
+    It used to run at module scope. That was harmless while only the command
+    line imported this module, but the test suite now imports it to check the
+    CLI defaults, and pytest imports every test module before running any. An
+    import-time load would hand the whole session the developer's real key --
+    the leak backend/mailserver.py had, which tests/test_per_user_source.py
+    now guards against.
+    """
+    load_dotenv(ENV_FILE)
+
+
+def prompt_fingerprint():
+    """First 12 hex digits of sha256(INTENT_SYSTEM).
+
+    Every figure this harness prints depends on the prompt as much as on the
+    model, and a saved result that does not say which prompt produced it is
+    how FR-02 ended up with a headline nobody can tie to a file (FIXES.md
+    item 7). Twelve digits is plenty to tell two prompts apart and short
+    enough to quote.
+    """
+    return hashlib.sha256(prompts.INTENT_SYSTEM.encode("utf-8")).hexdigest()[:12]
 
 
 def load(path):
@@ -57,9 +101,15 @@ def load(path):
 
 
 def run(rows, config, label):
-    """Classify every row. Returns (correct, total, mistakes)."""
+    """Classify every row.
+
+    Returns (correct, total, mistakes, confusion, results), where `results`
+    holds one (transcript, expected, actual, confidence) per row, in input
+    order, for --out.
+    """
     correct = 0
     mistakes = []
+    results = []
     confusion = Counter()
 
     print(f"\n{label} ({len(rows)} transcripts)")
@@ -70,6 +120,7 @@ def run(rows, config, label):
         result = classify_intent(transcript, config)
         actual = result["intent"]
         confusion[(expected, actual)] += 1
+        results.append((transcript, expected, actual, result["confidence"]))
 
         if actual == expected:
             correct += 1
@@ -79,7 +130,49 @@ def run(rows, config, label):
             mark = "MISS"
         print(f"  {mark}  {actual:10} (conf {result['confidence']:.2f})  {transcript}")
 
-    return correct, len(rows), mistakes, confusion
+    return correct, len(rows), mistakes, confusion, results
+
+
+def result_rows(set_name, source, results, model, fingerprint):
+    """Shape run() output for write_results(): one dict per transcript."""
+    return [
+        {
+            "set": set_name,
+            "transcript": transcript,
+            "expected": expected,
+            "actual": actual,
+            "confidence": confidence,
+            "source": os.path.basename(source),
+            "model": model,
+            "prompt_sha256": fingerprint,
+        }
+        for transcript, expected, actual, confidence in results
+    ]
+
+
+def out_path_problem(path):
+    """Why `path` cannot take an --out file, or None if it can.
+
+    Checked before the first API call, so a bad path costs nothing. An existing
+    file is refused rather than replaced: the per-row predictions behind the
+    FR-02 headline were lost by being overwritten (FIXES.md item 7), and a
+    measurement worth saving is worth a new name.
+    """
+    if os.path.exists(path):
+        return f"{path} already exists; results are never overwritten, choose a new name"
+    parent = os.path.dirname(os.path.abspath(path))
+    if not os.path.isdir(parent):
+        return f"directory {parent} does not exist"
+    return None
+
+
+def write_results(path, rows):
+    """Write per-transcript results. Mode "x" refuses to replace a file that
+    appeared after out_path_problem() looked."""
+    with open(path, "x", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=RESULT_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def wilson(correct, total, z=1.96):
@@ -186,6 +279,8 @@ def report(correct, total, mistakes, confusion, threshold):
 # classifier -- it is an upper bound on how far this particular set can be
 # solved by spotting a verb. That is the point: if a regex tuned to the answers
 # scores near the model, the set is measuring vocabulary, not understanding.
+# They predate voice_intents_heldout*.csv and were not changed for it, so on
+# that set the same probe is an untuned keyword rival rather than a bound.
 _CUES = (
     ("read", r"read|aloud|out loud"),
     ("summarise", r"summar|\bsum up\b|gist|brief|condens"),
@@ -201,15 +296,19 @@ def keyword_baseline(transcript):
     return UNKNOWN
 
 
-def difficulty_probe():
-    """How much of the acceptance set is solvable by keyword alone.
+def difficulty_probe(graded=GRADED, probes=UNKNOWN_PROBES):
+    """How much of a graded set is solvable by keyword alone.
 
     Runs offline so a marker can check this claim without a key or any spend.
     """
     print("\nDataset-difficulty probe: keyword baseline, no model (0 API calls)")
+    print(f"  graded: {os.path.basename(graded)}   probes: {os.path.basename(probes)}")
     print("-" * 78)
-    for path, label in ((GRADED, "graded acceptance set"), (UNKNOWN_PROBES, "out-of-scope probes")):
+    for path, label in ((graded, "graded set"), (probes, "out-of-scope probes")):
         rows = load(path)
+        if not rows:
+            print(f"  {label:22} no transcripts in {path}")
+            continue
         hits = wrong = 0
         misses = []
         for row in rows:
@@ -227,7 +326,9 @@ def difficulty_probe():
 
     # Which rows carry one unambiguous cue for their own intent, and which
     # carry none or two. The model's errors concentrate entirely in the latter.
-    rows = load(GRADED)
+    rows = load(graded)
+    if not rows:
+        return
     ambiguous = []
     for row in rows:
         cues = {intent for intent, pattern in _CUES if re.search(pattern, row["transcript"])}
@@ -240,7 +341,7 @@ def difficulty_probe():
         print(f"      {expected:10} cues={','.join(cues):20} {transcript}")
 
 
-def main():
+def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--threshold", type=float, default=PASS_THRESHOLD)
     parser.add_argument("--skip-unknown-probes", action="store_true")
@@ -248,36 +349,74 @@ def main():
         "--baseline-only", action="store_true",
         help="run only the offline keyword baseline; makes no API calls and needs no key",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--graded", default=GRADED, metavar="CSV",
+        help="graded transcripts, scored against the threshold "
+             "(default: the 30-transcript acceptance set)",
+    )
+    parser.add_argument(
+        "--probes", default=UNKNOWN_PROBES, metavar="CSV",
+        help="out-of-scope probes, where unknown is the only correct answer "
+             "(default: the 8 original probes)",
+    )
+    parser.add_argument(
+        "--out", metavar="CSV",
+        help="also write one row per transcript here; refuses to replace an existing file",
+    )
+    return parser
+
+
+def main(argv=None):
+    args = build_parser().parse_args(argv)
 
     if args.baseline_only:
-        difficulty_probe()
+        difficulty_probe(args.graded, args.probes)
         return 0
 
+    if args.out:
+        problem = out_path_problem(args.out)
+        if problem:
+            print(f"--out: {problem}", file=sys.stderr)
+            return 2
+
+    load_settings_file()
     try:
         config = Config(require_llm=True)
     except Exception as exc:
         print(f"Config error: {exc}", file=sys.stderr)
         return 2
 
-    correct, total, mistakes, confusion = run(
-        load(GRADED), config, "FR-05 acceptance set: summarise / read / draft"
+    fingerprint = prompt_fingerprint()
+    graded_name = os.path.basename(args.graded)
+    print(f"model {config.openai_model}, temperature {config.openai_temperature}, "
+          f"INTENT_SYSTEM sha256 {fingerprint}")
+
+    correct, total, mistakes, confusion, results = run(
+        load(args.graded), config, f"Graded set {graded_name}: summarise / read / draft"
     )
     rate = report(correct, total, mistakes, confusion, args.threshold)
+    saved = result_rows("graded", args.graded, results, config.openai_model, fingerprint)
 
     if not args.skip_unknown_probes:
-        # Not part of the graded 30. This checks the other half of the
+        # Not part of the graded set. This checks the other half of the
         # requirement -- that out-of-scope commands come back as `unknown`
         # rather than being forced into one of the three actions.
-        u_correct, u_total, u_mistakes, u_confusion = run(
-            load(UNKNOWN_PROBES), config, "Out-of-scope probes: must return unknown"
+        u_correct, u_total, u_mistakes, u_confusion, u_results = run(
+            load(args.probes), config,
+            f"Out-of-scope probes {os.path.basename(args.probes)}: must return unknown",
         )
         report(u_correct, u_total, u_mistakes, u_confusion, 0.0)
+        saved += result_rows("probe", args.probes, u_results, config.openai_model, fingerprint)
 
-    difficulty_probe()
+    if args.out:
+        write_results(args.out, saved)
+        print(f"\nper-transcript results: {args.out} ({len(saved)} rows)")
+
+    difficulty_probe(args.graded, args.probes)
 
     passed = rate >= args.threshold
-    print(f"\n{'PASS' if passed else 'FAIL'}: {rate:.1%} on the {total}-transcript acceptance set\n")
+    print(f"\n{'PASS' if passed else 'FAIL'}: {rate:.1%} on the {total}-transcript "
+          f"graded set ({graded_name})\n")
     return 0 if passed else 1
 
 

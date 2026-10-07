@@ -1,31 +1,41 @@
 """Voice intent tests (FR-05, spec sections 6.3 and 8).
 
-Three separate things are tested here, and it is worth being clear about which
+Four separate things are tested here, and it is worth being clear about which
 is which:
 
 1. Target resolution -- deterministic, no model, always runs. This is the part
    that decides *which email* an action applies to, and rule 5 keeps it out of
    the model entirely.
 2. Backend handling of a model response -- stubbed, always runs.
-3. The 30-transcript accuracy criterion -- needs the real model, so it is
-   SKIPPED unless RUN_LLM_EVAL=1 and a key is configured. A skip, not a pass:
+3. The transcript sets and the harness that measures them -- offline, always
+   runs. These hold the properties the published figures rest on: the 30
+   acceptance transcripts, a held-out set that is disjoint from them and
+   balanced, and a harness that still measures the original files by default.
+4. The 90% accuracy criterion -- needs the real model, so it is SKIPPED
+   unless RUN_LLM_EVAL=1 and a key is configured. A skip, not a pass:
    asserting 90% accuracy against a stub would be asserting that the stub
    returns what the stub was told to return.
 """
 
 import csv
 import os
+import re
+import subprocess
+import sys
+from collections import Counter
 
 import pytest
 
 from backend.orchestrator.intent import classify_intent, resolve_target
 from backend.orchestrator.schemas import INTENTS
+from eval import intent_harness
 
-EVAL_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "eval", "data"
-)
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+EVAL_DIR = os.path.join(ROOT, "eval", "data")
 GRADED_CSV = os.path.join(EVAL_DIR, "voice_intents.csv")
 UNKNOWN_CSV = os.path.join(EVAL_DIR, "voice_intents_unknown.csv")
+HELDOUT_CSV = os.path.join(EVAL_DIR, "voice_intents_heldout.csv")
+HELDOUT_UNKNOWN_CSV = os.path.join(EVAL_DIR, "voice_intents_heldout_unknown.csv")
 
 CANDIDATES = [
     {"id": "work-1", "sender_name": "David Robinson", "subject": "Project deadline moved to Friday"},
@@ -61,7 +71,8 @@ def test_sender_outranks_a_subject_word():
 
 
 def test_recency_phrase_resolves_to_the_newest():
-    """Candidates arrive newest first, as the adapter sorts them."""
+    """Candidates arrive newest first: the frontend sends them sorted, and the
+    route re-sorts by received_at when supplied."""
     assert resolve_target("", "summarise the latest email", CANDIDATES) == "work-1"
     assert resolve_target("", "read the most recent one", CANDIDATES) == "work-1"
 
@@ -166,7 +177,7 @@ def test_the_acceptance_set_covers_the_three_intents():
 
 
 def test_every_label_in_the_dataset_is_a_real_intent():
-    for path in (GRADED_CSV, UNKNOWN_CSV):
+    for path in (GRADED_CSV, UNKNOWN_CSV, HELDOUT_CSV, HELDOUT_UNKNOWN_CSV):
         for row in _rows(path):
             assert row["expected_intent"] in INTENTS, row
 
@@ -175,6 +186,141 @@ def test_no_duplicate_transcripts():
     """A duplicate would inflate the score without testing anything new."""
     transcripts = [row["transcript"] for row in _rows(GRADED_CSV)]
     assert len(set(transcripts)) == len(transcripts)
+
+
+# --- The held-out set (always checked) -------------------------------------
+#
+# Written and frozen before INTENT_SYSTEM was rewritten to fix the misses on
+# the 30 above, so the rewrite can be measured on transcripts it was not tuned
+# against (FIXES.md item 5, route b). These tests hold the properties that
+# claim depends on; they say nothing about how realistic the rows are.
+
+
+def test_the_heldout_set_is_balanced_across_the_three_intents():
+    """Equal support, so a weak intent cannot hide inside the headline."""
+    counts = Counter(row["expected_intent"] for row in _rows(HELDOUT_CSV))
+    assert set(counts) == {"summarise", "read", "draft"}
+    assert len(set(counts.values())) == 1, counts
+    assert min(counts.values()) >= 15, counts
+
+
+def test_the_heldout_probes_are_all_out_of_scope():
+    rows = _rows(HELDOUT_UNKNOWN_CSV)
+    assert len(rows) >= 12
+    assert {row["expected_intent"] for row in rows} == {"unknown"}
+
+
+def test_the_heldout_sets_share_no_transcript_with_the_original_sets():
+    """A shared row would be one the prompt was fixed against -- the thing a
+    held-out set exists to exclude -- and a repeated row would count twice."""
+    original = {row["transcript"] for path in (GRADED_CSV, UNKNOWN_CSV) for row in _rows(path)}
+    heldout = [
+        row["transcript"] for path in (HELDOUT_CSV, HELDOUT_UNKNOWN_CSV) for row in _rows(path)
+    ]
+    assert len(set(heldout)) == len(heldout), "a transcript appears twice in the held-out sets"
+    assert not original & set(heldout)
+
+
+def test_the_heldout_sets_are_written_like_the_acceptance_set():
+    """Same columns and the same surface form -- lowercase words, no
+    punctuation -- so the two sets differ in what was said, not in how it was
+    typed, and their figures can be compared."""
+    for path in (HELDOUT_CSV, HELDOUT_UNKNOWN_CSV):
+        with open(path, newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            assert reader.fieldnames == ["transcript", "expected_intent"], path
+            for row in reader:
+                assert re.fullmatch(r"[a-z]+( [a-z]+)*", row["transcript"]), row
+
+
+# --- The harness (offline) -------------------------------------------------
+
+
+def test_the_harness_still_measures_the_acceptance_set_at_ninety_percent():
+    """`python -m eval.intent_harness` with no options is the documented
+    command, and every figure quoted against it assumes the 30 + 8 at 90%."""
+    args = intent_harness.build_parser().parse_args([])
+    assert os.path.samefile(args.graded, GRADED_CSV)
+    assert os.path.samefile(args.probes, UNKNOWN_CSV)
+    assert args.out is None
+    assert args.threshold == intent_harness.PASS_THRESHOLD == 0.90
+
+
+def test_importing_the_harness_does_not_load_the_env_file():
+    """This module imports the harness, and pytest imports every test module
+    before running any. An import-time load_dotenv -- which the harness had --
+    would hand the whole suite the developer's real key: the leak described in
+    tests/test_per_user_source.py. Counting calls, rather than diffing the
+    environment, makes this hold on a machine with no backend/.env as well."""
+    probe = (
+        f"import sys; sys.path.insert(0, {ROOT!r});"
+        "import dotenv; calls = [];"
+        "dotenv.load_dotenv = lambda *a, **k: calls.append(a) or True;"
+        "import eval.intent_harness;"
+        "print(len(calls))"
+    )
+    result = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, cwd=ROOT)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "0"
+
+
+def _must_not_run():
+    raise AssertionError("the harness went past the --out check")
+
+
+def test_out_never_replaces_a_saved_result(tmp_path, monkeypatch, stub_llm):
+    """Refused before the settings file or the model is touched, so a reused
+    name costs nothing and a saved measurement survives (FIXES.md item 7)."""
+    saved = tmp_path / "saved.csv"
+    saved.write_text("set,transcript\ngraded,keep me\n", encoding="utf-8")
+    monkeypatch.setattr(intent_harness, "load_settings_file", _must_not_run)
+
+    assert intent_harness.main(["--out", str(saved)]) == 2
+    assert saved.read_text(encoding="utf-8") == "set,transcript\ngraded,keep me\n"
+    assert stub_llm.call_count == 0
+
+
+def test_graded_and_probes_options_choose_what_is_measured(tmp_path, monkeypatch, stub_llm):
+    """Plumbing only: which files are read, what --out records, and that the
+    90% gate applies to a set other than the default. The stub's answers are
+    chosen here, so nothing in this test says anything about accuracy."""
+    graded = tmp_path / "graded.csv"
+    graded.write_text(
+        "transcript,expected_intent\nread me the one from sarah,read\nreply to sarah,draft\n",
+        encoding="utf-8",
+    )
+    probes = tmp_path / "probes.csv"
+    probes.write_text("transcript,expected_intent\ndelete everything,unknown\n", encoding="utf-8")
+    out = tmp_path / "results.csv"
+
+    # The settings file is the developer's; this test supplies its own.
+    monkeypatch.setattr(intent_harness, "load_settings_file", lambda: None)
+    monkeypatch.setenv("JWT_SECRET", "test-secret-not-used-in-production")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-a-real-key")
+    stub_llm.queue(
+        _intent_response(intent="read"),
+        _intent_response(intent="unknown", reference="", confidence=0.4),
+        _intent_response(intent="unknown", reference="", confidence=0.1),
+    )
+
+    code = intent_harness.main(
+        ["--graded", str(graded), "--probes", str(probes), "--out", str(out)]
+    )
+
+    assert code == 1, "1 of 2 graded is below the 90% gate and must fail"
+    assert stub_llm.call_count == 3
+    with open(out, newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        assert tuple(reader.fieldnames) == intent_harness.RESULT_FIELDS
+        rows = list(reader)
+    assert [(r["set"], r["transcript"], r["expected"], r["actual"]) for r in rows] == [
+        ("graded", "read me the one from sarah", "read", "read"),
+        ("graded", "reply to sarah", "draft", "unknown"),
+        ("probe", "delete everything", "unknown", "unknown"),
+    ]
+    assert [r["source"] for r in rows] == ["graded.csv", "graded.csv", "probes.csv"]
+    assert {r["prompt_sha256"] for r in rows} == {intent_harness.prompt_fingerprint()}
+    assert all(r["model"] for r in rows)
 
 
 # --- The accuracy criterion (needs the real model) -------------------------
@@ -195,6 +341,27 @@ def test_thirty_transcripts_dispatch_at_or_above_ninety_percent():
 
     live_config = Config(require_llm=True)
     rows = _rows(GRADED_CSV)
+    correct = sum(
+        1 for row in rows
+        if classify_intent(row["transcript"], live_config)["intent"] == row["expected_intent"]
+    )
+    rate = correct / len(rows)
+    assert rate >= 0.90, f"{correct}/{len(rows)} = {rate:.1%}, below the 90% criterion"
+
+
+@pytest.mark.skipif(not _LIVE_EVAL, reason=_SKIP_REASON)
+def test_heldout_transcripts_dispatch_at_or_above_ninety_percent():
+    """The gate that is not marking its own homework.
+
+    INTENT_SYSTEM was rewritten after reading which of the 30 above it missed,
+    so a pass there is partly the fix being checked against the transcripts
+    that shaped it. These were written and frozen before the rewrite, and
+    their results were not used to adjust it. Same model call, same 90%.
+    """
+    from backend.config import Config
+
+    live_config = Config(require_llm=True)
+    rows = _rows(HELDOUT_CSV)
     correct = sum(
         1 for row in rows
         if classify_intent(row["transcript"], live_config)["intent"] == row["expected_intent"]

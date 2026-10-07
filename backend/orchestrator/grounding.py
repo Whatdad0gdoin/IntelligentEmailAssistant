@@ -174,6 +174,116 @@ def _source_times(text):
     return times
 
 
+# --- Dates, weekdays and years by meaning, not spelling -------------------------
+#
+# Measured on 2026-10-06: most of Gemini 3.8 Flash's summary flags on a 60-email
+# sample were the model writing out a date the email abbreviated -- "July 14"
+# for an airline's "14JUL", "January 17th" for "Jan 17", "Thursday" for
+# "Thurs", "1999" for the "99" in "6/1/99". Each was reported to the user as an
+# unverified claim although the fact was in the email. These helpers compare
+# what a date MEANS, so reformatting stops reading as invention, while a date,
+# day or year that is genuinely absent is still flagged.
+
+_MONTH_NUMBERS = {name: number for number, names in enumerate((
+    ("jan", "january"), ("feb", "february"), ("mar", "march"), ("apr", "april"),
+    ("may",), ("jun", "june"), ("jul", "july"), ("aug", "august"),
+    ("sep", "sept", "september"), ("oct", "october"), ("nov", "november"),
+    ("dec", "december"),
+), start=1) for name in names}
+
+_MONTH_WORD = r"(?:" + _MONTHS + r")"
+_MONTH_DAY = re.compile(r"(?i)\b(" + _MONTH_WORD + r")\.?\s*(\d{1,2})(?:st|nd|rd|th)?\b")
+_DAY_MONTH = re.compile(r"(?i)\b(\d{1,2})(?:st|nd|rd|th)?\s*(" + _MONTH_WORD + r")\b")
+# A numeric date in the source needs its year. Without one, "24/7", "1/2 of the
+# total", "3-5 business days" and "Mon-Fri 9-5" all read as dates, and each
+# vouched for a date the email never gave. So "14/7" alone is not read as one
+# -- a false flag on a real date, the cheaper of the two mistakes.
+_NUMERIC_DATE = re.compile(r"\b(\d{1,2})([/-])(\d{1,2})\2(?:\d{2}|\d{4})\b")
+_ISO_DATE = re.compile(r"\b\d{4}-(\d{1,2})-(\d{1,2})\b")
+
+_WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+# Abbreviations count only when written as one (capitalised or upper case),
+# because lower-case "sat", "sun", "wed" and "mon" are ordinary words.
+_WEEKDAY_ABBREVIATIONS = {
+    "Mon": "monday", "Tue": "tuesday", "Tues": "tuesday", "Wed": "wednesday",
+    "Thu": "thursday", "Thur": "thursday", "Thurs": "thursday", "Fri": "friday",
+    "Sat": "saturday", "Sun": "sunday",
+}
+# These three are words even when capitalised -- "The Sun reported", "Your SAT
+# score", "Wed in June" -- so they count only beside a date or a time ("Sat 5
+# Oct", "SAT 14JUL", "Sun 10am") or in a range of days ("Mon-Sat", "Sat & Sun").
+_AMBIGUOUS_ABBREVIATIONS = ("sat", "sun", "wed")
+_ANY_DAY = r"(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(?:day|nesday|sday|rsday|urday)?"
+_DATE_AFTER = re.compile(r"\.?,?\s*(?:\d|(?:" + _MONTHS + r")\b)", re.I)
+_RANGE_AFTER = re.compile(r"\.?\s*(?:[-–—/&,]|to\b|and\b)\s*" + _ANY_DAY + r"\b", re.I)
+_RANGE_BEFORE = re.compile(r"\b" + _ANY_DAY + r"\.?\s*(?:[-–—/&,]|to|and)\s*$", re.I)
+_WORD = re.compile(r"[A-Za-z]+")
+
+# A two-digit year only counts as one inside a numeric date ("6/1/99") or after
+# an apostrophe that starts a word ("'99") -- never as a bare number, or "99
+# bottles" would vouch for the year 1999, and never after a digit, or a height
+# of 6'10" would vouch for 2010.
+_TWO_DIGIT_YEAR = re.compile(r"(?:\b\d{1,2}[/-]\d{1,2}[/-]|(?<!\w)['’])(\d{2})\b")
+
+
+def _month_days(text, source):
+    """Every (month, day) a text names.
+
+    A numeric date in the SOURCE is read both ways, because "3/4/26" is 3 April
+    in Australia and March 4 in the United States, and the verifier's job is to
+    ask whether the email supports the claim -- not to guess which convention a
+    sender used. A numeric date in a CLAIM is matched literally elsewhere.
+
+    In the source, "may" is a month only when written as one: "Step 2 may take
+    a minute" names no date.
+    """
+    found = set()
+    for month, day in _MONTH_DAY.findall(text or ""):
+        if not (source and month == "may"):
+            found.add((_MONTH_NUMBERS.get(month.lower()), int(day)))
+    for day, month in _DAY_MONTH.findall(text or ""):
+        if not (source and month == "may"):
+            found.add((_MONTH_NUMBERS.get(month.lower()), int(day)))
+    if source:
+        for first, _separator, second in _NUMERIC_DATE.findall(text or ""):
+            a, b = int(first), int(second)
+            found.add((a, b))
+            found.add((b, a))
+        for month, day in _ISO_DATE.findall(text or ""):
+            found.add((int(month), int(day)))
+    return {(m, d) for m, d in found if m and 1 <= m <= 12 and 1 <= d <= 31}
+
+
+def _source_weekdays(text):
+    text = text or ""
+    days = set()
+    lowered = text.lower()
+    for day in _WEEKDAYS:
+        if re.search(r"\b" + day + r"\b", lowered):
+            days.add(day)
+    for match in _WORD.finditer(text):
+        word = match.group(0)
+        canonical = _WEEKDAY_ABBREVIATIONS.get(word) or _WEEKDAY_ABBREVIATIONS.get(word.title()
+                                                                                if word.isupper() else "")
+        if not canonical:
+            continue
+        if word.lower() in _AMBIGUOUS_ABBREVIATIONS and not (
+                _DATE_AFTER.match(text, match.end())
+                or _RANGE_AFTER.match(text, match.end())
+                or _RANGE_BEFORE.search(text[max(0, match.start() - 16):match.start()])):
+            continue
+        days.add(canonical)
+    return days
+
+
+def _source_years(text):
+    years = set()
+    for two in _TWO_DIGIT_YEAR.findall(text or ""):
+        value = int(two)
+        years.add(str(1900 + value if value >= 50 else 2000 + value))
+    return years
+
+
 def extract_typed_claims(text):
     """Return [(kind, span)] for numerics, times, dates and weekdays."""
     claims = []
@@ -381,6 +491,9 @@ def check_grounding(generated, source):
     source_depunctuated = _depunctuate(source)
     source_numbers = _numeric_cores(source)
     source_times = _source_times(source)
+    source_dates = _month_days(source, source=True)
+    source_weekdays = _source_weekdays(source)
+    source_years = _source_years(source)
 
     flags = []
     seen = set()
@@ -393,15 +506,30 @@ def check_grounding(generated, source):
 
     for kind, claim in extract_typed_claims(generated):
         if kind in ("currency", "percent", "number"):
-            if not _numeric_cores(claim) <= source_numbers:
-                flag(claim, kind)
+            cores = _numeric_cores(claim)
+            if cores <= source_numbers:
+                continue
+            # "1999" is supported by the "99" in "6/1/99", and nothing else.
+            if kind == "number" and cores <= source_numbers | source_years:
+                continue
+            flag(claim, kind)
         elif kind == "time":
             value = _minutes(claim)
             if value is None or value not in source_times:
                 flag(claim, kind)
-        else:  # date, weekday
-            if normalise(claim) not in source_normalised:
-                flag(claim, kind)
+        elif kind == "weekday":
+            if normalise(claim) in source_normalised:
+                continue
+            if claim.lower() in _WEEKDAYS and claim.lower() in source_weekdays:
+                continue
+            flag(claim, kind)
+        else:  # date
+            if normalise(claim) in source_normalised:
+                continue
+            claimed = _month_days(claim, source=False)
+            if claimed and claimed <= source_dates:
+                continue
+            flag(claim, kind)
 
     for name in extract_proper_nouns(generated):
         if not _name_in_source(name, source_normalised, source_depunctuated):

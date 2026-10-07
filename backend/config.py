@@ -39,6 +39,16 @@ def _int(name, default):
     return int(_optional(name, default))
 
 
+def _positive_int(name, default):
+    # Zero or a negative count would not mean "off" to the code reading it --
+    # a batch of 0 emails per call, or a pool of 0 workers, is a crash waiting
+    # for the first inbox load. Refused here so it fails at startup instead.
+    value = _int(name, default)
+    if value < 1:
+        raise ConfigError(f"{name} must be a whole number of at least 1 (got {value}).")
+    return value
+
+
 class Config:
     """Application configuration.
 
@@ -83,6 +93,26 @@ class Config:
 
         # --- Grounding thresholds (section 4.3) ----------------------------
         self.classify_confidence_threshold = _float("CLASSIFY_CONFIDENCE_THRESHOLD", "0.7")
+
+        # --- Classification calls (FR-02, NFR-01) --------------------------
+        # Emails per model call. 1 classifies every email on its own; 20 is
+        # the batched design the project shipped with, and setting it back is
+        # the whole revert. Measured on the held-out test split (n=215, same
+        # prompt, verifier and threshold): one email per call took strict
+        # accuracy from 77.7% to 90.7%, and quote-verification failures from
+        # 15 to 2. backend/orchestrator/classify.py has the reasoning.
+        self.classify_batch_size = _positive_int("CLASSIFY_BATCH_SIZE", 1)
+        # How many of those calls are in flight at once. A single-email call
+        # takes about 1 s and a 20-email call about 8.5 s, so one-per-email is
+        # only faster on a cold inbox load if the calls overlap -- and this is
+        # the setting NFR-01 turns on. Measured cold loads of a 25-email inbox
+        # (GMAIL_LIMIT's default; eval/BENCHMARKS.md, NFR-01): 8 at once had a
+        # median of 5.1 s and stayed under 5 s on 2 of 5 loads; 25 at once had
+        # a median of 2.0 s and stayed under 5 s on all of them. So a
+        # default-sized inbox goes out in one wave. If GMAIL_LIMIT is raised,
+        # raise this with it; if the provider's per-minute rate limit is hit,
+        # lower it (a rate-limited call waits and retries once).
+        self.classify_concurrency = _positive_int("CLASSIFY_CONCURRENCY", 25)
 
         # --- Latency (NFR-01) ----------------------------------------------
         # The Week 6 deck states < 5 seconds; that is the number we report against.
