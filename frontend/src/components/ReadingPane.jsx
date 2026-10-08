@@ -30,15 +30,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, Check, File as FileIcon, FileImage, FileText, Languages, Loader2, Mail,
-  MessageSquareReply, RefreshCw, Sparkles, Square, Undo2, Volume2, X,
+  MessageSquareReply, Mic, RefreshCw, Sparkles, Square, Undo2, Volume2, X,
 } from "lucide-react";
 
 import * as api from "../api/client.js";
+import { useDictation } from "../hooks/useDictation.jsx";
 import { useSpeech } from "../hooks/useSpeech.jsx";
 import GroundingNotice from "./GroundingNotice.jsx";
 import {
-  CATEGORIES, DEFAULT_TRANSLATION_LANGUAGE, LANGUAGES, TONES, languageCode,
+  CATEGORIES, DEFAULT_SPEECH_LANG, DEFAULT_TRANSLATION_LANGUAGE, LANGUAGES, TONES, languageCode,
 } from "../lib/constants.js";
+import { appendDictation } from "../lib/dictation.js";
 import { segment, toParagraphs } from "../lib/highlight.js";
 import { attachmentLabel, formatBytes, formatReceivedLong } from "../lib/format.js";
 
@@ -57,7 +59,7 @@ function LanguageOptions() {
 
 export default function ReadingPane({
   email, body, bodyLoading, pendingAction, onActionConsumed, onBack, voiceEnabled = true,
-  translationLang = DEFAULT_TRANSLATION_LANGUAGE,
+  translationLang = DEFAULT_TRANSLATION_LANGUAGE, speechLang = DEFAULT_SPEECH_LANG,
 }) {
   const [summary, setSummary] = useState(null);
   const [summaryState, setSummaryState] = useState("idle");
@@ -94,6 +96,16 @@ export default function ReadingPane({
   const draftGeneration = useRef(0);
 
   const speech = useSpeech();
+  // Speech to text into the draft. Each finished phrase is added at the end of
+  // whatever is in the textarea, edits included, and -- like any edit --
+  // withdraws approval: approval covers the text that was reviewed.
+  const dictation = useDictation({
+    lang: speechLang,
+    onText: (heard) => {
+      setDraftText((text) => appendDictation(text, heard));
+      setApproved(false);
+    },
+  });
   const cat = CATEGORIES.find((c) => c.label === email.category);
 
   function cancelTranslation() {
@@ -129,6 +141,7 @@ export default function ReadingPane({
     setTranslateLang(translationLang);
     setDraftLang(translationLang);
     resetDraftTranslation();
+    dictation.cancel();
     speech.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email.id]);
@@ -164,6 +177,8 @@ export default function ReadingPane({
     // a click event here, and that used to travel all the way into the request
     // body before failing as a confusing network error.
     const useTone = typeof nextTone === "string" ? nextTone : tone;
+    // Words still being dictated were meant for the draft being replaced.
+    dictation.cancel();
     setDraftState("loading");
     setDraftError(null);
     setApproved(false);
@@ -220,6 +235,9 @@ export default function ReadingPane({
     if (draftTranslateState === "loading") return;
     const before = draftText;
     if (!before.trim()) return;
+    // The textarea is read-only until the translation lands; a phrase dictated
+    // meanwhile would be overwritten by it, so dictation stops first.
+    dictation.cancel();
     const generation = draftGeneration.current;
     setDraftTranslateState("loading");
     setDraftTranslateError(null);
@@ -247,6 +265,7 @@ export default function ReadingPane({
   function undoDraftTranslation() {
     if (draftHistory.length === 0) return;
     const last = draftHistory[draftHistory.length - 1];
+    dictation.cancel();
     setDraftHistory(draftHistory.slice(0, -1));
     setDraftText(last.text);
     setDraftTranslation(last.translation);
@@ -532,6 +551,7 @@ export default function ReadingPane({
               onClick={() => {
                 setDraft(null); setDraftState("idle"); setDraftError(null); setApproved(false);
                 resetDraftTranslation();
+                dictation.cancel();
               }}
               aria-label="Dismiss draft"
             >
@@ -556,6 +576,32 @@ export default function ReadingPane({
                 readOnly={draftTranslateState === "loading"}
                 aria-busy={draftTranslateState === "loading"}
               />
+              {/* Speech to text for the draft. Shown only where the browser can
+                  recognise speech and voice is switched on (SR-01); typing
+                  always works. */}
+              {voiceEnabled && dictation.supported && (
+                <div className="ai-dictate-row">
+                  <button
+                    className={`ai-dictate-btn ${dictation.listening ? "on" : ""}`}
+                    aria-pressed={dictation.listening}
+                    onClick={dictation.listening ? dictation.stop : dictation.start}
+                    disabled={!dictation.listening && (draftTranslateState === "loading" || draftState === "loading")}
+                  >
+                    {dictation.listening
+                      ? <Square size={13} strokeWidth={2.6} />
+                      : <Mic size={15} strokeWidth={2.2} />}
+                    {dictation.listening ? "Stop dictating" : "Dictate"}
+                  </button>
+                  <span className="ai-dictate-status" aria-live="polite">
+                    {dictation.listening
+                      ? (dictation.interim
+                        ? `“${dictation.interim}”`
+                        : "Listening… say “comma”, “full stop” or “new paragraph” for punctuation.")
+                      : "Speak to add to the end of the draft. Our server never receives your audio; your browser's speech service may."}
+                  </span>
+                </div>
+              )}
+              {dictation.error && <p className="ai-error" role="alert">{dictation.error}</p>}
               {/* FR-06. Choosing a tone regenerates immediately: a selector
                   that only takes effect on the next manual Regenerate looks
                   broken, because the draft on screen still reads the old way. */}

@@ -696,3 +696,13 @@ body { background:var(--paper); overflow:hidden; }
 .iq button.ai-undo-btn { display:inline-flex; align-items:center; gap:7px; background:#fff; border:1.5px solid var(--line); color:var(--ink-3); font-size:13px; font-weight:600; padding:7px 14px; border-radius:20px; transition:border-color 0.15s,color 0.15s; }
 .iq button.ai-undo-btn:hover:not(:disabled) { border-color:var(--grey-2); color:var(--ink); }
 .iq button.ai-undo-btn:disabled { opacity:0.55; cursor:not-allowed; }
+/* Dictation into the draft: the same pill as Translate, red while listening. */
+.ai-dictate-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.ai-dictate-row + .ai-error { margin-top:10px; }
+.iq button.ai-dictate-btn { display:inline-flex; align-items:center; gap:7px; flex-shrink:0; background:#fff; border:1.5px solid #3B82F6; color:var(--blue-deep); font-size:13px; font-weight:600; padding:7px 14px; border-radius:20px; transition:background 0.15s,border-color 0.15s,color 0.15s; }
+.iq button.ai-dictate-btn:hover:not(:disabled) { background:var(--blue-wash); border-color:var(--blue); }
+.iq button.ai-dictate-btn:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+.iq button.ai-dictate-btn.on { background:#FEF2F2; border-color:#DC2626; color:#B91C1C; }
+.iq button.ai-dictate-btn.on svg { animation:pulse 1.2s ease-in-out infinite; }
+.iq button.ai-dictate-btn:disabled { background:var(--paper-2); border-color:var(--line); color:var(--grey); cursor:not-allowed; }
+.ai-dictate-status { flex:1; min-width:180px; font-size:12.5px; line-height:1.45; color:var(--grey-2); }

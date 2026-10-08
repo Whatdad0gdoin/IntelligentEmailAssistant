@@ -97,6 +97,7 @@ export default function Inbox({
   onActionConsumed,
   voiceEnabled,
   translationLang,
+  speechLang,
 }) {
   const [query, setQuery] = useState("");
 
@@ -253,6 +254,7 @@ export default function Inbox({
             onBack={() => setSelected(null)}
             voiceEnabled={voiceEnabled}
             translationLang={translationLang}
+            speechLang={speechLang}
           />
         ) : (
           <div className="reader-empty">

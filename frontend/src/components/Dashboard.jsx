@@ -159,6 +159,7 @@ export default function Dashboard({ user, onLogout }) {
         onActionConsumed={() => setPendingAction(null)}
         voiceEnabled={voiceEnabled}
         translationLang={translationLang}
+        speechLang={speechLang}
       />
     );
   }

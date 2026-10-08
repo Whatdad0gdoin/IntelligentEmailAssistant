@@ -26,7 +26,7 @@ says how.
 |---|---|---|---|---|
 | FR-01 | Summarise unread emails, 2–3 sentences each | HIGH | Done | `POST /api/summarise` → `orchestrator/summarise.py`, which enforces the sentence count in Python and retries once. Rendered in place by `components/ReadingPane.jsx`, with a Verified/Unverified chip and a per-sentence "show source" that highlights the passage a sentence came from. Groundedness **93.0%** |
 | FR-02 | Auto-categorise into Work / Personal / Promotions / Studies, 80% | HIGH | Done · target met | `POST /api/classify` and `GET /api/inbox`, one email per model call, 25 at once. **89.8% on the held-out test split (n=226), 86.9% on real email only, 87.0% on a holdout no configuration had been scored on** — all strict, an email sent to Review counted as wrong. See `eval/BENCHMARKS.md` |
-| FR-03 | Draft a reply; editable area; not sent without explicit approval | HIGH | Done | `POST /api/draft` returns text and nothing else. The draft lands in an editable textarea with an **Approve** button; approval marks the text reviewed and stops there. There is no send route and no mail-sending library in the backend, both asserted by `tests/test_draft.py`. Groundedness **97.4%** |
+| FR-03 | Draft a reply; editable area; not sent without explicit approval | HIGH | Done | `POST /api/draft` returns text and nothing else. The draft lands in an editable textarea with an **Approve** button; approval marks the text reviewed and stops there. It can be typed into or, in Chrome and Edge, dictated: **Dictate** adds speech at the end of the draft, in the recognition language from Settings, with "comma", "full stop" and "new paragraph" as punctuation (`hooks/useDictation.jsx`, `lib/dictation.js`); dictated words withdraw approval like any edit, and only the recognised text is handled — our server never receives audio. There is no send route and no mail-sending library in the backend, both asserted by `tests/test_draft.py`. Groundedness **97.4%** |
 | FR-04 | Read summaries aloud via Web Speech API ("Read Aloud") | HIGH¹ | Done | `hooks/useSpeech.jsx`, browser-side only, no backend. Reads the *summary* sentences, never the raw body; fetches a summary first if none exists yet, so the button cannot read email text. The control is hidden outright when the browser has no `speechSynthesis` |
 | FR-05 | Accept spoken voice commands; classify intent | HIGH¹ | Done · criterion met on held-out transcripts | `views/Voice.jsx` (spoken; only the transcript reaches our server; recognition language en-AU by default, chosen in Settings) and `components/CommandBar.jsx` (typed, shown in every browser) → `POST /api/voice/intent`. Below the confidence floor both show the command back and ask (`components/IntentChoice.jsx`, shared) rather than guessing. **91.7–95.0% on 60 held-out transcripts over three runs, no wrong dispatch in 180**; the earlier prompt scored 86.7% on the original 30. See `eval/BENCHMARKS.md` |
 | FR-06 | Adjust tone of the drafted reply (Formal / Casual / Professional) | MED | Done | `TONES` in `orchestrator/schemas.py`, register-only guidance in `orchestrator/prompts.py`, optional `tone` on `POST /api/draft` (an unknown value is a 400, not a silent fallback), and a tone row on the draft panel that regenerates immediately. The tone is echoed back in the response so the UI cannot label a draft with a tone it was not written in |
@@ -328,7 +328,7 @@ npm run dev                        # http://localhost:5173
 
 ```bash
 python -m pytest tests/ -q     # 693 passed, 2 skipped, 8 xfailed
-cd frontend && npx vitest run  # 208 passed, in 16 files
+cd frontend && npx vitest run  # 229 passed, in 18 files
 ```
 
 The two skips are deliberate: they are the FR-05 accuracy criterion, on the
@@ -385,7 +385,12 @@ degraded path is what a test gets unless it asks for more. What it covers:
   `Dashboard.translate.test.jsx` cover FR-07: what is requested, switching
   language, loading, errors and late answers dropped, keyboard use; the draft
   translated in place, Undo, approval withdrawn, no send control; and the
-  Settings preference stored and used.
+  Settings preference stored and used. `ReadingPane.dictation.test.jsx` drives
+  dictation with a stand-in recogniser: the Settings language, phrases added at
+  the end with spoken punctuation, approval withdrawn, words still arriving for
+  a replaced draft thrown away, the blocked-microphone message, and no button
+  without speech support or with voice switched off; `lib/dictation.test.js`
+  covers the punctuation and capitalisation rules.
 - `src/lib/search.test.js`, `src/lib/format.test.js` — which view the inbox
   shows for a filter and query, newest-first ordering with undated mail last,
   and the attachment and size labels.
