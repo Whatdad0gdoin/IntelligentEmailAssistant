@@ -28,6 +28,7 @@ Measured with the shipped configuration (`gpt-4o-mini`, as set in
 | **FR-05** voice intent | dispatch accuracy, 60 held-out transcripts, three runs | **91.7–95.0%** — at or above ≥90% on every run; the 95% CIs still reach below it |
 | | — wrong action dispatched | **0 of 180** attempts |
 | **NFR-01** latency | cold inbox load, 25 emails, 8 loads | **median 2.0 s, worst 2.7 s** — all under 5 s |
+| **FR-07** translation | numbers, links and addresses preserved, 37 test-split emails each | **89.2%** Spanish, **86.5%** Chinese (Simplified) — figures only, not meaning |
 
 The FR-02 figures are **run 13**, measured on the 400-email set, and recompute
 from `eval/data/test_preds_run13.csv`; the holdout figure recomputes from
@@ -824,6 +825,46 @@ the target on 3 of 9 loads; it is now 25.
 
 ---
 
+## FR-07 — Translation: figures preserved
+
+```bash
+python -m eval.evaluate_translation --language Spanish --limit 40 --out eval/data/translation/<new>.csv
+python -m eval.evaluate_translation --language "Chinese (Simplified)" --limit 40 --out eval/data/translation/<new>.csv
+```
+
+The RTM gives FR-07 no acceptance figure, and there are no reference
+translations to score fluency against. What can be checked in any language
+pair is the error that does real damage: a figure changed on the way through —
+an amount that lost a zero, a date read the other way round, a link one
+character off. So every number, link and email address in the original must
+appear in the translation, and nothing of the kind may appear that the original
+lacks. Numbers compare by their digits, so `1,000.50` and `1.000,50` match.
+`gpt-4o-mini`, temperature 0, 2026-10-08, the first 10 test-split emails of
+each class; 3 of the 40 have nothing left to translate once cleaned (a 422 in
+the app) and are reported apart. Every run, email by email, is in
+`eval/data/translation/` (ids, counts and flags; never text).
+
+| Run | Spanish | Chinese (Simplified) |
+|---|---|---|
+| 1, strict check | 89.2% (33/37) | 54.1% (20/37) |
+| 1, re-scored with the month exception (below) | 89.2% | 83.8% (31/37) |
+| **2, as shipped** | **89.2% (33/37)** | **86.5% (32/37)** |
+
+- **What was checked:** 189 numbers, 6 links and 7 email addresses; 28 of the
+  37 originals contain at least one, so the other 9 pass with nothing to check.
+- **What the run-2 flags are:** figures written differently from the original —
+  `1,000` for `1`, `1999` for `99`, `02` for `2`, numbers written out in Chinese
+  characters. None is a figure invented from nothing.
+- **Long text:** a body is translated in pieces of at most 2,500 characters at
+  once, to stay inside the client's 20-second timeout. Live through the route,
+  9,498 characters in four pieces took 9.3 s into Chinese and 6.0 s into
+  Spanish, with no flags.
+- **What this is not:** a quality score. A fluent mistranslation that keeps
+  every figure passes, only 2 of the 15 languages were measured, and comparing
+  digits alone means `1.5` and `15` look the same.
+
+---
+
 ## Verifier corrections made during evaluation
 
 Each was found by inspecting flagged output, confirmed as a false positive, and
@@ -836,6 +877,7 @@ caught.
 | Proper nouns: strip leading articles and possessives | `Robert Parker's`, `the Trust Agreement` flagged when the bare name is in the source | FR-01 82.5% → 93.0% |
 | Proper nouns: strip salutations | spaCy returns `Dear Student Services` as one ORG span (it handles `Hi Sarah` correctly) | FR-03 78.9% → 97.4% |
 | Dates, weekdays and two-digit years compared by meaning | `July 14` flagged against an email's `14JUL`, `Thursday` against `Thurs`, `January 17th` against `Jan 17th` | Same 55 summaries, both verifiers: gpt-4o-mini 90.9% → 94.5%, gemini-3.8-flash 87.3% → 90.9%, no flag added |
+| Translation: a month named in the original may return as its number | `October 15` → `10月15日` flagged as an invented `10` — how Chinese, Japanese and Korean write dates | FR-07 Chinese 54.1% → 83.8% on the same 37 translations; Spanish unchanged. The reverse, a numeric date written out with a month name, is still flagged |
 
 These raised the measured numbers by making the measurement correct, not by
 weakening the check. `Priya Sharma`, `Acme Holdings` and `Dear Acme Holdings`

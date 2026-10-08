@@ -13,22 +13,32 @@
  * backend never reads their content, so there is nothing to open, preview or
  * send to the AI, and the pane says so rather than offering a dead link.
  *
- * Two things deliberately stay out of this pane:
- *  - Translation (FR-07) is not implemented in this build.
- *  - Voice Commands (FR-05) is inbox-wide, not a property of one email, so it
- *    does not belong on a per-message toolbar.
+ * Translation (FR-07) is here twice, because the RTM names two things to
+ * translate. Translate in the toolbar opens a panel with the email's subject
+ * and body in the language chosen in Settings, and a picker on the panel
+ * switches language on the spot. Translate on the draft panel replaces the
+ * draft with its translation, in the same editable textarea, with an undo;
+ * the new text has not been reviewed, so it withdraws an approval. Both show
+ * the backend's check -- every number, link and address carried across -- in
+ * the same notice summaries use.
+ *
+ * Voice Commands (FR-05) deliberately stays out of this pane: it is
+ * inbox-wide, not a property of one email, so it does not belong on a
+ * per-message toolbar.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Check, File as FileIcon, FileImage, FileText, Loader2, Mail, MessageSquareReply,
-  RefreshCw, Sparkles, Square, Volume2, X,
+  ArrowLeft, Check, File as FileIcon, FileImage, FileText, Languages, Loader2, Mail,
+  MessageSquareReply, RefreshCw, Sparkles, Square, Undo2, Volume2, X,
 } from "lucide-react";
 
 import * as api from "../api/client.js";
 import { useSpeech } from "../hooks/useSpeech.jsx";
 import GroundingNotice from "./GroundingNotice.jsx";
-import { CATEGORIES, TONES } from "../lib/constants.js";
+import {
+  CATEGORIES, DEFAULT_TRANSLATION_LANGUAGE, LANGUAGES, TONES, languageCode,
+} from "../lib/constants.js";
 import { segment, toParagraphs } from "../lib/highlight.js";
 import { attachmentLabel, formatBytes, formatReceivedLong } from "../lib/format.js";
 
@@ -41,7 +51,14 @@ function AttachmentIcon({ type }) {
   return <Icon size={14} strokeWidth={2.2} aria-hidden="true" />;
 }
 
-export default function ReadingPane({ email, body, bodyLoading, pendingAction, onActionConsumed, onBack, voiceEnabled = true }) {
+function LanguageOptions() {
+  return LANGUAGES.map(({ key }) => <option key={key} value={key}>{key}</option>);
+}
+
+export default function ReadingPane({
+  email, body, bodyLoading, pendingAction, onActionConsumed, onBack, voiceEnabled = true,
+  translationLang = DEFAULT_TRANSLATION_LANGUAGE,
+}) {
   const [summary, setSummary] = useState(null);
   const [summaryState, setSummaryState] = useState("idle");
   const [summaryError, setSummaryError] = useState(null);
@@ -56,8 +73,41 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
   // Which summary sentence the reader is tracing back to the source.
   const [tracedSentence, setTracedSentence] = useState(null);
 
+  // FR-07, the email. The panel's own picker starts at the Settings choice.
+  const [translation, setTranslation] = useState(null);
+  const [translationState, setTranslationState] = useState("idle");
+  const [translationError, setTranslationError] = useState(null);
+  const [translateLang, setTranslateLang] = useState(translationLang);
+  // The request in flight, so switching language or email cancels it rather
+  // than letting a slower, older answer land on top of the newer one.
+  const translateRequest = useRef(null);
+
+  // FR-07, the draft. `draftHistory` holds the text from before each
+  // translation, newest last, which is what Undo puts back.
+  const [draftLang, setDraftLang] = useState(translationLang);
+  const [draftTranslation, setDraftTranslation] = useState(null);
+  const [draftTranslateState, setDraftTranslateState] = useState("idle");
+  const [draftTranslateError, setDraftTranslateError] = useState(null);
+  const [draftHistory, setDraftHistory] = useState([]);
+  // Bumped by anything that replaces the draft, so a translation that comes
+  // back after a regenerate is dropped instead of overwriting the new draft.
+  const draftGeneration = useRef(0);
+
   const speech = useSpeech();
   const cat = CATEGORIES.find((c) => c.label === email.category);
+
+  function cancelTranslation() {
+    if (translateRequest.current) translateRequest.current.abort();
+    translateRequest.current = null;
+  }
+
+  function resetDraftTranslation() {
+    draftGeneration.current += 1;
+    setDraftTranslation(null);
+    setDraftTranslateState("idle");
+    setDraftTranslateError(null);
+    setDraftHistory([]);
+  }
 
   // Selecting a different email must not show the previous one's output.
   useEffect(() => {
@@ -72,9 +122,25 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
     setTone("neutral");
     setApproved(false);
     setTracedSentence(null);
+    cancelTranslation();
+    setTranslation(null);
+    setTranslationState("idle");
+    setTranslationError(null);
+    setTranslateLang(translationLang);
+    setDraftLang(translationLang);
+    resetDraftTranslation();
     speech.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email.id]);
+
+  // A new choice in Settings becomes where both pickers start.
+  useEffect(() => {
+    setTranslateLang(translationLang);
+    setDraftLang(translationLang);
+  }, [translationLang]);
+
+  // Nothing may land in an unmounted pane.
+  useEffect(() => () => cancelTranslation(), []);
 
   async function runSummarise() {
     if (summaryState === "loading") return null;
@@ -101,15 +167,91 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
     setDraftState("loading");
     setDraftError(null);
     setApproved(false);
+    // A draft translation still in flight belongs to the text being replaced.
+    draftGeneration.current += 1;
     try {
       const result = await api.draft(email.id, instruction.trim() || undefined, useTone);
       setDraft(result);
       setDraftText(result.draft);
+      // A new draft is untranslated, and there is nothing to undo back to.
+      resetDraftTranslation();
       setDraftState("idle");
     } catch (err) {
       setDraftError(err.message);
       setDraftState("error");
     }
+  }
+
+  // FR-07. The email as the reading pane shows it -- subject and cleaned
+  // body -- in `nextLang`, or in the panel's current choice.
+  async function runTranslate(nextLang) {
+    const language = typeof nextLang === "string" ? nextLang : translateLang;
+    cancelTranslation();
+    const controller = new AbortController();
+    translateRequest.current = controller;
+    setTranslation(null);
+    setTranslationError(null);
+    setTranslationState("loading");
+    try {
+      const result = await api.translate({ emailId: email.id, language }, { signal: controller.signal });
+      if (controller.signal.aborted) return;
+      setTranslation(result);
+      setTranslationState("idle");
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      setTranslationError(err.message);
+      setTranslationState("error");
+    } finally {
+      if (translateRequest.current === controller) translateRequest.current = null;
+    }
+  }
+
+  function closeTranslation() {
+    cancelTranslation();
+    setTranslation(null);
+    setTranslationState("idle");
+    setTranslationError(null);
+  }
+
+  // FR-07. The draft in the textarea, replaced by its translation. The text
+  // from before goes on the undo stack, and approval is withdrawn: it covered
+  // the words that were reviewed, and these are new words.
+  async function translateDraft() {
+    if (draftTranslateState === "loading") return;
+    const before = draftText;
+    if (!before.trim()) return;
+    const generation = draftGeneration.current;
+    setDraftTranslateState("loading");
+    setDraftTranslateError(null);
+    try {
+      const result = await api.translate({ text: before, language: draftLang });
+      if (draftGeneration.current !== generation) {
+        setDraftTranslateState("idle");
+        return;
+      }
+      setDraftHistory((history) => [...history, { text: before, translation: draftTranslation }]);
+      setDraftText(result.translation);
+      setDraftTranslation(result);
+      setApproved(false);
+      setDraftTranslateState("idle");
+    } catch (err) {
+      if (draftGeneration.current !== generation) {
+        setDraftTranslateState("idle");
+        return;
+      }
+      setDraftTranslateError(err.message);
+      setDraftTranslateState("error");
+    }
+  }
+
+  function undoDraftTranslation() {
+    if (draftHistory.length === 0) return;
+    const last = draftHistory[draftHistory.length - 1];
+    setDraftHistory(draftHistory.slice(0, -1));
+    setDraftText(last.text);
+    setDraftTranslation(last.translation);
+    setDraftTranslateError(null);
+    setApproved(false);
   }
 
   // Reads the summary, never the raw body (section 6.2). With no summary yet,
@@ -252,6 +394,14 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
               : <MessageSquareReply size={15} strokeWidth={2.2} />}
             <span>{draft ? "Regenerate" : "Draft Reply"}</span>
           </button>
+
+          {/* FR-07. Wrapped for the same reason: the parameter is a language. */}
+          <button className="action-btn" onClick={() => runTranslate()} disabled={translationState === "loading"}>
+            {translationState === "loading"
+              ? <Loader2 size={15} strokeWidth={2.2} className="spin" />
+              : <Languages size={15} strokeWidth={2.2} />}
+            <span>Translate</span>
+          </button>
         </div>
       </div>
 
@@ -319,6 +469,58 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
         </section>
       )}
 
+      {/* ------------------------------------------------ translation (FR-07) */}
+      {(translation || translationState === "loading" || translationError) && (
+        <section className="ai-panel" aria-label="Translation">
+          <header className="ai-panel-head">
+            <Languages size={14} strokeWidth={2.4} /> <b>Translation</b>
+            {translation && !translation.grounded && <span className="ai-chip warn">Unverified</span>}
+            <span className="ai-panel-tools">
+              {/* Changing language translates again at once, as choosing a
+                  tone redrafts: a picker that waits for another click leaves
+                  the old language on screen and reads as broken. */}
+              <select
+                className="ai-lang-select"
+                aria-label="Translate into"
+                value={translateLang}
+                onChange={(event) => {
+                  setTranslateLang(event.target.value);
+                  runTranslate(event.target.value);
+                }}
+              >
+                <LanguageOptions />
+              </select>
+              <button className="ai-close" onClick={closeTranslation} aria-label="Dismiss translation">
+                <X size={14} />
+              </button>
+            </span>
+          </header>
+
+          {translationState === "loading" && (
+            <div className="ai-skel" aria-busy="true" aria-label="Translating"><span /><span /><span /><span /></div>
+          )}
+          {translationError && <p className="ai-error" role="alert">{translationError}</p>}
+
+          {translation && (
+            <>
+              <GroundingNotice
+                grounded={translation.grounded}
+                flags={translation.ungrounded_flags}
+                source="the original"
+                okText="Every number, link and email address in the original is in the translation, and none was added."
+              />
+              {/* lang, so a screen reader reads it in the right voice; dir auto,
+                  so Arabic runs right to left. pre-wrap keeps the line breaks
+                  and lists the translation was asked to keep. */}
+              <div className="ai-translation" lang={languageCode(translation.language)} dir="auto">
+                {translation.subject && <h3 className="ai-translation-subject">{translation.subject}</h3>}
+                <div className="ai-translation-body">{translation.translation}</div>
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
       {/* ------------------------------------------------------ draft (FR-03) */}
       {(draft || draftState === "loading" || draftError) && (
         <section className="ai-panel">
@@ -327,7 +529,10 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
             {draft && !draft.grounded && <span className="ai-chip warn">Unverified</span>}
             <button
               className="ai-close"
-              onClick={() => { setDraft(null); setDraftState("idle"); setDraftError(null); setApproved(false); }}
+              onClick={() => {
+                setDraft(null); setDraftState("idle"); setDraftError(null); setApproved(false);
+                resetDraftTranslation();
+              }}
               aria-label="Dismiss draft"
             >
               <X size={14} />
@@ -340,12 +545,16 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
           {draft && (
             <>
               <GroundingNotice grounded={draft.grounded} flags={draft.ungrounded_flags} />
+              {/* Read-only only while a translation of it is on its way, so an
+                  edit made in those seconds is not overwritten by the result. */}
               <textarea
                 className="ai-draft"
                 value={draftText}
                 onChange={(e) => { setDraftText(e.target.value); setApproved(false); }}
                 rows={10}
                 aria-label="Draft reply, editable"
+                readOnly={draftTranslateState === "loading"}
+                aria-busy={draftTranslateState === "loading"}
               />
               {/* FR-06. Choosing a tone regenerates immediately: a selector
                   that only takes effect on the next manual Regenerate looks
@@ -370,6 +579,51 @@ export default function ReadingPane({ email, body, bodyLoading, pendingAction, o
                   </button>
                 ))}
               </div>
+              {/* FR-07. Translates whatever is in the textarea, edits included,
+                  and puts the result back there to be read and edited like
+                  any draft. Undo restores the text from before, one
+                  translation at a time. */}
+              <div className="ai-translate-row" role="group" aria-label="Translate the draft">
+                <span className="ai-tone-label">Language</span>
+                <select
+                  className="ai-lang-select"
+                  aria-label="Translate draft into"
+                  value={draftLang}
+                  onChange={(event) => setDraftLang(event.target.value)}
+                  disabled={draftTranslateState === "loading"}
+                >
+                  <LanguageOptions />
+                </select>
+                <button
+                  className="ai-translate-btn"
+                  aria-label="Translate draft"
+                  onClick={translateDraft}
+                  disabled={draftTranslateState === "loading" || draftState === "loading" || !draftText.trim()}
+                >
+                  {draftTranslateState === "loading"
+                    ? <Loader2 size={15} strokeWidth={2.2} className="spin" />
+                    : <Languages size={15} strokeWidth={2.2} />}
+                  Translate
+                </button>
+                {draftHistory.length > 0 && (
+                  <button
+                    className="ai-undo-btn"
+                    onClick={undoDraftTranslation}
+                    disabled={draftTranslateState === "loading"}
+                  >
+                    <Undo2 size={15} strokeWidth={2.2} /> Undo translation
+                  </button>
+                )}
+              </div>
+              {draftTranslateError && <p className="ai-error" role="alert">{draftTranslateError}</p>}
+              {draftTranslation && (
+                <GroundingNotice
+                  grounded={draftTranslation.grounded}
+                  flags={draftTranslation.ungrounded_flags}
+                  source="the draft before it was translated"
+                  okText={`Translated into ${draftTranslation.language}. Every number, link and email address in the draft is in the translation, and none was added.`}
+                />
+              )}
               <div className="ai-draft-foot">
                 <input
                   className="ai-instruction"

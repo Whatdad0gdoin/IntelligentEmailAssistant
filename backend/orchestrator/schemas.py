@@ -32,6 +32,31 @@ INTENTS = ("summarise", "read", "draft", "unknown")
 TONES = ("neutral", "formal", "casual", "professional")
 DEFAULT_TONE = "neutral"
 
+# Translation target languages (FR-07). Display names, because the name is
+# what the user picks and what the prompt asks for. A fixed tuple for the same
+# reason as TONES: the route rejects anything else rather than interpolating a
+# caller's string into a prompt. frontend/src/lib/constants.js mirrors it, and
+# tests/test_translate.py checks that the two lists agree. English is the
+# default the Week 11 Settings wireframe gives.
+LANGUAGES = (
+    "English",
+    "Chinese (Simplified)",
+    "Chinese (Traditional)",
+    "Vietnamese",
+    "Hindi",
+    "Indonesian",
+    "Malay",
+    "Spanish",
+    "French",
+    "German",
+    "Italian",
+    "Japanese",
+    "Korean",
+    "Arabic",
+    "Portuguese",
+)
+DEFAULT_LANGUAGE = "English"
+
 # Section 3: summary must be 2 or 3 sentences. Enforced in summarise.py.
 SUMMARY_MIN_SENTENCES = 2
 SUMMARY_MAX_SENTENCES = 3
@@ -118,6 +143,39 @@ DRAFT_SCHEMA = {
             "type": "string",
             "description": "The reply body as plain text, including a greeting and sign-off.",
         }
+    },
+}
+
+
+# Translation (FR-07). Two shapes because an email has a subject and a drafted
+# reply does not: asking for a subject that does not exist invites the model
+# to write one. Both carry the text and nothing else -- whether a number or a
+# link survived is checked in translate.py, never asked of the model.
+TRANSLATION_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["translation"],
+    "properties": {
+        "translation": {
+            "type": "string",
+            "description": "The complete translation, keeping the original's line breaks.",
+        }
+    },
+}
+
+EMAIL_TRANSLATION_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["subject", "translation"],
+    "properties": {
+        "subject": {
+            "type": "string",
+            "description": "The subject line, translated. Empty only when the original subject is empty.",
+        },
+        "translation": {
+            "type": "string",
+            "description": "The complete body, translated, keeping the original's line breaks.",
+        },
     },
 }
 

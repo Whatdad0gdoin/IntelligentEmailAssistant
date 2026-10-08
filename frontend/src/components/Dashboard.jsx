@@ -2,8 +2,10 @@
  * Authenticated app shell.
  *
  * Three destinations: Inbox, Voice Commands, Settings. The AI actions are not
- * destinations; Summarise, Read Aloud and Draft Reply act on the open message
- * inside the reading pane, and tone lives on the draft.
+ * destinations; Summarise, Read Aloud, Draft Reply and Translate act on the
+ * open message inside the reading pane, and tone lives on the draft. The
+ * translation language chosen in Settings is passed down as the language
+ * Translate starts in.
  *
  * Voice can be switched off in Settings. That hides the microphone and speaker
  * controls and nothing else: every voice action already has a click equivalent
@@ -25,7 +27,13 @@ import SettingsView from "../views/Settings.jsx";
 import VoiceView from "../views/Voice.jsx";
 import { useInbox } from "../hooks/useInbox.jsx";
 import { usePreference } from "../hooks/usePreference.jsx";
-import { DEFAULT_SPEECH_LANG, FEATURES, speechLangOrDefault } from "../lib/constants.js";
+import {
+  DEFAULT_SPEECH_LANG,
+  DEFAULT_TRANSLATION_LANGUAGE,
+  FEATURES,
+  speechLangOrDefault,
+  translationLangOrDefault,
+} from "../lib/constants.js";
 import { capabilities, voiceLimitation } from "../lib/capabilities.js";
 import { newestFirst } from "../lib/search.js";
 
@@ -40,6 +48,11 @@ export default function Dashboard({ user, onLogout }) {
   const [voiceEnabled, setVoiceEnabled] = usePreference("voiceEnabled", true);
   const [storedSpeechLang, setSpeechLang] = usePreference("speechLang", DEFAULT_SPEECH_LANG);
   const speechLang = speechLangOrDefault(storedSpeechLang);
+  // Stored as mailkit:translationLang. Read through the same guard as the
+  // recognition language, so a stale value cannot become a refused request.
+  const [storedTranslationLang, setTranslationLang] =
+    usePreference("translationLang", DEFAULT_TRANSLATION_LANGUAGE);
+  const translationLang = translationLangOrDefault(storedTranslationLang);
 
   const inbox = useInbox(true);
   const { loadBody } = inbox;
@@ -121,6 +134,8 @@ export default function Dashboard({ user, onLogout }) {
         setVoiceEnabled={setVoiceEnabled}
         speechLang={speechLang}
         setSpeechLang={setSpeechLang}
+        translationLang={translationLang}
+        setTranslationLang={setTranslationLang}
         onReloadInbox={inbox.reload}
         reloading={inbox.loading}
         onBack={() => setActive("inbox")}
@@ -143,6 +158,7 @@ export default function Dashboard({ user, onLogout }) {
         pendingAction={pendingAction}
         onActionConsumed={() => setPendingAction(null)}
         voiceEnabled={voiceEnabled}
+        translationLang={translationLang}
       />
     );
   }

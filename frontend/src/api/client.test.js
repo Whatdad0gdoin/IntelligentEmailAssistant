@@ -220,3 +220,29 @@ describe("draft body construction", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 });
+
+describe("translate body construction (FR-07)", () => {
+  it("sends an email id and the language for an email", async () => {
+    global.fetch = mockFetch(200, { translation: "Hola", grounded: true, ungrounded_flags: [] });
+    await api.translate({ emailId: "email-1", language: "Spanish" });
+
+    const [url, options] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/api\/translate$/);
+    expect(options.method).toBe("POST");
+    expect(JSON.parse(options.body)).toEqual({ email_id: "email-1", language: "Spanish" });
+  });
+
+  it("sends the text and the language for a draft, and no email id", async () => {
+    global.fetch = mockFetch(200, { translation: "Hola", grounded: true, ungrounded_flags: [] });
+    await api.translate({ text: "Hi David", language: "French" });
+
+    const [, options] = global.fetch.mock.calls[0];
+    expect(JSON.parse(options.body)).toEqual({ text: "Hi David", language: "French" });
+  });
+
+  it("surfaces the backend's refusal of a language it does not offer", async () => {
+    global.fetch = mockFetch(400, { error: "'language' must be one of: English, Spanish." });
+    await expect(api.translate({ emailId: "email-1", language: "Klingon" }))
+      .rejects.toThrow(/must be one of/i);
+  });
+});

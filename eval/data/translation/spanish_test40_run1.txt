@@ -1,0 +1,54 @@
+Translating 40 emails (test split) into Spanish with gpt-4o-mini.
+  temperature=0.0  timeout=20s  body budget=12000 chars  piece size=2500 chars  max spend=US$0.50
+  10/40
+  20/40
+  30/40
+  40/40
+
+========================================================================
+TRANSLATION  (FR-07)   language=Spanish  model=gpt-4o-mini
+
+  attempted          40
+  produced           37
+  failed outright    3  <-- not counted in the rate below
+
+  NUMBERS AND LINKS PRESERVED  89.2%  (33 clean / 37 produced)
+  flagged translations         4
+
+  checked: 189 numbers, 6 links and 7 email addresses in 37 originals
+  originals with at least one checkable item: 28/37
+
+  Flags by kind
+       4  number missing from the translation
+       3  number not in the original
+
+  Most frequently flagged
+       1  '4'  (number missing from the translation)
+       1  '1,000'  (number not in the original)
+       1  '1'  (number missing from the translation)
+       1  '02'  (number not in the original)
+       1  '2'  (number missing from the translation)
+       1  '1999'  (number not in the original)
+       1  '99'  (number missing from the translation)
+
+  category         n  preserved
+  Personal        10    100.0%
+  Promotions       9     77.8%
+  Studies         10    100.0%
+  Work             8     75.0%
+
+  returned unchanged (identical to the original): 2
+  long enough to be cut into pieces: 0
+  time per email: median 2.0s, max 4.4s; 87s in all
+
+  Production failures (reported apart, never as flags)
+       3  EmptyEmailError
+
+  tokens: 20,391 prompt + 6,299 completion over 37 calls (failed calls not counted)
+  estimated cost: US$0.0068 at list price
+
+Quote the preserved rate with the language, the model, the sample size and
+the flags by kind. It is not a quality score: it says the figures, links and
+addresses came through, not that the translation is right.
+
+Per-email results -> eval\data\translation\spanish_test40.csv

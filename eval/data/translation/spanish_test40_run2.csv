@@ -1,0 +1,41 @@
+id,category,provenance,text_origin,language,model,status,error,source_chars,translation_chars,pieces,unchanged,numbers_in_original,links_in_original,addresses_in_original,grounded,flag_count,flags_number_added,flags_number_missing,flags_link_added,flags_link_missing,flags_address_added,flags_address_missing,flags,seconds,prompt_tokens,completion_tokens
+enron-0452049916fa,Personal,enron,real,Spanish,gpt-4o-mini,ok,,327,356,1,False,1,0,0,True,0,0,0,0,0,0,0,,3.75,503,101
+enron-0c46f4281958,Personal,enron,real,Spanish,gpt-4o-mini,ok,,98,107,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.18,448,38
+enron-0d3815dc2f15,Personal,enron,real,Spanish,gpt-4o-mini,ok,,317,372,1,False,6,0,0,True,0,0,0,0,0,0,0,,2.02,528,139
+enron-0e2651538daf,Personal,enron,real,Spanish,gpt-4o-mini,ok,,40,40,1,False,0,0,0,True,0,0,0,0,0,0,0,,0.77,430,19
+enron-0e8a95e47904,Personal,enron,real,Spanish,gpt-4o-mini,ok,,547,627,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.89,552,166
+enron-1221d9e85cef,Personal,enron,real,Spanish,gpt-4o-mini,ok,,156,178,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.08,450,55
+enron-15c652b6770d,Personal,enron,real,Spanish,gpt-4o-mini,ok,,689,701,1,False,24,0,0,True,0,0,0,0,0,0,0,,3.41,680,297
+enron-197dd9a9ed67,Personal,enron,real,Spanish,gpt-4o-mini,ok,,367,383,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.46,501,100
+enron-21eac3eb68b3,Personal,enron,real,Spanish,gpt-4o-mini,ok,,642,699,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.91,579,174
+enron-22caaa78f9e8,Personal,enron,real,Spanish,gpt-4o-mini,ok,,160,171,1,False,2,0,0,True,0,0,0,0,0,0,0,,1.29,461,69
+enron-0044e7eaebff,Promotions,enron,real,Spanish,gpt-4o-mini,ok,,439,503,1,False,14,1,0,True,0,0,0,0,0,0,0,,2.99,631,273
+enron-00ecb971440c,Promotions,enron,real,Spanish,gpt-4o-mini,ok,,1056,1200,1,False,3,0,0,False,1,0,1,0,0,0,0,4 (number missing from the translation),3.44,659,309
+enron-02761b49b55b,Promotions,enron,real,Spanish,gpt-4o-mini,ok,,786,921,1,False,2,0,0,True,0,0,0,0,0,0,0,,2.37,592,221
+enron-0537d7d93ffe,Promotions,enron,real,Spanish,gpt-4o-mini,ok,,367,457,1,False,2,0,0,True,0,0,0,0,0,0,0,,1.67,486,117
+enron-07a248e756fd,Promotions,enron,real,Spanish,gpt-4o-mini,ok,,878,1029,1,False,2,1,1,True,0,0,0,0,0,0,0,,4.5,619,296
+enron-07b69ad0557c,Promotions,enron,real,Spanish,gpt-4o-mini,ok,,1090,1231,1,False,12,0,0,True,0,0,0,0,0,0,0,,3.33,694,363
+enron-0f94d1b29059,Promotions,enron,real,Spanish,gpt-4o-mini,ok,,130,162,1,False,6,0,1,False,2,1,1,0,0,0,0,"1,000 (number not in the original); 1 (number missing from the translation)",1.18,469,71
+enron-1109ae9dd613,Promotions,enron,real,Spanish,gpt-4o-mini,empty,EmptyEmailError,0,,0,,0,0,0,,,,,,,,,,0.0,0,0
+enron-141c403a0ed1,Promotions,enron,real,Spanish,gpt-4o-mini,ok,,1025,1165,1,False,32,2,1,True,0,0,0,0,0,0,0,,3.93,692,348
+enron-1e609ebe6755,Promotions,enron,real,Spanish,gpt-4o-mini,ok,,458,458,1,True,18,0,1,True,0,0,0,0,0,0,0,,2.38,605,199
+generated-03ddea97bdf0,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,391,440,1,False,2,0,0,True,0,0,0,0,0,0,0,,1.53,499,112
+generated-05ab934e247b,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,631,682,1,False,2,0,1,True,0,0,0,0,0,0,0,,2.03,545,160
+generated-0b3214c4a7e4,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,357,374,1,False,4,0,0,True,0,0,0,0,0,0,0,,1.46,498,101
+generated-0c7e527b7167,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,374,401,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.43,494,98
+generated-11d612b3d367,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,531,633,1,False,3,0,0,True,0,0,0,0,0,0,0,,2.28,526,149
+generated-1308bb55599c,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,693,740,1,False,4,0,0,True,0,0,0,0,0,0,0,,2.04,560,182
+generated-1ce2ffca4e2d,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,641,743,1,False,9,0,1,True,0,0,0,0,0,0,0,,2.92,567,193
+generated-23b1d7692f37,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,509,576,1,False,4,0,0,True,0,0,0,0,0,0,0,,1.78,533,149
+generated-23ee63925c92,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,694,790,1,False,8,0,0,True,0,0,0,0,0,0,0,,2.89,563,203
+generated-27851cb15950,Studies,generated,synthetic,Spanish,gpt-4o-mini,ok,,659,729,1,False,3,0,0,True,0,0,0,0,0,0,0,,2.17,560,184
+enron-01381c3e85c6,Work,enron,real,Spanish,gpt-4o-mini,ok,,264,298,1,False,3,0,0,True,0,0,0,0,0,0,0,,1.41,478,92
+enron-08d24e9ef5aa,Work,enron,real,Spanish,gpt-4o-mini,ok,,81,81,1,False,1,0,0,True,0,0,0,0,0,0,0,,1.48,443,35
+enron-094771a0b5fe,Work,enron,real,Spanish,gpt-4o-mini,ok,,1068,1175,1,False,7,0,1,False,2,1,1,0,0,0,0,02 (number not in the original); 2 (number missing from the translation),3.71,687,323
+enron-0ad83856a4a6,Work,enron,real,Spanish,gpt-4o-mini,ok,,210,238,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.22,464,64
+enron-1000f717ae1b,Work,enron,real,Spanish,gpt-4o-mini,ok,,2,2,1,True,0,0,0,True,0,0,0,0,0,0,0,,0.83,422,12
+enron-1c03255b2c0f,Work,enron,real,Spanish,gpt-4o-mini,ok,,1416,1455,1,False,7,0,0,True,0,0,0,0,0,0,0,,4.12,727,374
+enron-258a1efde235,Work,enron,real,Spanish,gpt-4o-mini,empty,EmptyEmailError,0,,0,,0,0,0,,,,,,,,,,0.0,0,0
+enron-25b7ba6a4437,Work,enron,real,Spanish,gpt-4o-mini,empty,EmptyEmailError,0,,0,,0,0,0,,,,,,,,,,0.0,0,0
+enron-29793e616bac,Work,enron,real,Spanish,gpt-4o-mini,ok,,1173,1329,1,False,6,0,0,False,2,1,1,0,0,0,0,1999 (number not in the original); 99 (number missing from the translation),3.22,678,325
+enron-2ab526e2e803,Work,enron,real,Spanish,gpt-4o-mini,ok,,620,684,1,False,2,2,0,True,0,0,0,0,0,0,0,,2.26,568,191

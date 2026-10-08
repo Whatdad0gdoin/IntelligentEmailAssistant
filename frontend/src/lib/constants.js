@@ -31,11 +31,11 @@ export const ROTATING = [
  *   FR-05 voice       -> POST /api/voice/intent built
  *   speak             -> browser speechSynthesis, no backend needed
  *   FR-06 tone        -> POST /api/draft {tone}  built, on the draft panel
- *   FR-07 translate   -> not implemented in this build
+ *   FR-07 translate   -> POST /api/translate     built, on the reading pane
  */
-// Sidebar destinations. Summarise, Read Aloud and Draft Reply are not here:
-// they act on an open message and live on the reading pane. Tone is on the
-// draft. Translation (FR-07) is not implemented.
+// Sidebar destinations. Summarise, Read Aloud, Draft Reply and Translate are
+// not here: they act on an open message and live on the reading pane. Tone and
+// the draft's translation are on the draft.
 export const FEATURES = [
   { id: "inbox", label: "Inbox", icon: Inbox, group: "main" },
   { id: "voice", label: "Voice Commands", icon: Mic, group: "voice", desc: "Control your inbox hands-free with your voice." },
@@ -111,3 +111,47 @@ export const TONES = [
   { key: "formal", label: "Formal", hint: "No contractions, Yours sincerely" },
   { key: "casual", label: "Casual", hint: "Warmer and more relaxed" },
 ];
+
+/**
+ * Translation languages (FR-07). Mirrors LANGUAGES in
+ * backend/orchestrator/schemas.py, in the same order: the key is the value the
+ * API takes, and anything else is a 400. tests/test_translate.py fails if the
+ * two lists drift apart.
+ *
+ * `code` is the BCP 47 tag put on translated text, so a screen reader reads
+ * it in the right language and the browser picks the right fonts.
+ */
+export const DEFAULT_TRANSLATION_LANGUAGE = "English";
+
+export const LANGUAGES = [
+  { key: "English", code: "en" },
+  { key: "Chinese (Simplified)", code: "zh-Hans" },
+  { key: "Chinese (Traditional)", code: "zh-Hant" },
+  { key: "Vietnamese", code: "vi" },
+  { key: "Hindi", code: "hi" },
+  { key: "Indonesian", code: "id" },
+  { key: "Malay", code: "ms" },
+  { key: "Spanish", code: "es" },
+  { key: "French", code: "fr" },
+  { key: "German", code: "de" },
+  { key: "Italian", code: "it" },
+  { key: "Japanese", code: "ja" },
+  { key: "Korean", code: "ko" },
+  { key: "Arabic", code: "ar" },
+  { key: "Portuguese", code: "pt" },
+];
+
+/**
+ * The stored choice if it is still on offer, otherwise English. As with the
+ * recognition language: a stale or hand-edited preference must not become a
+ * request the backend will refuse.
+ */
+export function translationLangOrDefault(value) {
+  return LANGUAGES.some((lang) => lang.key === value) ? value : DEFAULT_TRANSLATION_LANGUAGE;
+}
+
+/** The BCP 47 tag for a language key, for the lang attribute. */
+export function languageCode(key) {
+  const found = LANGUAGES.find((lang) => lang.key === key);
+  return found ? found.code : undefined;
+}

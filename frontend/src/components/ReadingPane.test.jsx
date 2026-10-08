@@ -14,9 +14,10 @@
  *    as Firefox or Safari would. Read Aloud must be absent rather than present
  *    and dead. The supported browser is covered in ReadingPane.voice.test.jsx.
  *
- * The api client is mocked to the two calls this pane can make. That keeps the
- * tests offline, and it means a third call added later fails loudly here
- * instead of quietly reaching the network.
+ * The api client is mocked to the three calls this pane can make. That keeps
+ * the tests offline, and it means a fourth call added later fails loudly here
+ * instead of quietly reaching the network. Translation (FR-07) has its own
+ * file, ReadingPane.translate.test.jsx.
  */
 
 import { render, screen } from "@testing-library/react";
@@ -29,6 +30,7 @@ import * as api from "../api/client.js";
 vi.mock("../api/client.js", () => ({
   summarise: vi.fn(),
   draft: vi.fn(),
+  translate: vi.fn(),
 }));
 
 const EMAIL = {
@@ -127,6 +129,7 @@ describe("FR-03: approval is explicit, and nothing sends", () => {
 
     expect(api.draft).toHaveBeenCalledTimes(1);
     expect(api.summarise).not.toHaveBeenCalled();
+    expect(api.translate).not.toHaveBeenCalled();
   });
 
   it("the api client has no send endpoint for a button to be wired to", async () => {

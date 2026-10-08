@@ -12,13 +12,13 @@ Tracked against the Week 11 Requirements Traceability Matrix rather than the
 build spec's step order, because the RTM is what the project is graded on and
 the step order no longer says anything useful: all ten steps are now built, so a
 list of them reads as ten ticks and hides where the real gaps are. What is left
-is one requirement nobody started, work only a person can do, and the limits of
-what each measurement can show.
+is work only a person can do, and the limits of what each measurement can show.
 
-**FR-07 (translation) is not implemented at all.** Everything else in the table
-is built on both tiers, reachable in the browser, and measured: FR-02 at 86.9%
-strict on real email, FR-05 at 91.7–95.0% on held-out transcripts, NFR-01 at a
-2.0 s median cold load. Where a figure still falls short of proving its
+**Every requirement in the table is built** on both tiers, reachable in the
+browser, and measured: FR-02 at 86.9% strict on real email, FR-05 at
+91.7–95.0% on held-out transcripts, NFR-01 at a 2.0 s median cold load, and
+FR-07 carrying every number, link and address through 86.5–89.2% of
+translations. Where a figure still falls short of proving its
 requirement, [the list below the table](#where-this-build-falls-short-precisely)
 says how.
 
@@ -30,12 +30,12 @@ says how.
 | FR-04 | Read summaries aloud via Web Speech API ("Read Aloud") | HIGH¹ | Done | `hooks/useSpeech.jsx`, browser-side only, no backend. Reads the *summary* sentences, never the raw body; fetches a summary first if none exists yet, so the button cannot read email text. The control is hidden outright when the browser has no `speechSynthesis` |
 | FR-05 | Accept spoken voice commands; classify intent | HIGH¹ | Done · criterion met on held-out transcripts | `views/Voice.jsx` (spoken; only the transcript reaches our server; recognition language en-AU by default, chosen in Settings) and `components/CommandBar.jsx` (typed, shown in every browser) → `POST /api/voice/intent`. Below the confidence floor both show the command back and ask (`components/IntentChoice.jsx`, shared) rather than guessing. **91.7–95.0% on 60 held-out transcripts over three runs, no wrong dispatch in 180**; the earlier prompt scored 86.7% on the original 30. See `eval/BENCHMARKS.md` |
 | FR-06 | Adjust tone of the drafted reply (Formal / Casual / Professional) | MED | Done | `TONES` in `orchestrator/schemas.py`, register-only guidance in `orchestrator/prompts.py`, optional `tone` on `POST /api/draft` (an unknown value is a 400, not a silent fallback), and a tone row on the draft panel that regenerates immediately. The tone is echoed back in the response so the UI cannot label a draft with a tone it was not written in |
-| FR-07 | Translate email content or drafted reply into a chosen language | LOW | **Not implemented** | Nothing exists: no route, no prompt, no schema, no UI control. Deliberately still listed here rather than dropped from the docs |
+| FR-07 | Translate email content or drafted reply into a chosen language | LOW | Done · figures checked | `POST /api/translate` → `orchestrator/translate.py`: an email (its subject and the cleaned body the reader shows) or a drafted reply, into 15 languages (`LANGUAGES` in `orchestrator/schemas.py`, mirrored in `lib/constants.js`; anything else is a 400). Never cached: a translation is the whole body in another language (NFR-03). Every number, link and email address is checked both ways in any language pair — numbers by their digits, so 1,000.50 matches 1.000,50 — and flags show in the same notice summaries use. The reading pane has a **Translate** button and a Translation panel with its own language picker; the draft panel translates the draft in place, with **Undo translation**, and withdraws approval. The starting language is the **Translation language** in Settings (English by default). **Figures preserved in 89.2% (Spanish) and 86.5% (Chinese, Simplified) of 37 test-split emails** — a check on figures, not meaning. See `eval/BENCHMARKS.md` |
 | FR-08 | On login, retrieve emails and display them grouped by category | HIGH | Done | `GET /api/inbox` returns five groups already grouped; `views/Inbox.jsx` renders them with category chips, a flat "All" view, search, and a Review bucket that carries its explanation inline |
 | NFR-01 | AI responses returned and displayed within a few seconds | HIGH | Done · measured | A cold inbox load — the slowest routine request, because every email is classified inside it — **median 2.0 s, worst 2.7 s over 8 loads of a 25-email inbox, all under the 5 s target**, against the real model (`eval/cold_load.py`, `eval/BENCHMARKS.md`). Batched, the same load took 13.5 s; one email per call with 25 calls at once is what brought it under. `middleware/timing.py` times every route into a bounded in-process ring, and `GET /api/metrics` reports nearest-rank p50/p95/max against the target, returning `null` rather than `0` on an empty window (`tests/test_metrics.py`). The inbox renders a skeleton while a load is in flight |
 | NFR-02 | Browser-accessible; no install or plugin; works in Chrome | HIGH | Done by construction, not by test | A React SPA over a REST API; `npm run build` produces a static bundle and nothing needs an extension. There is no browser-driven or end-to-end test in this repo, so "fully functional in Chrome" rests on manual use, not on a green tick. The latest manual check (2026-10-07, headless Edge, which is Chromium) covered sign-in, the inbox layout at three window sizes and a typed command end to end; Firefox was not available. Voice is the one browser-gated part, and SR-01 covers it |
-| NFR-03 | Email content not stored permanently; no body data between calls | HIGH | Done | Bodies are fetched per request, preprocessed in memory and dropped; the cache holds model output only; logs carry character counts rather than content. `tests/test_no_body_in_logs.py` runs a full session against a real log file on disk and greps it |
-| NFR-04 | Login required before email data or assistant features | HIGH | Done | One fail-closed `before_request` guard with a two-entry public allowlist. `tests/test_auth.py` enumerates the URL map rather than listing routes by hand, so it covers all seven protected routes and picked up `/api/metrics` the moment that was registered, with no change to the test |
+| NFR-03 | Email content not stored permanently; no body data between calls | HIGH | Done | Bodies are fetched per request, preprocessed in memory and dropped; the cache holds summaries and labels only — a translation, being the whole body in another language, is never kept; logs carry character counts rather than content. `tests/test_no_body_in_logs.py` runs a full session against a real log file on disk and greps it |
+| NFR-04 | Login required before email data or assistant features | HIGH | Done | One fail-closed `before_request` guard with a two-entry public allowlist. `tests/test_auth.py` enumerates the URL map rather than listing routes by hand, so it covers all eight protected routes and picked up `/api/metrics` and `/api/translate` the moment each was registered, with no change to the test |
 | SR-01 | Voice restricted to Chrome/Edge; notify on unsupported browsers | MED | Done | `lib/capabilities.js` reads `speechSynthesis` and `SpeechRecognition` once at load. Without STT the Voice destination is removed rather than shown as a dead end; without TTS the Read Aloud button is not rendered; a persistent, non-blocking notice says which one is missing. Every voice action is also a button, and every voice command can also be typed into the command bar, which needs no speech support |
 | DR-01 | Labelled dataset of 400 emails, 100 per category | MED | Done | `eval/data/dataset.csv`: **400 rows, 100 per class, 300 real / 100 synthetic, every real label read and verified by a person**. It was 480; reading the folder-labelled Work rows found 27 of 120 were not Work, so the set was rebalanced to 94 per class rather than topped up with unverified rows, then brought to 100 with twelve more Work emails read and confirmed. The RTM asks for an AI-generated set; the Week 11 dataset slide asks for real mail. The slide won — generation fills Studies only, the class no real corpus covers. See below |
 | DR-02 | Labelled set as ground truth: accuracy, precision, recall, F1, matrix | MED | Done | `eval/evaluate_classifier.py` prints coverage, accuracy and strict accuracy, per-class precision/recall/F1, macro-F1 and a confusion matrix. Every run is logged in `eval/BENCHMARKS.md` |
@@ -46,8 +46,13 @@ over the same cell for FR-04 and FR-05, so text extraction reads both
 
 ### Where this build falls short, precisely
 
-- **FR-07 is not implemented at all.** It is LOW priority in the RTM and was
-  not attempted. Nothing partial exists to describe.
+- **FR-07 is checked on figures, not meaning.** Every number, link and address
+  must survive in both directions, and in 86.5–89.2% of translations they did
+  (2 of the 15 languages, 37 emails each). There are no reference translations,
+  so nothing scores the prose. A month named in English may come back as its
+  number, deliberately, because that is how Chinese, Japanese and Korean write
+  dates. There is no voice or typed "translate" command: adding one would
+  change the measured FR-05 intent prompt.
 - **FR-02's figure is quoted strictly, and on real email.** Counting Review as
   a miss, the shipped configuration scores 86.9% on real email and 98.3% on the
   synthetic Studies mail, so the pooled 89.8% partly measures the model telling
@@ -96,10 +101,11 @@ from memory. All of them require
 | `POST /api/classify` | FR-02, DR-02 | `{results: [{id, category, confidence, evidence}]}`. Up to 100 emails per request, classified as the inbox classifies them. Takes bodies rather than ids so the evaluation set need not exist as a mailbox; results from supplied bodies are deliberately **not** cached, or an eval run could poison the inbox's labels. |
 | `POST /api/draft` | FR-03, FR-06 | `{draft, grounded, ungrounded_flags[], tone}`. Optional `instruction` (string) and optional `tone` (`neutral`/`formal`/`casual`/`professional`; anything else is a 400). Returns text only — **no send endpoint exists.** |
 | `POST /api/voice/intent` | FR-05 | `{intent, target_email_id, confidence}` where `intent` is `summarise` / `read` / `draft` / `unknown`. Optional `emails` (`{id, sender_name, subject, received_at}`) and `alternatives` arrays; see the deviations below. Takes the transcript only — the server never receives audio. The voice view and the typed command bar both call it. |
+| `POST /api/translate` | FR-07 | Exactly one of `{email_id, language}` → `{email_id, language, subject, translation, grounded, ungrounded_flags[]}` or `{text, language}` → `{language, translation, grounded, ungrounded_flags[]}`; both or neither is a 400. `language` must be one of the 15 in `LANGUAGES`, otherwise a 400 that lists them. `text` is at most 10,000 characters. The email form translates the subject and the cleaned body; neither form is cached. Flag reasons: `number not in the original`, `number missing from the translation`, and the same for links and email addresses. Text over 2,500 characters is translated in pieces at once, each piece one call against the session cap. Returns text only. |
 | `GET /api/metrics` | NFR-01 | `{window_size, units, percentile_method, p95_min_samples, target_seconds, p95_within_target, overall, routes}`. Each block is `{count, p50_ms, p95_ms, max_ms, over_target, enough_for_p95}`; empty blocks return `null` rather than `0`, so an unmeasured window cannot read as a pass. Authenticated, like everything else under `/api`, and excluded from its own window so polling it cannot evict the samples it reports. The frontend does not call it; it is there for measurement, not for the UI. |
 
 Failure codes: `400` malformed request, `404` unknown email id, `422` nothing
-left to summarise after preprocessing, `429` session request cap spent, `502`
+left to summarise or translate after preprocessing, `429` session request cap spent, `502`
 the model would not produce valid output after a retry, `503` the AI service or
 mailbox is unreachable. No route returns a success shape on failure, and no
 error response echoes the request payload back (NFR-03).
@@ -321,8 +327,8 @@ npm run dev                        # http://localhost:5173
 ## Tests
 
 ```bash
-python -m pytest tests/ -q     # 602 passed, 2 skipped, 8 xfailed
-cd frontend && npx vitest run  # 178 passed, in 14 files
+python -m pytest tests/ -q     # 693 passed, 2 skipped, 8 xfailed
+cd frontend && npx vitest run  # 208 passed, in 16 files
 ```
 
 The two skips are deliberate: they are the FR-05 accuracy criterion, on the
@@ -375,7 +381,11 @@ degraded path is what a test gets unless it asks for more. What it covers:
   Aloud, Draft and Approve, the voice-order and attachment contracts, and the
   command bar typed end to end (what is sent, what opens and runs, the pick-one
   question below the confidence floor, empty input, busy and error states,
-  keyboard-only use).
+  keyboard-only use). `ReadingPane.translate.test.jsx` and
+  `Dashboard.translate.test.jsx` cover FR-07: what is requested, switching
+  language, loading, errors and late answers dropped, keyboard use; the draft
+  translated in place, Undo, approval withdrawn, no send control; and the
+  Settings preference stored and used.
 - `src/lib/search.test.js`, `src/lib/format.test.js` — which view the inbox
   shows for a filter and query, newest-first ordering with undated mail last,
   and the attachment and size labels.
@@ -404,6 +414,7 @@ not tuned against:
 | FR-03 draft reply | groundedness rate | 97.4% |
 | FR-05 voice intent | dispatch accuracy, 60 held-out transcripts, three runs | 91.7–95.0%, no wrong dispatch in 180 |
 | NFR-01 latency | cold inbox load, 25 emails, 8 loads | median 2.0 s, worst 2.7 s |
+| FR-07 translation | numbers, links and addresses preserved, 37 test-split emails each | 89.2% Spanish, 86.5% Chinese (Simplified) |
 
 The tooling:
 
@@ -431,6 +442,9 @@ The tooling:
   its probes and prints accuracy and a confusion table. Exits non-zero below 90%.
 - `eval/cold_load.py` (NFR-01) - times a cold inbox load through the real route
   and model, comparing classification settings trial by trial.
+- `eval/evaluate_translation.py` (FR-07) - the share of translations that keep
+  every number, link and address, flags by kind, failures apart; `--out` writes
+  no text. Runs are in `eval/data/translation/`.
 - `eval/compare_models.py`, `eval/providers.py` - the same classification,
   intent and summary tasks run on Claude, Gemini and GPT models behind one
   interface; results and the report are in `eval/data/compare/`.
@@ -485,6 +499,7 @@ backend/
     provenance.py  where each generated sentence came from, as char offsets
     classify.py    FR-02      summarise.py  FR-01
     draft.py       FR-03/06   intent.py     FR-05
+    translate.py   FR-07, and the check that figures survive translation
     cache.py       summaries and labels only, never bodies
     budget.py      per-session request cap
   adapters/    three email sources behind one interface -- fixture .eml mailbox,
@@ -506,7 +521,7 @@ tests/         backend suite (pytest); frontend tests sit beside their modules
   explicit two-entry allowlist. Forgetting to allowlist a new route makes it
   return 401 - visible and safe - rather than shipping it unauthenticated.
   `tests/test_auth.py` enumerates the URL map, so a route added later is
-  covered automatically; it currently checks seven protected routes.
+  covered automatically; it currently checks eight protected routes.
   `/api/metrics` needed no auth decorator and got none — it was covered by the
   401 test the moment it was registered, which is the whole argument for the
   guard being central rather than per-route.

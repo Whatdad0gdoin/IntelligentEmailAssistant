@@ -200,6 +200,25 @@ export async function draft(emailId, instruction, tone, { signal } = {}) {
 }
 
 /**
+ * POST /api/translate (FR-07)
+ *   { emailId, language } -> { email_id, language, subject, translation, grounded, ungrounded_flags[] }
+ *   { text, language }    -> { language, translation, grounded, ungrounded_flags[] }
+ *
+ * Exactly one of emailId and text. Both are passed through as given, so a
+ * caller that sends both, or neither, gets the backend's 400 rather than one
+ * being quietly picked. `language` is a key of LANGUAGES in lib/constants.js.
+ *
+ * Like draft(), this returns text and nothing else: a translated draft goes
+ * back into the editable textarea, and there is still no send endpoint.
+ */
+export async function translate({ emailId, text, language } = {}, { signal } = {}) {
+  const body = { language };
+  if (emailId !== undefined) body.email_id = emailId;
+  if (text !== undefined) body.text = text;
+  return request("/api/translate", { method: "POST", body, signal });
+}
+
+/**
  * POST /api/voice/intent -> { intent, target_email_id, confidence } (FR-05)
  *
  * `intent` is one of summarise | read | draft | unknown.

@@ -11,15 +11,20 @@
  * A flag means "this token is not in the source email", which is evidence of a
  * problem rather than proof of one, so the wording says "check" and not
  * "wrong".
+ *
+ * A translation (FR-07) is checked against its original rather than against
+ * an email -- for a draft, the draft as it was before translating -- so
+ * `source` names what was checked against, and `okText` says what a clean
+ * result means there. Both default to the summary and draft wording.
  */
 import { CheckCircle2, TriangleAlert } from "lucide-react";
 
-export default function GroundingNotice({ grounded, flags = [] }) {
+export default function GroundingNotice({ grounded, flags = [], source = "the source email", okText }) {
   if (grounded) {
     return (
       <div className="ground-note ok">
         <CheckCircle2 size={15} strokeWidth={2.2} />
-        <span>Every checkable claim was found in the source email.</span>
+        <span>{okText || `Every checkable claim was found in ${source}.`}</span>
       </div>
     );
   }
@@ -30,7 +35,7 @@ export default function GroundingNotice({ grounded, flags = [] }) {
         <TriangleAlert size={15} strokeWidth={2.2} />
         <span>
           {flags.length} claim{flags.length === 1 ? "" : "s"} could not be
-          verified against the source email. Check {flags.length === 1 ? "it" : "them"} before you rely on this.
+          verified against {source}. Check {flags.length === 1 ? "it" : "them"} before you rely on this.
         </span>
       </div>
       {flags.length > 0 && (

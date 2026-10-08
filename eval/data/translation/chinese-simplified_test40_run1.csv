@@ -1,0 +1,41 @@
+id,category,provenance,text_origin,language,model,status,error,source_chars,translation_chars,pieces,unchanged,numbers_in_original,links_in_original,addresses_in_original,grounded,flag_count,flags_number_added,flags_number_missing,flags_link_added,flags_link_missing,flags_address_added,flags_address_missing,flags,seconds,prompt_tokens,completion_tokens
+enron-0452049916fa,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,327,116,1,False,1,0,0,False,1,1,0,0,0,0,0,12 (number not in the original),3.5,509,98
+enron-0c46f4281958,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,98,40,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.23,454,36
+enron-0d3815dc2f15,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,317,169,1,False,6,0,0,True,0,0,0,0,0,0,0,,2.39,534,145
+enron-0e2651538daf,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,40,13,1,False,0,0,0,True,0,0,0,0,0,0,0,,0.74,436,20
+enron-0e8a95e47904,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,547,198,1,False,0,0,0,True,0,0,0,0,0,0,0,,2.01,558,173
+enron-1221d9e85cef,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,156,56,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.16,456,55
+enron-15c652b6770d,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,689,462,1,False,24,0,0,False,2,1,1,0,0,0,0,3 (number not in the original); 1 (number missing from the translation),3.0,686,279
+enron-197dd9a9ed67,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,367,118,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.48,507,96
+enron-21eac3eb68b3,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,642,186,1,False,0,0,0,True,0,0,0,0,0,0,0,,2.28,585,134
+enron-22caaa78f9e8,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,160,78,1,False,2,0,0,True,0,0,0,0,0,0,0,,1.15,467,65
+enron-0044e7eaebff,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,439,340,1,False,14,1,0,False,1,1,0,0,0,0,0,11 (number not in the original),3.07,637,226
+enron-00ecb971440c,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1056,360,1,False,3,0,0,True,0,0,0,0,0,0,0,,2.68,665,233
+enron-02761b49b55b,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,786,269,1,False,2,0,0,True,0,0,0,0,0,0,0,,2.2,598,178
+enron-0537d7d93ffe,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,367,116,1,False,2,0,0,True,0,0,0,0,0,0,0,,1.8,492,106
+enron-07a248e756fd,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,878,355,1,False,2,1,1,True,0,0,0,0,0,0,0,,3.21,625,245
+enron-07b69ad0557c,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1090,397,1,False,12,0,0,False,1,0,1,0,0,0,0,100 (number missing from the translation),4.73,700,295
+enron-0f94d1b29059,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,130,74,1,False,6,0,1,False,1,1,0,0,0,0,0,"1,000 (number not in the original)",1.14,475,63
+enron-1109ae9dd613,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,failed,EmptyEmailError,0,,0,,0,0,0,,,,,,,,,,0.0,0,0
+enron-141c403a0ed1,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1025,551,1,False,32,2,1,True,0,0,0,0,0,0,0,,4.38,698,330
+enron-1e609ebe6755,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,458,375,1,False,18,0,1,False,1,0,1,0,0,0,0,8 (number missing from the translation),2.32,611,206
+generated-03ddea97bdf0,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,391,135,1,False,2,0,0,False,1,1,0,0,0,0,0,3 (number not in the original),1.54,505,101
+generated-05ab934e247b,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,631,217,1,False,2,0,1,False,1,1,0,0,0,0,0,10 (number not in the original),2.03,551,139
+generated-0b3214c4a7e4,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,357,115,1,False,4,0,0,True,0,0,0,0,0,0,0,,1.55,504,94
+generated-0c7e527b7167,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,374,107,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.47,500,92
+generated-11d612b3d367,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,531,186,1,False,3,0,0,False,1,1,0,0,0,0,0,10 (number not in the original),1.65,532,137
+generated-1308bb55599c,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,693,209,1,False,4,0,0,False,2,1,1,0,0,0,0,11 (number not in the original); 2 (number missing from the translation),2.18,566,156
+generated-1ce2ffca4e2d,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,641,234,1,False,9,0,1,False,1,1,0,0,0,0,0,10 (number not in the original),2.53,573,170
+generated-23b1d7692f37,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,509,158,1,False,4,0,0,False,1,1,0,0,0,0,0,10 (number not in the original),1.93,539,129
+generated-23ee63925c92,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,694,217,1,False,8,0,0,False,1,1,0,0,0,0,0,10 (number not in the original),2.29,569,167
+generated-27851cb15950,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,659,208,1,False,3,0,0,False,2,2,0,0,0,0,0,10 (number not in the original); 11 (number not in the original),1.96,566,163
+enron-01381c3e85c6,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,264,101,1,False,3,0,0,True,0,0,0,0,0,0,0,,1.37,484,82
+enron-08d24e9ef5aa,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,81,30,1,False,1,0,0,True,0,0,0,0,0,0,0,,0.9,449,36
+enron-094771a0b5fe,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1068,430,1,False,7,0,1,False,1,1,0,0,0,0,0,1 (number not in the original),4.13,693,297
+enron-0ad83856a4a6,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,210,65,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.26,470,58
+enron-1000f717ae1b,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,2,2,1,False,0,0,0,True,0,0,0,0,0,0,0,,0.87,428,12
+enron-1c03255b2c0f,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1416,500,1,False,7,0,0,True,0,0,0,0,0,0,0,,3.0,733,320
+enron-258a1efde235,Work,enron,real,Chinese (Simplified),gpt-4o-mini,failed,EmptyEmailError,0,,0,,0,0,0,,,,,,,,,,0.0,0,0
+enron-25b7ba6a4437,Work,enron,real,Chinese (Simplified),gpt-4o-mini,failed,EmptyEmailError,0,,0,,0,0,0,,,,,,,,,,0.0,0,0
+enron-29793e616bac,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1173,407,1,False,6,0,0,False,3,2,1,0,0,0,0,1999 (number not in the original); 6 (number not in the original); 99 (number missing from the translation),3.25,684,307
+enron-2ab526e2e803,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,620,297,1,False,2,2,0,False,1,1,0,0,0,0,0,8 (number not in the original),2.2,574,189

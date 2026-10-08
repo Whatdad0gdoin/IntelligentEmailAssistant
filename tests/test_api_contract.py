@@ -219,20 +219,21 @@ def test_voice_intent_without_candidates_returns_a_null_target(client, auth_head
 
 
 @pytest.mark.parametrize("path", ["/api/summarise", "/api/classify", "/api/draft",
-                                  "/api/voice/intent"])
+                                  "/api/translate", "/api/voice/intent"])
 def test_a_non_json_body_is_a_400_not_a_500(client, auth_headers, stub_llm, path):
     response = client.post(path, data="this is not json", headers=auth_headers)
     assert response.status_code == 400
 
 
-# /api/summarise and /api/draft name the email_id they could not find. That is
-# an identifier the caller just sent, not email content, and echoing it is what
-# makes a 404 diagnosable. What NFR-03 forbids is the *body* coming back.
-_ECHOES_THE_ID = {"/api/summarise", "/api/draft"}
+# /api/summarise, /api/draft and /api/translate name the email_id they could
+# not find. That is an identifier the caller just sent, not email content, and
+# echoing it is what makes a 404 diagnosable. What NFR-03 forbids is the *body*
+# coming back.
+_ECHOES_THE_ID = {"/api/summarise", "/api/draft", "/api/translate"}
 
 
 @pytest.mark.parametrize("path", ["/api/summarise", "/api/classify", "/api/draft",
-                                  "/api/voice/intent"])
+                                  "/api/translate", "/api/voice/intent"])
 def test_an_error_response_never_echoes_the_request(client, auth_headers, stub_llm, path):
     """NFR-03: no error handler dumps the payload."""
     marker = "ZEBRAFISH-REQUEST-MARKER"
@@ -240,7 +241,7 @@ def test_an_error_response_never_echoes_the_request(client, auth_headers, stub_l
     response = client.post(
         path,
         json={"email_id": marker, "transcript": marker, "emails": marker,
-              "body": body_marker, "instruction": body_marker},
+              "body": body_marker, "instruction": body_marker, "language": body_marker},
         headers=auth_headers,
     )
     assert response.status_code >= 400

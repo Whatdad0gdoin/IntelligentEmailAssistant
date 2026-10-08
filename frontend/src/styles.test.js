@@ -209,6 +209,16 @@ describe("reader layout", () => {
   });
 });
 
+describe("translation (FR-07)", () => {
+  it("keeps the translation's line breaks, which the backend asked the model to keep", () => {
+    // jsdom does not load this sheet, so the component test can only see the
+    // "\n" in the text node; whether the browser shows it is decided here.
+    const rule = css.match(/\.ai-translation-body\s*\{([^}]*)\}/);
+    expect(rule, ".ai-translation-body rule not found").not.toBeNull();
+    expect(rule[1]).toMatch(/white-space:\s*pre-wrap/);
+  });
+});
+
 describe("the selected row is not clipped", () => {
   /** Last declaration of `prop` within any rule whose selector matches. */
   const lastDecl = (selectorNeedle, prop) => {

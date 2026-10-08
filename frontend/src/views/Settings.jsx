@@ -1,20 +1,22 @@
 /**
- * Settings (section 5.5): voice on/off, recognition language, browser
- * capability status, cache clear.
+ * Settings (section 5.5): voice on/off, recognition language, translation
+ * language, browser capability status, cache clear.
  *
- * Deliberately small. The FIT3163 wireframe also listed default reply tone and
- * translation language; tone now lives on the draft itself where it applies,
- * and translation (FR-07) is out of scope for this build.
+ * Deliberately small. The FIT3163 wireframe also listed a default reply tone;
+ * tone lives on the draft itself, where it applies. The wireframe's
+ * translation language is here (FR-07): it is the language the reading pane's
+ * Translate button starts in, and the translation itself has its own picker
+ * for a quick switch.
  *
  * Every voice-triggered action has a click equivalent (SR-01), so turning
  * voice off removes nothing but the microphone and speaker controls.
  */
 
-import { ChevronRight, Mic, RefreshCw, Volume2 } from "lucide-react";
+import { ChevronRight, Languages, Mic, RefreshCw, Volume2 } from "lucide-react";
 
 import { useSpeech } from "../hooks/useSpeech.jsx";
 import { capabilities } from "../lib/capabilities.js";
-import { SPEECH_LANGS } from "../lib/constants.js";
+import { DEFAULT_TRANSLATION_LANGUAGE, LANGUAGES, SPEECH_LANGS } from "../lib/constants.js";
 
 function Row({ label, detail, children }) {
   return (
@@ -42,6 +44,8 @@ export default function Settings({
   setVoiceEnabled,
   speechLang,
   setSpeechLang,
+  translationLang = DEFAULT_TRANSLATION_LANGUAGE,
+  setTranslationLang,
   onReloadInbox,
   reloading,
   onBack,
@@ -59,7 +63,7 @@ export default function Settings({
       <header className="feature-head">
         <div>
           <h1 className="main-title">Settings</h1>
-          <p className="main-sub">Voice, browser support, and cached data.</p>
+          <p className="main-sub">Voice, translation, browser support, and cached data.</p>
         </div>
       </header>
 
@@ -102,6 +106,27 @@ export default function Settings({
             </select>
           </Row>
         )}
+      </section>
+
+      <section className="setting-group">
+        <h2 className="setting-group-title">Translation</h2>
+
+        {/* FR-07. Always offered: translation needs no browser capability. */}
+        <Row
+          label={<><Languages size={15} /> Translation language</>}
+          detail="The language Translate uses first, for an email or a draft reply. Each translation can still be switched to another language on the spot."
+        >
+          <select
+            className="setting-select"
+            aria-label="Translation language"
+            value={translationLang}
+            onChange={(event) => setTranslationLang(event.target.value)}
+          >
+            {LANGUAGES.map(({ key }) => (
+              <option key={key} value={key}>{key}</option>
+            ))}
+          </select>
+        </Row>
       </section>
 
       <section className="setting-group">

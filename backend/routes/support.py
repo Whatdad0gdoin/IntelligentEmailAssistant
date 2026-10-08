@@ -22,6 +22,8 @@ from backend.orchestrator.client import LLMSchemaError, LLMUnavailable
 from backend.orchestrator.draft import DraftValidationError
 from backend.orchestrator.draft import EmptyEmailError as DraftEmptyEmailError
 from backend.orchestrator.summarise import EmptyEmailError, SummaryValidationError
+from backend.orchestrator.translate import EmptyEmailError as TranslateEmptyEmailError
+from backend.orchestrator.translate import TranslationValidationError
 
 log = logging.getLogger(__name__)
 
@@ -74,8 +76,10 @@ _ERROR_STATUS = (
     (BudgetExceeded, 429),
     (EmptyEmailError, 422),
     (DraftEmptyEmailError, 422),
+    (TranslateEmptyEmailError, 422),
     (SummaryValidationError, 502),
     (DraftValidationError, 502),
+    (TranslationValidationError, 502),
     (LLMSchemaError, 502),
     (LLMUnavailable, 503),
     (EmailSourceError, 503),

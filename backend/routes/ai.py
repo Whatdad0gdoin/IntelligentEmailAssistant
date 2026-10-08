@@ -1,4 +1,4 @@
-"""The three AI feature routes: summarise, classify, draft.
+"""The four AI feature routes: summarise, classify, draft, translate.
 
 Kept in one blueprint because they are the same four lines each -- read the
 request, look the email up in the adapter, hand it to an orchestrator module,
@@ -15,8 +15,9 @@ from flask import Blueprint, jsonify
 from backend.adapters.email_source import get_email_source
 from backend.orchestrator.classify import classify_emails
 from backend.orchestrator.draft import draft_reply
-from backend.orchestrator.schemas import DEFAULT_TONE, TONES
+from backend.orchestrator.schemas import DEFAULT_TONE, LANGUAGES, TONES
 from backend.orchestrator.summarise import summarise_email
+from backend.orchestrator.translate import translate_email, translate_text
 from backend.routes.support import (
     BadRequest,
     EmailNotFound,
@@ -33,6 +34,10 @@ bp = Blueprint("ai", __name__, url_prefix="/api")
 # One /api/classify call carries a whole inbox, not a whole mail server.
 MAX_BATCH = 100
 MAX_BODY_CHARS = 100_000
+
+# A drafted reply sent for translation. Generous for a reply, and short of the
+# 12,000-character body budget an email is held to.
+MAX_TRANSLATE_CHARS = 10_000
 
 
 def _load_email(email_id):
@@ -151,5 +156,58 @@ def draft():
             session_key=session_key(),
             user_email=current_user(),
             tone=tone or DEFAULT_TONE,
+        )
+    ), 200
+
+
+@bp.post("/translate")
+@handle_errors
+def translate():
+    """FR-07. Translates an email, or a drafted reply, into a listed language.
+
+    Exactly one of the two forms:
+      {email_id, language}  the email's subject and cleaned body -- the text
+                            the reading pane shows.
+      {text, language}      text the client supplies: the draft in the reply
+                            panel, up to MAX_TRANSLATE_CHARS.
+
+    Neither is cached: a translation is the whole message in another
+    language, and NFR-03 keeps no body data between calls (translate.py).
+
+    `language` must be one of LANGUAGES. Rejected rather than coerced, as tone
+    is: a typo should be a visible 400, not a translation into a language
+    nobody chose. The response carries the translation and the check on it
+    (grounded, ungrounded_flags) and never the text that was sent. Like
+    /api/draft, it returns text and nothing that could send it anywhere.
+    """
+    body = json_body()
+    has_email = body.get("email_id") is not None
+    has_text = body.get("text") is not None
+    if has_email == has_text:
+        raise BadRequest("Send exactly one of 'email_id' or 'text'.")
+
+    language = body.get("language")
+    if not isinstance(language, str) or language not in LANGUAGES:
+        raise BadRequest("'language' must be one of: " + ", ".join(LANGUAGES) + ".")
+
+    if has_text:
+        text = body["text"]
+        if not isinstance(text, str) or not text.strip():
+            raise BadRequest("'text' must be a non-empty string.")
+        if len(text) > MAX_TRANSLATE_CHARS:
+            raise BadRequest(f"'text' is too long (limit {MAX_TRANSLATE_CHARS:,} characters).")
+        return jsonify(
+            translate_text(text, language, config(), session_key=session_key())
+        ), 200
+
+    email_id = required_string(body, "email_id", max_length=256)
+    message = _load_email(email_id)
+
+    return jsonify(
+        translate_email(
+            message,
+            language,
+            config(),
+            session_key=session_key(),
         )
     ), 200

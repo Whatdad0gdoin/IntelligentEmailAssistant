@@ -7,8 +7,8 @@ like.
 Every figure here was measured, not estimated. Where something is a judgement
 call rather than a task, it says so.
 
-Status at time of writing (2026-10-07): **602 backend tests passing (2 skipped,
-8 expected failures), 178 frontend tests passing.**
+Status at time of writing (2026-10-08): **693 backend tests passing (2 skipped,
+8 expected failures), 208 frontend tests passing.**
 
 Item numbers are kept from earlier versions of this file, because code and other
 documents cite them; new items continue from 16.
@@ -63,17 +63,6 @@ the capability notice appears, Voice Commands is gone from the sidebar, and the
 command bar still works: "summarise the latest email" opens the newest email and
 summarises it, "read …" reads the summary aloud, and nonsense shows the pick-one
 question.
-
----
-
-### 4. Decide FR-07 (translation) — a decision, not a task
-
-In the RTM at LOW priority. Not implemented: no route, no prompt, no schema, no
-UI control. The build spec explicitly descoped it, and the README says only that
-it was not attempted — a fact, not a justified descoping.
-
-Pick one and write it down: **descoped with justification**, or **built**.
-Leaving it merely absent is the bad option — a marker reads the RTM.
 
 ---
 
@@ -159,6 +148,7 @@ re-run; the result is not kept.
 | 11 | Save `claims_checked` | `evaluate_grounding.py` writes it |
 | 12 | No React component tests | 178 frontend tests in 14 files, including component tests for the inbox, the reading pane, the voice view, the command bar and the shared intent question |
 | 13 | FR-04/05 priority | **HIGH.** The PDF draws an orange MED badge and then a red HIGH badge over the same cell; the rendered slide shows HIGH, and the README now says so |
+| 4 | Decide FR-07 (translation) | **Built** (2026-10-08). `POST /api/translate` translates an email or a drafted reply into one of 15 languages, from the reading pane, the draft panel and a Settings default; nothing translated is kept between calls (NFR-03). Every number, link and address is checked: figures preserved in 89.2% (Spanish) and 86.5% (Chinese, Simplified) of 37 test-split emails (`eval/BENCHMARKS.md`). Left out on purpose: a voice or typed "translate" command, which would change `INTENT_SYSTEM` and need FR-05 re-measured |
 | 16 | DR-01's 400 emails | Twelve more Work emails read and confirmed (2026-10-08); the 100-per-class merge wrote **400 rows, 300 real**. Run 13 measures the shipped configuration on it: 89.8% strict, 86.9% on real email. The 17 holdout rows the merge took were dropped from `holdout_unscored.csv` |
 
 Found in the October review, not previously listed, and fixed:

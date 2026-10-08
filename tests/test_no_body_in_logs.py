@@ -3,8 +3,8 @@
 Spec section 8: "run a full session, grep the logs for known body text, assert
 zero matches."
 
-This runs a real session -- login, inbox, summarise, draft, voice -- with
-logging attached to a real file on disk at DEBUG level, then greps that file
+This runs a real session -- login, inbox, summarise, draft, translate, voice --
+with logging attached to a real file on disk at DEBUG level, then greps that file
 for distinctive phrases from the fixture bodies and from the model output. The
 handler is attached before the app is built so it goes through the same
 redaction install path a deployed handler would.
@@ -39,7 +39,10 @@ BODY_PHRASES = [
 # Model output is derived from the body, so it must not be logged either.
 SUMMARY_MARKER = "ZEBRAFISH-SUMMARY-MARKER"
 DRAFT_MARKER = "ZEBRAFISH-DRAFT-MARKER"
+TRANSLATION_MARKER = "ZEBRAFISH-TRANSLATION-MARKER"
 TRANSCRIPT_MARKER = "ZEBRAFISH-TRANSCRIPT-MARKER"
+# A drafted reply sent for translation is the user's own text: content too.
+TRANSLATE_INPUT_MARKER = "ZEBRAFISH-TRANSLATE-INPUT-MARKER"
 
 
 @pytest.fixture
@@ -63,7 +66,7 @@ def log_file(tmp_path):
 
 
 def _run_full_session(config, stub):
-    """Login, inbox, summarise, draft and a voice command."""
+    """Login, inbox, summarise, draft, both kinds of translation and a voice command."""
     app = create_app(config)
     app.config.update(TESTING=True)
     http = app.test_client()
@@ -91,6 +94,16 @@ def _run_full_session(config, stub):
 
     stub.queue({"draft": f"Hi,\n\n{DRAFT_MARKER}\n\nThanks"})
     assert http.post("/api/draft", json={"email_id": PROMO_EMAIL_ID, "instruction": "decline"},
+                     headers=headers).status_code == 200
+
+    # FR-07, both forms: an email from the mailbox, and a draft the user sent.
+    stub.queue({"subject": f"{TRANSLATION_MARKER} asunto",
+                "translation": f"{TRANSLATION_MARKER} cuerpo"})
+    assert http.post("/api/translate", json={"email_id": WORK_EMAIL_ID, "language": "Spanish"},
+                     headers=headers).status_code == 200
+    stub.queue({"translation": f"{TRANSLATION_MARKER} brouillon"})
+    assert http.post("/api/translate",
+                     json={"text": f"Hi,\n\n{TRANSLATE_INPUT_MARKER}\n\nThanks", "language": "French"},
                      headers=headers).status_code == 200
 
     stub.queue({"intent": "summarise", "target_reference": "", "confidence": 0.9})
@@ -135,8 +148,13 @@ def test_no_email_body_text_appears_in_the_log(session_log):
 
 def test_no_generated_summary_or_draft_appears_in_the_log(session_log):
     """Model output is derived from the body and is treated the same way."""
-    for marker in (SUMMARY_MARKER, DRAFT_MARKER):
+    for marker in (SUMMARY_MARKER, DRAFT_MARKER, TRANSLATION_MARKER):
         assert marker not in session_log, f"{marker} leaked into the log"
+
+
+def test_no_text_sent_for_translation_appears_in_the_log(session_log):
+    """A draft sent to /api/translate is the user's writing, not metadata."""
+    assert TRANSLATE_INPUT_MARKER not in session_log
 
 
 def test_no_voice_transcript_appears_in_the_log(session_log):

@@ -1,0 +1,41 @@
+id,category,provenance,text_origin,language,model,status,error,source_chars,translation_chars,pieces,unchanged,numbers_in_original,links_in_original,addresses_in_original,grounded,flag_count,flags_number_added,flags_number_missing,flags_link_added,flags_link_missing,flags_address_added,flags_address_missing,flags,seconds,prompt_tokens,completion_tokens
+enron-0452049916fa,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,327,116,1,False,1,0,0,True,0,0,0,0,0,0,0,,3.2,509,98
+enron-0c46f4281958,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,98,41,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.02,454,37
+enron-0d3815dc2f15,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,317,171,1,False,6,0,0,True,0,0,0,0,0,0,0,,2.01,534,147
+enron-0e2651538daf,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,40,13,1,False,0,0,0,True,0,0,0,0,0,0,0,,0.82,436,20
+enron-0e8a95e47904,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,547,198,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.88,558,174
+enron-1221d9e85cef,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,156,56,1,False,0,0,0,True,0,0,0,0,0,0,0,,0.97,456,55
+enron-15c652b6770d,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,689,460,1,False,24,0,0,False,1,0,1,0,0,0,0,1 (number missing from the translation),3.24,686,278
+enron-197dd9a9ed67,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,367,118,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.34,507,96
+enron-21eac3eb68b3,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,642,186,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.79,585,134
+enron-22caaa78f9e8,Personal,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,160,78,1,False,2,0,0,True,0,0,0,0,0,0,0,,1.24,467,65
+enron-0044e7eaebff,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,439,340,1,False,14,1,0,True,0,0,0,0,0,0,0,,2.47,637,226
+enron-00ecb971440c,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1056,360,1,False,3,0,0,True,0,0,0,0,0,0,0,,3.2,665,233
+enron-02761b49b55b,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,786,269,1,False,2,0,0,True,0,0,0,0,0,0,0,,2.25,598,178
+enron-0537d7d93ffe,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,367,115,1,False,2,0,0,True,0,0,0,0,0,0,0,,1.72,492,105
+enron-07a248e756fd,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,878,355,1,False,2,1,1,True,0,0,0,0,0,0,0,,3.51,625,245
+enron-07b69ad0557c,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1090,395,1,False,12,0,0,False,1,0,1,0,0,0,0,100 (number missing from the translation),2.96,700,295
+enron-0f94d1b29059,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,130,74,1,False,6,0,1,False,1,1,0,0,0,0,0,"1,000 (number not in the original)",1.15,475,63
+enron-1109ae9dd613,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,empty,EmptyEmailError,0,,0,,0,0,0,,,,,,,,,,0.0,0,0
+enron-141c403a0ed1,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1025,550,1,False,32,2,1,True,0,0,0,0,0,0,0,,3.07,698,329
+enron-1e609ebe6755,Promotions,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,458,458,1,True,18,0,1,True,0,0,0,0,0,0,0,,2.57,611,200
+generated-03ddea97bdf0,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,391,135,1,False,2,0,0,True,0,0,0,0,0,0,0,,1.69,505,101
+generated-05ab934e247b,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,631,217,1,False,2,0,1,True,0,0,0,0,0,0,0,,2.03,551,139
+generated-0b3214c4a7e4,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,357,115,1,False,4,0,0,True,0,0,0,0,0,0,0,,1.42,504,94
+generated-0c7e527b7167,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,374,107,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.42,500,92
+generated-11d612b3d367,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,531,186,1,False,3,0,0,True,0,0,0,0,0,0,0,,1.73,532,137
+generated-1308bb55599c,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,693,209,1,False,4,0,0,False,1,0,1,0,0,0,0,2 (number missing from the translation),1.85,566,156
+generated-1ce2ffca4e2d,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,641,227,1,False,9,0,1,True,0,0,0,0,0,0,0,,2.43,573,164
+generated-23b1d7692f37,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,509,158,1,False,4,0,0,True,0,0,0,0,0,0,0,,1.96,539,128
+generated-23ee63925c92,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,694,226,1,False,8,0,0,True,0,0,0,0,0,0,0,,3.16,569,174
+generated-27851cb15950,Studies,generated,synthetic,Chinese (Simplified),gpt-4o-mini,ok,,659,208,1,False,3,0,0,True,0,0,0,0,0,0,0,,1.85,566,163
+enron-01381c3e85c6,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,264,107,1,False,3,0,0,True,0,0,0,0,0,0,0,,1.75,484,85
+enron-08d24e9ef5aa,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,81,30,1,False,1,0,0,True,0,0,0,0,0,0,0,,1.08,449,37
+enron-094771a0b5fe,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1068,420,1,False,7,0,1,True,0,0,0,0,0,0,0,,3.05,693,300
+enron-0ad83856a4a6,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,210,65,1,False,0,0,0,True,0,0,0,0,0,0,0,,1.15,470,58
+enron-1000f717ae1b,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,2,2,1,False,0,0,0,True,0,0,0,0,0,0,0,,0.75,428,12
+enron-1c03255b2c0f,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1416,500,1,False,7,0,0,True,0,0,0,0,0,0,0,,3.21,733,320
+enron-258a1efde235,Work,enron,real,Chinese (Simplified),gpt-4o-mini,empty,EmptyEmailError,0,,0,,0,0,0,,,,,,,,,,0.0,0,0
+enron-25b7ba6a4437,Work,enron,real,Chinese (Simplified),gpt-4o-mini,empty,EmptyEmailError,0,,0,,0,0,0,,,,,,,,,,0.0,0,0
+enron-29793e616bac,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,1173,403,1,False,6,0,0,False,2,1,1,0,0,0,0,1999 (number not in the original); 99 (number missing from the translation),3.87,684,304
+enron-2ab526e2e803,Work,enron,real,Chinese (Simplified),gpt-4o-mini,ok,,620,299,1,False,2,2,0,True,0,0,0,0,0,0,0,,2.15,574,191
