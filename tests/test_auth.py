@@ -22,8 +22,11 @@ def _protected_rules(app):
             continue
         path = str(rule)
         for arg in rule.arguments:
-            for pattern in (f"<{arg}>", f"<string:{arg}>", f"<int:{arg}>", f"<path:{arg}>"):
+            for pattern in (f"<{arg}>", f"<string:{arg}>", f"<path:{arg}>"):
                 path = path.replace(pattern, "placeholder")
+            # A number, or the request would not match an <int:...> rule at all
+            # and the test would be checking some other route in its place.
+            path = path.replace(f"<int:{arg}>", "0")
         for method in sorted(rule.methods - {"HEAD", "OPTIONS"}):
             rules.append((method, path))
     return rules

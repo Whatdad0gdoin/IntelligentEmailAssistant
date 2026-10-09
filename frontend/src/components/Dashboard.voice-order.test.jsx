@@ -9,9 +9,12 @@
  * passed a list that was already sorted, so nothing caught it; this test drives
  * the real shell and inspects what it actually sends.
  *
- * capabilities.js is mocked because it reads `window` at load. Voice.jsx does
- * the same for SpeechRecognition, so a stand-in is installed with vi.hoisted,
- * ahead of the imports, and every instance is recorded.
+ * A command is spoken into the command bar, which sits above every page, so
+ * these tests press its microphone, deliver an utterance, and press Run.
+ *
+ * capabilities.js is mocked because it reads `window` at load. jsdom has no
+ * SpeechRecognition, so a stand-in is installed ahead of the tests and every
+ * instance is recorded.
  */
 
 import { act, render, screen, waitFor } from "@testing-library/react";
@@ -97,16 +100,17 @@ function renderDashboard() {
   return render(<Dashboard user={{ email: "student@monash.edu" }} onLogout={vi.fn()} />);
 }
 
-async function openVoice(user) {
-  await screen.findByRole("button", { name: /subject of studies-newest/i });
-  await user.click(screen.getByRole("button", { name: /voice commands/i }));
+function inboxLoaded() {
+  return screen.findByRole("button", { name: /subject of studies-newest/i });
 }
 
-/** Starts listening and delivers one recognised utterance. */
+/** Speaks one utterance into the command bar, then runs what was heard. */
 async function say(user, transcript) {
-  await user.click(screen.getByRole("button", { name: /start listening/i }));
+  await user.click(screen.getByRole("button", { name: "Speak a command" }));
   const recogniser = recognisers.at(-1);
   act(() => recogniser.onresult({ results: [[{ transcript }]] }));
+  expect(screen.getByRole("textbox", { name: /command/i })).toHaveValue(transcript);
+  await user.click(screen.getByRole("button", { name: /^run$/i }));
   await waitFor(() => expect(api.voiceIntent).toHaveBeenCalledTimes(1));
   return recogniser;
 }
@@ -115,7 +119,7 @@ describe("the candidates sent with a voice command", () => {
   it("are newest first across categories, undated last, ties in inbox order", async () => {
     const user = userEvent.setup();
     renderDashboard();
-    await openVoice(user);
+    await inboxLoaded();
 
     await say(user, "summarise the latest email");
 
@@ -132,7 +136,7 @@ describe("the candidates sent with a voice command", () => {
   it("carry each email's received_at, so the backend can check the order", async () => {
     const user = userEvent.setup();
     renderDashboard();
-    await openVoice(user);
+    await inboxLoaded();
 
     await say(user, "summarise the latest email");
 
@@ -143,6 +147,51 @@ describe("the candidates sent with a voice command", () => {
       subject: "Subject of studies-newest",
       received_at: "2026-09-04T19:26:00+10:00",
     });
+  });
+
+  it("go with what was heard and the recogniser's guesses, as one request", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+    await inboxLoaded();
+
+    await say(user, "summarise the latest email");
+
+    const [text, , alternatives] = api.voiceIntent.mock.calls[0];
+    expect(text).toBe("summarise the latest email");
+    expect(alternatives).toEqual(["summarise the latest email"]);
+  });
+});
+
+describe("a spoken command runs like a typed one", () => {
+  it("opens the email it names and runs the action there, once Run is pressed", async () => {
+    api.voiceIntent.mockResolvedValue({ intent: "summarise", target_email_id: "work-older", confidence: 0.9 });
+    api.summarise.mockResolvedValue({
+      email_id: "work-older", summary: ["Summary of work-older."],
+      action_items: [], grounded: true, ungrounded_flags: [],
+    });
+    const user = userEvent.setup();
+    renderDashboard();
+    await inboxLoaded();
+
+    await say(user, "summarise the email from David");
+
+    expect(await screen.findByRole("heading", { name: "Subject of work-older" })).toBeVisible();
+    expect(await screen.findByText("Summary of work-older.")).toBeVisible();
+    expect(api.summarise).toHaveBeenCalledWith("work-older");
+  });
+
+  it("does nothing with what was heard until Run is pressed", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+    await inboxLoaded();
+
+    await user.click(screen.getByRole("button", { name: "Speak a command" }));
+    act(() => recognisers.at(-1).onresult({ results: [[{ transcript: "summarise the latest email" }]] }));
+
+    expect(screen.getByRole("textbox", { name: /command/i })).toHaveValue("summarise the latest email");
+    expect(api.voiceIntent).not.toHaveBeenCalled();
+    expect(api.summarise).not.toHaveBeenCalled();
+    expect(screen.getByText("Select an email to read")).toBeInTheDocument();
   });
 });
 
@@ -159,7 +208,7 @@ describe("the recognition language", () => {
     await user.selectOptions(select, "en-US");
     expect(JSON.parse(window.localStorage.getItem("mailkit:speechLang"))).toBe("en-US");
 
-    await user.click(screen.getByRole("button", { name: /voice commands/i }));
+    // The command bar is above Settings too, so the microphone is right here.
     const recogniser = await say(user, "read the latest email");
     expect(recogniser.lang).toBe("en-US");
   });
@@ -168,21 +217,25 @@ describe("the recognition language", () => {
     window.localStorage.setItem("mailkit:speechLang", JSON.stringify("xx-XX"));
     const user = userEvent.setup();
     renderDashboard();
-    await openVoice(user);
+    await inboxLoaded();
 
     const recogniser = await say(user, "read the latest email");
     expect(recogniser.lang).toBe("en-AU");
   });
 
-  it("is not offered while voice is switched off", async () => {
+  it("is not offered while voice is switched off, and neither is the microphone", async () => {
     const user = userEvent.setup();
     renderDashboard();
-    await screen.findByRole("button", { name: /subject of studies-newest/i });
+    await inboxLoaded();
 
     await user.click(screen.getByRole("button", { name: /settings/i }));
     expect(screen.getByRole("combobox", { name: /recognition language/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Speak a command" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("switch"));
     expect(screen.queryByRole("combobox", { name: /recognition language/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Speak a command" })).toBeNull();
+    // The bar itself stays: a command can still be typed.
+    expect(screen.getByRole("textbox", { name: /command/i })).toBeEnabled();
   });
 });

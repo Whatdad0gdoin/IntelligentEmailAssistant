@@ -49,6 +49,10 @@ class EmailNotFound(Exception):
     """No message with that id in the source mailbox."""
 
 
+class AttachmentNotFound(Exception):
+    """No such attachment on that message, or no such message."""
+
+
 def json_body():
     body = request.get_json(silent=True)
     if not isinstance(body, dict):
@@ -73,6 +77,7 @@ def required_string(body, field, max_length=512):
 _ERROR_STATUS = (
     (BadRequest, 400),
     (EmailNotFound, 404),
+    (AttachmentNotFound, 404),
     (BudgetExceeded, 429),
     (EmptyEmailError, 422),
     (DraftEmptyEmailError, 422),

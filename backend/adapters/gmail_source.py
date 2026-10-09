@@ -48,7 +48,9 @@ ATTACHMENTS: A KNOWN COST
 -------------------------
 BODY.PEEK[] downloads whole messages, attachments included. Only their names,
 types and sizes are kept (headers.attachment_of); the bytes are dropped with
-the request. The Gmail API source avoids the download altogether
+the request. (get_attachment() is the one exception, by design: it returns the
+bytes of the single attachment a person opened, and nothing keeps them after
+the response.) The Gmail API source avoids the download altogether
 (format=full). Doing the same here means fetching BODYSTRUCTURE and then only
 the text sections, which is the riskiest code in the adapter to get wrong
 without a real IMAP server to test against -- and this source is the demo-day
@@ -65,7 +67,7 @@ from email import policy
 from email.parser import BytesParser
 
 from backend.adapters.email_source import EmailSource, EmailSourceError
-from backend.adapters.headers import message_id_of, parse_message
+from backend.adapters.headers import attachment_content, message_id_of, parse_message
 
 log = logging.getLogger(__name__)
 
@@ -250,8 +252,8 @@ class GmailImapSource(EmailSource):
         log.info("gmail: fetched %d message(s) from %s", len(emails), self.mailbox)
         return emails
 
-    def get_email(self, email_id):
-        """Locate one message by id, decoding the body of at most one of them.
+    def _find(self, email_id):
+        """(unread, raw bytes) of the message with this id, or None.
 
         Headers alone are enough to compute the id (headers.message_id_of), so
         the search pass fetches BODY.PEEK[HEADER] and only the match is fetched
@@ -270,5 +272,23 @@ class GmailImapSource(EmailSource):
                     # answer, and the route turns it into a 404.
                     return None
                 _uid, unread, body = full[0]
-                return self._to_source_email(body, unread)
+                return unread, body
         return None
+
+    def get_email(self, email_id):
+        """Locate one message by id, decoding the body of at most one of them."""
+        found = self._find(email_id)
+        if found is None:
+            return None
+        unread, body = found
+        return self._to_source_email(body, unread)
+
+    def get_attachment(self, email_id, index):
+        """One attachment's bytes, from the message BODY.PEEK[] already carries
+        whole (see ATTACHMENTS: A KNOWN COST above). Still a PEEK on a read-only
+        mailbox, so opening an attachment marks nothing as read."""
+        found = self._find(email_id)
+        if found is None:
+            return None
+        _unread, body = found
+        return attachment_content(BytesParser(policy=policy.default).parsebytes(body), index)

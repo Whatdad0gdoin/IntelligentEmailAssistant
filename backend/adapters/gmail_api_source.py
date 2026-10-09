@@ -15,8 +15,9 @@ That scope is the strongest version of the read-only claim this project makes.
 The IMAP adapter is read-only because of how it is written. This one is
 read-only because Google's authorisation server refuses anything else: a token
 granted gmail.readonly cannot modify, trash, label or send, whatever the code
-asks for. The code also only ever calls messages.list, messages.get and
-labels.list, which the tests check.
+asks for. The code also only ever calls messages.list, messages.get,
+messages.attachments.get and labels.list -- four reads -- which the tests
+check.
 
 THE COSTS, STATED
 -----------------
@@ -39,11 +40,16 @@ WHAT IS DOWNLOADED
 ------------------
 Messages are fetched with format=full: Gmail returns the headers and the body
 parts, and leaves every attachment behind as an id and a size. The app lists
-attachments by name, type and size (headers.attachment_of) and never fetches
-their content, so a 10 MB PDF costs the inbox a few bytes of metadata rather
-than ten megabytes on every load. format=raw, which carries every attachment
-inline, is used only for a message whose body text Gmail also left out of line
--- that one message is fetched whole, so its text is never lost.
+attachments by name, type and size (headers.attachment_of), and loading the
+inbox or a message never fetches their content, so a 10 MB PDF costs the inbox
+a few bytes of metadata rather than ten megabytes on every load. format=raw,
+which carries every attachment inline, is used only for a message whose body
+text Gmail also left out of line -- that one message is fetched whole, so its
+text is never lost.
+
+One attachment is downloaded when a person opens it, and only then:
+get_attachment() fetches that single part by its id (messages.attachments.get)
+for the route that serves it, and nothing keeps the bytes after the response.
 """
 
 import base64
@@ -59,6 +65,8 @@ from email.parser import BytesParser, Parser
 from backend.adapters.email_source import EmailSource, EmailSourceError
 from backend.adapters.headers import (
     MAX_ATTACHMENTS,
+    AttachmentContent,
+    attachment_content,
     attachment_of,
     build_source_email,
     message_id_of,
@@ -417,8 +425,8 @@ class GmailApiSource(EmailSource):
         log.info("gmail api: fetched %d message(s) from %s", len(emails), self.label)
         return emails
 
-    def get_email(self, email_id):
-        """Locate one message by our id, downloading at most one body.
+    def _locate(self, service, email_id):
+        """Gmail's id for the message with our id, or None.
 
         Fast path: Gmail can search by Message-ID. It is not sufficient on its
         own, because our ids are sanitised -- characters outside [A-Za-z0-9._@-]
@@ -426,12 +434,17 @@ class GmailApiSource(EmailSource):
         '+' and '='. So every candidate is verified by recomputing its id, and
         on a miss the recent messages are scanned by headers alone.
         """
-        service = self._service()
-
         candidates = self._list_ids(service, query=f"rfc822msgid:{email_id}", limit=5)
         match = self._first_matching(service, candidates, email_id)
         if match is None:
             match = self._first_matching(service, self._list_ids(service), email_id)
+        return match
+
+    def get_email(self, email_id):
+        """Locate one message by our id, downloading at most one body."""
+        service = self._service()
+
+        match = self._locate(service, email_id)
         if match is None:
             return None
 
@@ -444,6 +457,70 @@ class GmailApiSource(EmailSource):
         except _BodyNotInline:
             whole = self._batch_get(service, [match], "raw").get(match)
             return None if whole is None else self._to_source_email(whole)
+
+    def get_attachment(self, email_id, index):
+        """The bytes of one listed attachment, fetched when a person opens it.
+
+        The message is fetched the way the inbox fetches it (format=full, which
+        carries no attachment bytes) and walked exactly as its list was built,
+        so `index` names the same part here as it did on screen. Only that one
+        part is then downloaded, by its id.
+        """
+        service = self._service()
+
+        match = self._locate(service, email_id)
+        if match is None:
+            return None
+        full = self._batch_get(service, [match], "full").get(match)
+        if full is None:
+            return None
+        try:
+            self._to_source_email(full)
+        except _BodyNotInline:
+            # get_email() listed this message from format=raw, so its
+            # attachments are read from that same parse.
+            return self._attachment_from_raw(service, match, index)
+
+        parts = _full_attachment_parts(full.get("payload") or {})
+        if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(parts):
+            return None
+        part, attachment = parts[index]
+        body = part.get("body") or {}
+        try:
+            if body.get("data"):
+                data = _unb64(body["data"])
+            elif body.get("attachmentId"):
+                response = self._call(
+                    "fetch the attachment",
+                    service.users().messages().attachments().get(
+                        userId="me", messageId=match, id=body["attachmentId"]).execute,
+                )
+                data = _unb64((response or {}).get("data") or "")
+            else:
+                # Gmail gave this part nothing to fetch it by (an empty file,
+                # or an attached email it describes by its parts instead). The
+                # whole message has it; the name and type are checked so a
+                # difference between the two parses can never serve another
+                # attachment in its place.
+                found = self._attachment_from_raw(service, match, index)
+                if found is None or (found.filename, found.content_type) != (
+                        attachment.filename, attachment.content_type):
+                    return None
+                return found
+        except ValueError:
+            # Not base64 after all. Ids only: never the name or the content.
+            log.warning("gmail api: attachment %d of message %s is undecodable", index, match)
+            return None
+        return AttachmentContent(
+            filename=attachment.filename, content_type=attachment.content_type, data=data)
+
+    def _attachment_from_raw(self, service, gid, index):
+        """One attachment read out of the whole message (format=raw)."""
+        whole = self._batch_get(service, [gid], "raw").get(gid)
+        if whole is None or not whole.get("raw"):
+            return None
+        message = BytesParser(policy=policy.default).parsebytes(_unb64(whole["raw"]))
+        return attachment_content(message, index)
 
     def _first_matching(self, service, ids, email_id):
         if not ids:
@@ -549,11 +626,18 @@ def _part_text(part, part_headers):
         return raw.decode("utf-8", errors="replace")
 
 
-def _full_attachments(payload):
-    """Attachments in a format=full tree: name, type and Gmail's size, never data.
+def _unb64(data):
+    """Decode Gmail's unpadded URL-safe base64."""
+    return base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))
 
-    Like headers._attachments(), an attached message/rfc822 counts once and is
-    not descended into.
+
+def _full_attachment_parts(payload):
+    """(part, Attachment) for each attachment in a format=full tree, in the
+    order they are listed: name, type and Gmail's size, never data.
+
+    The one walk behind both the list and get_attachment(), so an index names
+    the same part to both. Like headers._attachment_parts(), an attached
+    message/rfc822 counts once and is not descended into.
     """
     found = []
 
@@ -576,14 +660,19 @@ def _full_attachments(payload):
                 (part.get("body") or {}).get("size"),
             )
         except Exception:
-            # As in headers._attachments: a malformed part costs its own entry,
-            # never the email.
+            # As in headers._attachment_parts: a malformed part costs its own
+            # entry, never the email.
             attachment = None
         if attachment is not None:
-            found.append(attachment)
+            found.append((part, attachment))
 
     visit(payload)
     return found
+
+
+def _full_attachments(payload):
+    """Attachments in a format=full tree: name, type and Gmail's size, never data."""
+    return [attachment for _part, attachment in _full_attachment_parts(payload)]
 
 
 def _explain_http_error(exc, what, label):

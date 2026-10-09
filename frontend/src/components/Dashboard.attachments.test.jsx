@@ -1,10 +1,11 @@
 /**
- * Attachments in the UI: listed, never opened.
+ * Attachments in the UI: listed with the inbox, fetched only when opened.
  *
- * The backend reads an attachment's name, type and size and nothing else, so
- * the UI has nothing it could open. These tests hold it to that: a paperclip
- * in the list, names and sizes in the reading pane, and no link or button that
- * would suggest the file can be fetched.
+ * The inbox carries an attachment's name, type and size and nothing else.
+ * These tests hold the app to that: a paperclip in the list, names and sizes
+ * in the reading pane, and no request for a file until the user presses View
+ * or Save on it. What View and Save then do with the file is covered in
+ * Attachments.test.jsx.
  */
 
 import { render, screen, within } from "@testing-library/react";
@@ -19,6 +20,7 @@ vi.mock("../api/client.js", () => ({
   getEmail: vi.fn(),
   summarise: vi.fn(),
   draft: vi.fn(),
+  fetchAttachment: vi.fn(),
 }));
 
 const WITH_ATTACHMENTS = {
@@ -94,11 +96,36 @@ describe("the reading pane", () => {
     expect(items[1]).toHaveTextContent("2 KB");
   });
 
-  it("offers nothing to click, because no attachment content is ever fetched", async () => {
+  it("fetches no attachment to show the list, and links to none", async () => {
     const list = await openBrief();
+    expect(api.fetchAttachment).not.toHaveBeenCalled();
+    // A link would need the token in its URL; the file is fetched instead.
     expect(within(list).queryAllByRole("link")).toHaveLength(0);
-    expect(within(list).queryAllByRole("button")).toHaveLength(0);
-    expect(screen.getByText(/not opened or sent to the AI/i)).toBeInTheDocument();
+    expect(screen.getByText(/fetched only when you open or save it/i)).toBeInTheDocument();
+    expect(screen.getByText(/never sent to the AI/i)).toBeInTheDocument();
+  });
+
+  it("offers Save for every attachment and View only for one the page can show", async () => {
+    const list = await openBrief();
+    const [pdf, forwarded] = within(list).getAllByRole("listitem");
+    expect(within(pdf).getByRole("button", { name: "View brief.pdf" })).toBeInTheDocument();
+    expect(within(pdf).getByRole("button", { name: "Save brief.pdf" })).toBeInTheDocument();
+    expect(within(forwarded).queryByRole("button", { name: /^view/i })).toBeNull();
+    expect(within(forwarded).getByRole("button", { name: "Save Forwarded message" })).toBeInTheDocument();
+  });
+
+  it("asks for an attachment by the open email and its place in the list", async () => {
+    api.fetchAttachment.mockResolvedValue(new Blob(["%PDF"], { type: "application/pdf" }));
+    URL.createObjectURL = vi.fn(() => "blob:mock/brief");
+    URL.revokeObjectURL = vi.fn();
+    const user = userEvent.setup();
+    const list = await openBrief();
+
+    await user.click(within(list).getByRole("button", { name: "View brief.pdf" }));
+
+    expect(api.fetchAttachment).toHaveBeenCalledTimes(1);
+    expect(api.fetchAttachment.mock.calls[0].slice(0, 2)).toEqual(["email-1", 0]);
+    expect(await screen.findByRole("region", { name: "Preview of brief.pdf" })).toBeInTheDocument();
   });
 
   it("shows no attachment section for an email without attachments", async () => {

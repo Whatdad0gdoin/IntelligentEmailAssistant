@@ -221,6 +221,57 @@ describe("draft body construction", () => {
   });
 });
 
+describe("fetching an attachment", () => {
+  const blob = new Blob(["%PDF"], { type: "application/pdf" });
+  const servesBlob = () =>
+    vi.fn().mockResolvedValue({ ok: true, status: 200, blob: async () => blob, json: async () => ({}) });
+
+  it("returns the file as a Blob, not as parsed JSON", async () => {
+    global.fetch = servesBlob();
+    await expect(api.fetchAttachment("email-1", 0)).resolves.toBe(blob);
+  });
+
+  it("asks for it by the email and its place in the list", async () => {
+    global.fetch = servesBlob();
+    await api.fetchAttachment("CAF_abc@mail.gmail.com", 2);
+
+    const [url, options] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/api\/inbox\/CAF_abc%40mail\.gmail\.com\/attachments\/2$/);
+    expect(options.method).toBe("GET");
+  });
+
+  it("sends the token as a header, so it never has to go in a URL", async () => {
+    global.fetch = servesBlob();
+    api.setToken("abc123");
+    await api.fetchAttachment("email-1", 0);
+
+    const [url, options] = global.fetch.mock.calls[0];
+    expect(options.headers.Authorization).toBe("Bearer abc123");
+    expect(url).not.toContain("abc123");
+  });
+
+  it("surfaces the backend's message when the attachment is not there", async () => {
+    global.fetch = mockFetch(404, { error: "That attachment could not be found on this email." });
+    await expect(api.fetchAttachment("email-1", 9)).rejects.toThrow(/could not be found/i);
+  });
+
+  it("treats a 401 like any other: the session has ended", async () => {
+    global.fetch = mockFetch(401, { error: "Not authenticated" });
+    const onUnauthorized = vi.fn();
+    api.setUnauthorizedHandler(onUnauthorized);
+    api.setToken("stale-token");
+
+    await expect(api.fetchAttachment("email-1", 0)).rejects.toThrow(/session has ended/i);
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it("leaves every other call asking for JSON", async () => {
+    global.fetch = mockFetch(200, {});
+    await api.request("/api/inbox");
+    expect(global.fetch.mock.calls[0][1].headers.Accept).toBe("application/json");
+  });
+});
+
 describe("translate body construction (FR-07)", () => {
   it("sends an email id and the language for an email", async () => {
     global.fetch = mockFetch(200, { translation: "Hola", grounded: true, ungrounded_flags: [] });

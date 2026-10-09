@@ -1,10 +1,14 @@
 """The Gmail API source (backend/adapters/gmail_api_source.py).
 
 No test here touches Google. A fake service stands in for googleapiclient's,
-built so that it only answers the three calls the adapter is allowed to make --
-messages.list, messages.get and labels.list. Anything else raises. That turns
-"the app never modifies your mailbox" from a claim in a docstring into
-something the suite fails on.
+built so that it only answers the four calls the adapter is allowed to make --
+messages.list, messages.get, messages.attachments.get and labels.list, all of
+them reads. Anything else raises. That turns "the app never modifies your
+mailbox" from a claim in a docstring into something the suite fails on.
+
+The fake also records every messages.attachments.get, the one call that
+downloads a file, so the tests can hold the adapter to making it only when a
+person opens an attachment and never while listing or reading mail.
 """
 
 import base64
@@ -22,7 +26,7 @@ from googleapiclient.errors import HttpError
 
 from backend.adapters.email_source import EmailSourceError, get_email_source
 from backend.adapters.gmail_api_source import SCOPES, GmailApiSource, _Credentials
-from backend.adapters.headers import message_id_of
+from backend.adapters.headers import INLINE_IMAGE_MIN_BYTES, attachment_content, message_id_of
 
 
 # --- fake Gmail --------------------------------------------------------------
@@ -95,7 +99,8 @@ class _Messages(_Guard):
             if format == "full":
                 message = BytesParser(policy=policy.default).parsebytes(_unb64(record["raw"]))
                 payload = _gmail_tree(message, "", self._gmail.decoded_headers,
-                                      record.get("out_of_line", ()))
+                                      record.get("out_of_line", ()),
+                                      self._gmail.attachment_data_inline)
                 return {"id": id, "labelIds": record["labelIds"], "payload": payload}
             # metadata: Gmail matches the requested names without regard to
             # case and returns each header under the name the message used.
@@ -105,12 +110,48 @@ class _Messages(_Guard):
             return {"id": id, "labelIds": record["labelIds"], "payload": {"headers": headers}}
         return _Request(run)
 
+    def attachments(self):
+        return _MessageAttachments(self._gmail)
+
+
+class _MessageAttachments(_Guard):
+    """messages.attachments: get and nothing else. The one call that downloads
+    a file, so every use of it is recorded."""
+
+    def __init__(self, gmail):
+        self._gmail = gmail
+
+    def get(self, userId, messageId, id):
+        assert userId == "me"
+        self._gmail.attachment_calls.append((messageId, id))
+
+        def run():
+            if self._gmail.attachment_error:
+                raise self._gmail.attachment_error
+            if self._gmail.attachment_data is not None:
+                return {"size": 0, "data": self._gmail.attachment_data}
+            record = self._gmail.by_id[messageId]
+            message = BytesParser(policy=policy.default).parsebytes(_unb64(record["raw"]))
+            assert id.startswith("ANG-"), f"not an id this fake handed out: {id}"
+            data = _part_at(message, id[len("ANG-"):]).get_payload(decode=True) or b""
+            return {"size": len(data), "data": base64.urlsafe_b64encode(data).decode().rstrip("=")}
+        return _Request(run)
+
 
 def _unb64(raw):
     return base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4))
 
 
-def _gmail_tree(part, part_id, decoded_headers, out_of_line):
+def _part_at(message, part_id):
+    """The MIME part _gmail_tree() numbered `part_id` ("1", "0.1", or "root")."""
+    part = message
+    if part_id != "root":
+        for step in part_id.split("."):
+            part = part.get_payload(int(step))
+    return part
+
+
+def _gmail_tree(part, part_id, decoded_headers, out_of_line, attachment_data_inline=False):
     """The format=full payload Gmail builds from one MIME part.
 
     Modelled on Gmail's documented behaviour: header values as they appear in
@@ -119,6 +160,9 @@ def _gmail_tree(part, part_id, decoded_headers, out_of_line):
     attachmentId and a size, never data -- and an attached message/rfc822
     nests the forwarded message's own tree. `out_of_line` lists body types to
     push out of line as well, to exercise the adapter's raw fallback.
+    `attachment_data_inline` makes attachments carry their bytes as body.data
+    too, which the API's reference allows for ("when not present, the entire
+    content of the message part body is contained in the data field").
     """
     content_type = part.get_content_type()
     if decoded_headers:
@@ -132,16 +176,18 @@ def _gmail_tree(part, part_id, decoded_headers, out_of_line):
     if content_type == "message/rfc822":
         inner = part.get_payload(0)
         node["body"] = {"size": len(inner.as_bytes())}
-        node["parts"] = [_gmail_tree(inner, child_id(0), decoded_headers, out_of_line)]
+        node["parts"] = [_gmail_tree(inner, child_id(0), decoded_headers, out_of_line,
+                                     attachment_data_inline)]
     elif part.is_multipart():
         node["body"] = {"size": 0}
-        node["parts"] = [_gmail_tree(c, child_id(i), decoded_headers, out_of_line)
+        node["parts"] = [_gmail_tree(c, child_id(i), decoded_headers, out_of_line,
+                                     attachment_data_inline)
                          for i, c in enumerate(part.get_payload())]
     else:
         data = part.get_payload(decode=True) or b""
         inline = (not node["filename"] and content_type in ("text/plain", "text/html")
                   and content_type not in out_of_line)
-        if inline:
+        if inline or (attachment_data_inline and content_type not in out_of_line):
             node["body"] = {"size": len(data), "data": base64.urlsafe_b64encode(data).decode()}
         else:
             node["body"] = {"attachmentId": f"ANG-{part_id or 'root'}", "size": len(data)}
@@ -175,6 +221,13 @@ class FakeGmail(_Guard):
         self.labels = [{"id": "INBOX", "name": "INBOX"}]
         self.list_calls = []
         self.get_calls = []
+        # Every messages.attachments.get, as (message id, attachment id).
+        self.attachment_calls = []
+        self.attachment_error = None
+        # Set to a string to answer every attachments.get with that as `data`.
+        self.attachment_data = None
+        # True: attachments come back with their bytes in body.data, no id.
+        self.attachment_data_inline = False
         self.batches = 0
         self.list_error = None
         # False: header values come back as they appear in the message, encoded
@@ -406,15 +459,20 @@ def test_the_only_scope_requested_is_read_only():
 
 
 def test_reading_and_opening_never_touch_a_mutating_call():
-    """The fake raises Forbidden on anything but list/get/labels.list, so this
-    passing means no modify, trash, send, batchModify or label change was
-    attempted along either path the app uses."""
+    """The fake raises Forbidden on anything but list/get/attachments.get/
+    labels.list, so this passing means no modify, trash, send, batchModify or
+    label change was attempted along any path the app uses: listing the inbox,
+    opening a message, and opening one of its attachments."""
     gmail = FakeGmail()
     gmail.labels.append({"id": "Label_1", "name": "Demo"})
     gmail.add("g1", "One", labels=("Label_1",))
+    gmail.add_message("a1", _report(), labels=("Label_1",))
     source = _source(gmail, label="Demo")
     emails = source.list_emails()
-    source.get_email(emails[0].id)
+    for email in emails:
+        source.get_email(email.id)
+        for index in range(len(email.attachments)):
+            assert source.get_attachment(email.id, index) is not None
 
 
 def test_no_mutating_gmail_method_appears_in_the_adapter_source():
@@ -540,6 +598,9 @@ def test_the_api_source_needs_no_imap_password(monkeypatch):
 
 # --- format=full: attachments stay on Google's side -----------------------------
 
+PDF_BYTES = b"%PDF-1.4 " + b"x" * 5000
+PASTED_PNG = b"\x89PNG\r\n\x1a\n" + b"s" * INLINE_IMAGE_MIN_BYTES
+
 
 def _report(gid="a1", subject="Report attached", message_id=None):
     message = EmailMessage()
@@ -604,6 +665,18 @@ def _sample_messages():
     embedded.get_payload()[1].add_related(b"\x89PNG", maintype="image", subtype="png",
                                          cid="<b1>", filename="banner.png", disposition="inline")
 
+    # A screenshot pasted into the body: embedded like the banner above, but
+    # big enough to be listed (headers.INLINE_IMAGE_MIN_BYTES).
+    pasted = EmailMessage()
+    pasted["From"] = "Ada Lovelace <ada@example.org>"
+    pasted["Subject"] = "Screenshot"
+    pasted["Message-ID"] = "<pasted@example.org>"
+    pasted["Date"] = format_datetime(datetime(2026, 9, 4, 12, tzinfo=timezone.utc))
+    pasted.set_content("[image: image.png]")
+    pasted.add_alternative('<p><img src="cid:ii_1"></p>', subtype="html")
+    pasted.get_payload()[1].add_related(PASTED_PNG, maintype="image", subtype="png",
+                                        cid="<ii_1>", filename="image.png", disposition="inline")
+
     inner = EmailMessage()
     inner["From"] = "boss@example.org"
     inner["Subject"] = "Original"
@@ -623,7 +696,7 @@ def _sample_messages():
     no_id["Date"] = format_datetime(datetime(2026, 9, 6, tzinfo=timezone.utc))
     no_id.set_content("Hashed id.")
 
-    return [plain, accented, embedded, _report(), forwarded, no_id]
+    return [plain, accented, embedded, pasted, _report(), forwarded, no_id]
 
 
 @pytest.mark.parametrize("decoded_headers", [False, True],
@@ -696,3 +769,165 @@ def test_a_message_id_header_in_any_case_still_opens():
     assert listed.id == "CAF_mixed_case@mail.example.org"   # '+' and '=' sanitised
     opened = _source(gmail).get_email(listed.id)
     assert opened is not None and opened.subject == "Lower-case id header"
+
+
+# --- opening one attachment ------------------------------------------------------
+
+
+def _with_report():
+    gmail = FakeGmail()
+    gmail.add_message("a1", _report())
+    gmail.add("g2", "Plain one")
+    source = _source(gmail)
+    report = next(e for e in source.list_emails() if e.subject == "Report attached")
+    return gmail, source, report
+
+
+def test_an_attachment_is_downloaded_only_when_it_is_opened():
+    """Listing the inbox and reading a message still fetch no file. Opening one
+    attachment fetches that one part, by its id, and not the whole message."""
+    gmail, source, report = _with_report()
+    source.get_email(report.id)
+    assert gmail.attachment_calls == []
+
+    pdf = source.get_attachment(report.id, 0)
+
+    assert (pdf.filename, pdf.content_type, pdf.data) == ("Q3 figures.pdf", "application/pdf", PDF_BYTES)
+    assert [gid for gid, _attachment_id in gmail.attachment_calls] == ["a1"]
+    assert not [call for call in gmail.get_calls if call[1] == "raw"]
+
+
+def test_the_position_names_the_same_attachment_as_the_list():
+    gmail, source, report = _with_report()
+    assert [a.filename for a in report.attachments] == ["Q3 figures.pdf", "notes.txt"]
+    for index, listed in enumerate(report.attachments):
+        content = source.get_attachment(report.id, index)
+        assert (content.filename, content.content_type) == (listed.filename, listed.content_type)
+        assert len(content.data) == listed.size
+    assert source.get_attachment(report.id, 1).data.decode().strip() == "ATTACHMENT-BODY-MARKER"
+
+
+def test_a_position_or_an_email_that_does_not_exist_opens_nothing():
+    gmail, source, report = _with_report()
+    for index in (2, 50, -1, None, "0", True):
+        assert source.get_attachment(report.id, index) is None, index
+    assert source.get_attachment("no-such-id@nowhere", 0) is None
+    plain = next(e for e in source.list_emails() if e.subject == "Plain one")
+    assert source.get_attachment(plain.id, 0) is None
+    assert gmail.attachment_calls == []
+
+
+def test_an_image_pasted_into_the_message_is_listed_and_opened():
+    """Embedded by Content-ID like a logo, but a logo is not this big. The app
+    shows the body as text, so this is the only way the picture is seen."""
+    pasted = next(m for m in _sample_messages() if m["Subject"] == "Screenshot")
+    gmail = FakeGmail()
+    gmail.add_message("p1", pasted)
+    source = _source(gmail)
+    email = source.list_emails()[0]
+    assert [(a.filename, a.content_type, a.size) for a in email.attachments] == [
+        ("image.png", "image/png", len(PASTED_PNG))]
+    assert source.get_attachment(email.id, 0).data == PASTED_PNG
+
+
+def test_a_logo_sized_embedded_image_is_still_not_listed():
+    banner = next(m for m in _sample_messages() if m["Subject"] == "Banner")
+    gmail = FakeGmail()
+    gmail.add_message("b1", banner)
+    source = _source(gmail)
+    email = source.list_emails()[0]
+    assert email.attachments == []
+    assert source.get_attachment(email.id, 0) is None
+
+
+def test_bytes_gmail_sends_with_the_message_need_no_second_call():
+    gmail, source, report = _with_report()
+    gmail.attachment_data_inline = True
+    assert source.get_attachment(report.id, 0).data == PDF_BYTES
+    assert gmail.attachment_calls == []
+
+
+def test_an_attached_email_is_opened_from_the_whole_message():
+    """Gmail describes a forwarded message by its parts and may give it no id
+    to download it by, so that one comes out of the raw message instead."""
+    forwarded = next(m for m in _sample_messages() if m["Subject"] == "Fwd: Original")
+    gmail = FakeGmail()
+    gmail.add_message("f1", forwarded)
+    source = _source(gmail)
+    email = source.list_emails()[0]
+
+    content = source.get_attachment(email.id, 0)
+
+    assert content.content_type == "message/rfc822"
+    inner = BytesParser(policy=policy.default).parsebytes(content.data)
+    assert inner["Subject"] == "Original"
+    assert gmail.attachment_calls == []
+    assert ("f1", "raw") in gmail.get_calls
+
+
+def test_an_attachment_of_a_message_fetched_whole_is_read_from_that_message():
+    """A message whose body text Gmail kept out of line is listed from
+    format=raw (see get_email), so its attachments are read from the same parse."""
+    gmail = FakeGmail()
+    gmail.add_message("o1", _report(gid="o1", subject="Long text"), out_of_line=("text/plain",))
+    source = _source(gmail)
+    email = source.list_emails()[0]
+    assert source.get_attachment(email.id, 0).data == PDF_BYTES
+    assert source.get_attachment(email.id, 1).filename == "notes.txt"
+    assert source.get_attachment(email.id, 2) is None
+    assert gmail.attachment_calls == []
+
+
+@pytest.mark.parametrize("decoded_headers", [False, True],
+                         ids=["headers-as-sent", "headers-decoded"])
+@pytest.mark.parametrize("attachment_data_inline", [False, True],
+                         ids=["bytes-by-id", "bytes-with-message"])
+def test_an_attachment_reads_the_same_from_gmail_as_from_the_raw_message(
+        decoded_headers, attachment_data_inline):
+    """Whichever way the bytes arrive, opening the nth attachment must give
+    exactly what parsing the message itself gives for the nth."""
+    opened = 0
+    for message in _sample_messages():
+        gmail = FakeGmail()
+        gmail.decoded_headers = decoded_headers
+        gmail.attachment_data_inline = attachment_data_inline
+        gmail.add_message("m", message)
+        source = _source(gmail)
+        email = source.list_emails()[0]
+        raw = BytesParser(policy=policy.default).parsebytes(message.as_bytes())
+        for index in range(len(email.attachments)):
+            assert source.get_attachment(email.id, index) == attachment_content(raw, index), (
+                f"{message['Subject']} attachment {index}")
+            opened += 1
+        assert source.get_attachment(email.id, len(email.attachments)) is None
+    assert opened == 4, "the samples no longer cover a PDF, a text file, an image and an email"
+
+
+def test_attachment_data_that_is_not_base64_opens_nothing():
+    gmail, source, report = _with_report()
+    gmail.attachment_data = "A"            # one character can never be valid base64
+    assert source.get_attachment(report.id, 0) is None
+
+
+@pytest.mark.parametrize("status,reason,expected", [
+    (401, None, "Reconnect"),
+    (403, "rateLimitExceeded", "rate limiting"),
+    (503, None, "trouble"),
+])
+def test_a_failed_attachment_download_is_an_error_a_person_can_act_on(status, reason, expected):
+    gmail, source, report = _with_report()
+    gmail.attachment_error = _http_error(status, reason)
+    with pytest.raises(EmailSourceError, match=expected):
+        source.get_attachment(report.id, 0)
+
+
+def test_neither_the_name_nor_the_content_of_an_attachment_reaches_the_log(caplog):
+    gmail, source, report = _with_report()
+    with caplog.at_level("DEBUG"):
+        source.get_attachment(report.id, 0)
+        source.get_attachment(report.id, 1)
+        gmail.attachment_data = "A"
+        source.get_attachment(report.id, 0)        # the path that logs a warning
+    assert "undecodable" in caplog.text, "the warning path did not run, so this proves less"
+    assert "Q3 figures" not in caplog.text and "notes.txt" not in caplog.text
+    assert "ATTACHMENT-BODY-MARKER" not in caplog.text

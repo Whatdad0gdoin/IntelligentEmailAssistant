@@ -14,7 +14,9 @@ Results are cached per email id, so a re-fetch costs no API calls.
 
 Each email also carries `attachments`: a list of {filename, content_type, size}
 parsed from MIME structure by the adapter. It describes attachments without
-containing them -- no attachment content is read, returned or sent to a model.
+containing them -- neither route here reads, returns or sends attachment
+content anywhere. Opening an attachment is a separate, explicit request, served
+by routes/attachments.py, which addresses it by its position in this list.
 """
 
 from flask import Blueprint, jsonify

@@ -28,17 +28,17 @@ export const ROTATING = [
  *   FR-01 summarise   -> POST /api/summarise    built
  *   FR-02 categorise  -> POST /api/classify     built
  *   FR-03 reply       -> POST /api/draft        built
- *   FR-05 voice       -> POST /api/voice/intent built
+ *   FR-05 voice       -> POST /api/voice/intent built, in the command bar
  *   speak             -> browser speechSynthesis, no backend needed
  *   FR-06 tone        -> POST /api/draft {tone}  built, on the draft panel
  *   FR-07 translate   -> POST /api/translate     built, on the reading pane
  */
 // Sidebar destinations. Summarise, Read Aloud, Draft Reply and Translate are
 // not here: they act on an open message and live on the reading pane. Tone and
-// the draft's translation are on the draft.
+// the draft's translation are on the draft. Commands, typed or spoken, are not
+// here either: they go in the command bar above every page.
 export const FEATURES = [
   { id: "inbox", label: "Inbox", icon: Inbox, group: "main" },
-  { id: "voice", label: "Voice Commands", icon: Mic, group: "voice", desc: "Control your inbox hands-free with your voice." },
 ];
 
 export const CATEGORIES = [

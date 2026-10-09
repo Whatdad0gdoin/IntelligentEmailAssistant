@@ -28,15 +28,15 @@ says how.
 | FR-02 | Auto-categorise into Work / Personal / Promotions / Studies, 80% | HIGH | Done · target met | `POST /api/classify` and `GET /api/inbox`, one email per model call, 25 at once. **89.8% on the held-out test split (n=226), 86.9% on real email only, 87.0% on a holdout no configuration had been scored on** — all strict, an email sent to Review counted as wrong. See `eval/BENCHMARKS.md` |
 | FR-03 | Draft a reply; editable area; not sent without explicit approval | HIGH | Done | `POST /api/draft` returns text and nothing else. The draft lands in an editable textarea with an **Approve** button; approval marks the text reviewed and stops there. It can be typed into or, in Chrome and Edge, dictated: **Dictate** adds speech at the end of the draft, in the recognition language from Settings, with "comma", "full stop" and "new paragraph" as punctuation (`hooks/useDictation.jsx`, `lib/dictation.js`); dictated words withdraw approval like any edit, and only the recognised text is handled — our server never receives audio. There is no send route and no mail-sending library in the backend, both asserted by `tests/test_draft.py`. Groundedness **97.4%** |
 | FR-04 | Read summaries aloud via Web Speech API ("Read Aloud") | HIGH¹ | Done | `hooks/useSpeech.jsx`, browser-side only, no backend. Reads the *summary* sentences, never the raw body; fetches a summary first if none exists yet, so the button cannot read email text. The control is hidden outright when the browser has no `speechSynthesis` |
-| FR-05 | Accept spoken voice commands; classify intent | HIGH¹ | Done · criterion met on held-out transcripts | `views/Voice.jsx` (spoken; only the transcript reaches our server; recognition language en-AU by default, chosen in Settings) and `components/CommandBar.jsx` (typed, shown in every browser) → `POST /api/voice/intent`. Below the confidence floor both show the command back and ask (`components/IntentChoice.jsx`, shared) rather than guessing. **91.7–95.0% on 60 held-out transcripts over three runs, no wrong dispatch in 180**; the earlier prompt scored 86.7% on the original 30. See `eval/BENCHMARKS.md` |
+| FR-05 | Accept spoken voice commands; classify intent | HIGH¹ | Done · criterion met on held-out transcripts | `components/CommandBar.jsx`, the bar above the inbox and Settings in every browser: a command is typed into it, or in Chrome and Edge spoken into it with the bar's microphone (`hooks/useSpokenCommand.jsx`; only the transcript reaches our server; recognition language en-AU by default, chosen in Settings) → `POST /api/voice/intent`. A spoken command fills the bar and runs nothing until the user presses Run, so a mishearing can be read and corrected first; there is no separate voice page. Below the confidence floor the bar shows the command back and asks (`components/IntentChoice.jsx`) rather than guessing. **91.7–95.0% on 60 held-out transcripts over three runs, no wrong dispatch in 180**; the earlier prompt scored 86.7% on the original 30. See `eval/BENCHMARKS.md` |
 | FR-06 | Adjust tone of the drafted reply (Formal / Casual / Professional) | MED | Done | `TONES` in `orchestrator/schemas.py`, register-only guidance in `orchestrator/prompts.py`, optional `tone` on `POST /api/draft` (an unknown value is a 400, not a silent fallback), and a tone row on the draft panel that regenerates immediately. The tone is echoed back in the response so the UI cannot label a draft with a tone it was not written in |
 | FR-07 | Translate email content or drafted reply into a chosen language | LOW | Done · figures checked | `POST /api/translate` → `orchestrator/translate.py`: an email (its subject and the cleaned body the reader shows) or a drafted reply, into 15 languages (`LANGUAGES` in `orchestrator/schemas.py`, mirrored in `lib/constants.js`; anything else is a 400). Never cached: a translation is the whole body in another language (NFR-03). Every number, link and email address is checked both ways in any language pair — numbers by their digits, so 1,000.50 matches 1.000,50 — and flags show in the same notice summaries use. The reading pane has a **Translate** button and a Translation panel with its own language picker; the draft panel translates the draft in place, with **Undo translation**, and withdraws approval. The starting language is the **Translation language** in Settings (English by default). **Figures preserved in 89.2% (Spanish) and 86.5% (Chinese, Simplified) of 37 test-split emails** — a check on figures, not meaning. See `eval/BENCHMARKS.md` |
-| FR-08 | On login, retrieve emails and display them grouped by category | HIGH | Done | `GET /api/inbox` returns five groups already grouped; `views/Inbox.jsx` renders them with category chips, a flat "All" view, search, and a Review bucket that carries its explanation inline |
+| FR-08 | On login, retrieve emails and display them grouped by category | HIGH | Done | `GET /api/inbox` returns five groups already grouped; `views/Inbox.jsx` renders them with category chips, a flat "All" view, search, and a Review bucket that carries its explanation inline. Each email lists its attachments by name, type and size, and the reading pane can open one: **View** shows an image, a PDF or a text file in the pane and **Save** downloads any attachment (`components/Attachments.jsx` → `GET /api/inbox/<id>/attachments/<n>`). An attachment is fetched only when the user asks for it and is never sent to the model |
 | NFR-01 | AI responses returned and displayed within a few seconds | HIGH | Done · measured | A cold inbox load — the slowest routine request, because every email is classified inside it — **median 2.0 s, worst 2.7 s over 8 loads of a 25-email inbox, all under the 5 s target**, against the real model (`eval/cold_load.py`, `eval/BENCHMARKS.md`). Batched, the same load took 13.5 s; one email per call with 25 calls at once is what brought it under. `middleware/timing.py` times every route into a bounded in-process ring, and `GET /api/metrics` reports nearest-rank p50/p95/max against the target, returning `null` rather than `0` on an empty window (`tests/test_metrics.py`). The inbox renders a skeleton while a load is in flight |
-| NFR-02 | Browser-accessible; no install or plugin; works in Chrome | HIGH | Done by construction, not by test | A React SPA over a REST API; `npm run build` produces a static bundle and nothing needs an extension. There is no browser-driven or end-to-end test in this repo, so "fully functional in Chrome" rests on manual use, not on a green tick. The latest manual check (2026-10-07, headless Edge, which is Chromium) covered sign-in, the inbox layout at three window sizes and a typed command end to end; Firefox was not available. Voice is the one browser-gated part, and SR-01 covers it |
-| NFR-03 | Email content not stored permanently; no body data between calls | HIGH | Done | Bodies are fetched per request, preprocessed in memory and dropped; the cache holds summaries and labels only — a translation, being the whole body in another language, is never kept; logs carry character counts rather than content. `tests/test_no_body_in_logs.py` runs a full session against a real log file on disk and greps it |
-| NFR-04 | Login required before email data or assistant features | HIGH | Done | One fail-closed `before_request` guard with a two-entry public allowlist. `tests/test_auth.py` enumerates the URL map rather than listing routes by hand, so it covers all eight protected routes and picked up `/api/metrics` and `/api/translate` the moment each was registered, with no change to the test |
-| SR-01 | Voice restricted to Chrome/Edge; notify on unsupported browsers | MED | Done | `lib/capabilities.js` reads `speechSynthesis` and `SpeechRecognition` once at load. Without STT the Voice destination is removed rather than shown as a dead end; without TTS the Read Aloud button is not rendered; a persistent, non-blocking notice says which one is missing. Every voice action is also a button, and every voice command can also be typed into the command bar, which needs no speech support |
+| NFR-02 | Browser-accessible; no install or plugin; works in Chrome | HIGH | Done by construction, not by test | A React SPA over a REST API; `npm run build` produces a static bundle and nothing needs an extension. There is no browser-driven or end-to-end test in this repo, so "fully functional in Chrome" rests on manual use, not on a green tick. A manual check (2026-10-07, headless Edge, which is Chromium) covered sign-in, the inbox layout at three window sizes and a typed command end to end; Firefox was not available. The latest (2026-10-09, headless Edge and Chrome, driven by a throwaway script that is not in this repo) covered opening and saving attachments — image, PDF and text previews, and an HTML attachment downloading without being rendered — and the command bar's microphone with a stand-in recogniser. The PDF preview inside the reading pane was confirmed in Chrome; in Edge the same file was confirmed only through its open-in-a-new-tab link. Voice is the one browser-gated part, and SR-01 covers it |
+| NFR-03 | Email content not stored permanently; no body data between calls | HIGH | Done | Bodies are fetched per request, preprocessed in memory and dropped; the cache holds summaries and labels only — a translation, being the whole body in another language, is never kept; logs carry character counts rather than content. An attachment's bytes are read only when the signed-in user opens that attachment, go out with that one response, and are never cached, logged, written to disk or sent to a model (`tests/test_attachment_route.py`). `tests/test_no_body_in_logs.py` runs a full session against a real log file on disk and greps it |
+| NFR-04 | Login required before email data or assistant features | HIGH | Done | One fail-closed `before_request` guard with a two-entry public allowlist. `tests/test_auth.py` enumerates the URL map rather than listing routes by hand, so it covers all nine protected routes and picked up `/api/metrics`, `/api/translate` and the attachment route the moment each was registered |
+| SR-01 | Voice restricted to Chrome/Edge; notify on unsupported browsers | MED | Done | `lib/capabilities.js` reads `speechSynthesis` and `SpeechRecognition` once at load. Without STT the command bar shows no microphone rather than a dead one; without TTS the Read Aloud button is not rendered; a persistent, non-blocking notice says which one is missing. Every voice action is also a button, and every voice command can also be typed into the command bar, which needs no speech support |
 | DR-01 | Labelled dataset of 400 emails, 100 per category | MED | Done | `eval/data/dataset.csv`: **400 rows, 100 per class, 300 real / 100 synthetic, every real label read and verified by a person**. It was 480; reading the folder-labelled Work rows found 27 of 120 were not Work, so the set was rebalanced to 94 per class rather than topped up with unverified rows, then brought to 100 with twelve more Work emails read and confirmed. The RTM asks for an AI-generated set; the Week 11 dataset slide asks for real mail. The slide won — generation fills Studies only, the class no real corpus covers. See below |
 | DR-02 | Labelled set as ground truth: accuracy, precision, recall, F1, matrix | MED | Done | `eval/evaluate_classifier.py` prints coverage, accuracy and strict accuracy, per-class precision/recall/F1, macro-F1 and a confusion matrix. Every run is logged in `eval/BENCHMARKS.md` |
 
@@ -74,11 +74,18 @@ over the same cell for FR-04 and FR-05, so text extraction reads both
   FR-02 figure is also quoted on real email alone.
 - **The Gmail source has never touched real Gmail.** Every test runs against a
   fake service; connecting an account needs a person (`FIXES.md` item 1).
-- **Attachments are listed, never read.** Names, types and sizes reach the
-  inbox; content never reaches a summary or a model. Reading PDF text would
-  break that promise, so it is a decision for the team, not a gap. The IMAP
-  source still downloads attachment bytes in order to list them; the Gmail API
-  source does not.
+- **Attachments can be opened by the user, and are never read by the AI.**
+  Names, types and sizes reach the inbox, and View or Save fetches one
+  attachment for the person signed in. Content never reaches a summary or a
+  model, so a summary of an email whose substance is in its PDF does not cover
+  that PDF. Reading PDF text into summaries would change that promise, so it
+  is a decision for the team, not a gap. An image pasted into a message body
+  is listed as an attachment once it is 20 KB or more; a smaller embedded
+  image is treated as a logo and not listed, so a small pasted image can be
+  missed. A text attachment is previewed as UTF-8 whatever its real encoding
+  (Save keeps the exact bytes). The IMAP source still downloads attachment
+  bytes in order to list them; the Gmail API source does not, and downloads
+  one only when it is opened.
 - **There is no send path, and that is the requirement.** FR-03 asks for a
   reply that is not sent without explicit approval; this build has no send
   route, no mail-sending library and no recipient field anywhere in the
@@ -96,15 +103,17 @@ from memory. All of them require
 | `POST /api/auth/login` | NFR-04 | `{token, expires_in}`. Public. No user enumeration: unknown email and wrong password are indistinguishable in body, status and timing. |
 | `GET /api/healthz` | — | `{status: "ok"}`. Public. Liveness only; returns no user or email data. |
 | `GET /api/inbox` | FR-08, FR-02 | `{groups: {Work, Personal, Promotions, Studies, Review}}`. **Snippets only, no bodies.** Classifies the inbox itself — one model call per uncached email, up to 25 at once — and caches labels per email id, so a re-fetch costs no API calls. Each email carries `attachments: [{filename, content_type, size}]` — names, types and byte sizes parsed from MIME structure, **never content**. |
-| `GET /api/inbox/<id>` | FR-08 | One message with its **preprocessed** body — quoted chains, signatures and HTML already stripped — so the reader shows the same text the orchestrator summarises, plus the same `attachments` list. Fetched fresh every time and never cached (NFR-03). Attachment content is not read, returned, or sent to a model. |
+| `GET /api/inbox/<id>` | FR-08 | One message with its **preprocessed** body — quoted chains, signatures and HTML already stripped — so the reader shows the same text the orchestrator summarises, plus the same `attachments` list. Fetched fresh every time and never cached (NFR-03). Attachment content is not read, returned, or sent to a model by this route. |
+| `GET /api/inbox/<id>/attachments/<n>` | FR-08 | **The bytes of one attachment**, the only non-JSON response in the API. `<n>` is the attachment's position in the `attachments` list. A PNG, JPEG, GIF, WebP or BMP image, a PDF or a plain-text or CSV file is served under its own type with `Content-Disposition: inline`; everything else, HTML and SVG included, is served as `application/octet-stream` with `Content-Disposition: attachment`, so a browser saves it and never renders it. Every response carries `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and `Cache-Control: no-store`. Read from the mailbox on each request; never cached, logged or sent to a model. |
 | `POST /api/summarise` | FR-01 | `{email_id, summary[], action_items[], provenance[], grounded, ungrounded_flags[]}`. 2–3 sentences, enforced in Python with one retry. `action_items` are `{text, source_sentence}`; `provenance` is `{sentence, spans[]}` with character offsets into the preprocessed body, computed deterministically and never asked of the model. Cached per email id. |
 | `POST /api/classify` | FR-02, DR-02 | `{results: [{id, category, confidence, evidence}]}`. Up to 100 emails per request, classified as the inbox classifies them. Takes bodies rather than ids so the evaluation set need not exist as a mailbox; results from supplied bodies are deliberately **not** cached, or an eval run could poison the inbox's labels. |
 | `POST /api/draft` | FR-03, FR-06 | `{draft, grounded, ungrounded_flags[], tone}`. Optional `instruction` (string) and optional `tone` (`neutral`/`formal`/`casual`/`professional`; anything else is a 400). Returns text only — **no send endpoint exists.** |
-| `POST /api/voice/intent` | FR-05 | `{intent, target_email_id, confidence}` where `intent` is `summarise` / `read` / `draft` / `unknown`. Optional `emails` (`{id, sender_name, subject, received_at}`) and `alternatives` arrays; see the deviations below. Takes the transcript only — the server never receives audio. The voice view and the typed command bar both call it. |
+| `POST /api/voice/intent` | FR-05 | `{intent, target_email_id, confidence}` where `intent` is `summarise` / `read` / `draft` / `unknown`. Optional `emails` (`{id, sender_name, subject, received_at}`) and `alternatives` arrays; see the deviations below. Takes the transcript only — the server never receives audio. The command bar calls it for a typed command and for a spoken one; one sent exactly as it was heard carries the recogniser's `alternatives`. |
 | `POST /api/translate` | FR-07 | Exactly one of `{email_id, language}` → `{email_id, language, subject, translation, grounded, ungrounded_flags[]}` or `{text, language}` → `{language, translation, grounded, ungrounded_flags[]}`; both or neither is a 400. `language` must be one of the 15 in `LANGUAGES`, otherwise a 400 that lists them. `text` is at most 10,000 characters. The email form translates the subject and the cleaned body; neither form is cached. Flag reasons: `number not in the original`, `number missing from the translation`, and the same for links and email addresses. Text over 2,500 characters is translated in pieces at once, each piece one call against the session cap. Returns text only. |
 | `GET /api/metrics` | NFR-01 | `{window_size, units, percentile_method, p95_min_samples, target_seconds, p95_within_target, overall, routes}`. Each block is `{count, p50_ms, p95_ms, max_ms, over_target, enough_for_p95}`; empty blocks return `null` rather than `0`, so an unmeasured window cannot read as a pass. Authenticated, like everything else under `/api`, and excluded from its own window so polling it cannot evict the samples it reports. The frontend does not call it; it is there for measurement, not for the UI. |
 
-Failure codes: `400` malformed request, `404` unknown email id, `422` nothing
+Failure codes: `400` malformed request, `404` unknown email id or no such
+attachment on that email, `422` nothing
 left to summarise or translate after preprocessing, `429` session request cap spent, `502`
 the model would not produce valid output after a retry, `503` the AI service or
 mailbox is unreachable. No route returns a success shape on failure, and no
@@ -290,9 +299,10 @@ Set `EMAIL_SOURCE=gmail` in `backend/.env` and restart with `.\start.ps1`.
 **It is read-only because Google enforces it.** The token is granted exactly one
 scope, `gmail.readonly`, so Google's own servers refuse any modify, trash, label
 or send, whatever the code asks for. The adapter additionally calls only
-`messages.list`, `messages.get` and `labels.list`, and
-`tests/test_gmail_api_source.py` fails if it tries anything else. Reading mail
-here never marks it read in Gmail.
+`messages.list`, `messages.get`, `messages.attachments.get` and `labels.list`
+— four reads — and `tests/test_gmail_api_source.py` fails if it tries anything
+else. Reading mail here never marks it read in Gmail, and an attachment is
+downloaded only when the user opens it.
 
 **No password is stored.** The token in `backend/secrets/` can be revoked at
 <https://myaccount.google.com/permissions> without changing any password, or
@@ -327,8 +337,8 @@ npm run dev                        # http://localhost:5173
 ## Tests
 
 ```bash
-python -m pytest tests/ -q     # 693 passed, 2 skipped, 8 xfailed
-cd frontend && npx vitest run  # 229 passed, in 18 files
+python -m pytest tests/ -q     # 771 passed, 2 skipped, 8 xfailed
+cd frontend && npx vitest run  # 299 passed, in 19 files
 ```
 
 The two skips are deliberate: they are the FR-05 accuracy criterion, on the
@@ -365,8 +375,11 @@ What the backend suite covers, and what it does not:
   URL map, no mail-sending library imported anywhere under `backend/`, no
   vendor SDK outside `orchestrator/client.py`, no model name outside
   `config.py`, no prompt built in a route, no application module importing the
-  mail server, and no concrete request path, email id or body reaching the
-  NFR-01 latency window or the `/api/metrics` response.
+  mail server, no concrete request path, email id or body reaching the NFR-01
+  latency window or the `/api/metrics` response, and, on the attachment
+  route, no HTML or SVG file served under a type a browser would render, no
+  file name able to write a header of its own, and no attachment bytes
+  reaching a model, a log or the disk.
 
 The frontend suite mounts React components under jsdom with Testing Library,
 in a browser with no speech support by default — the SR-01 case — so the
@@ -377,11 +390,20 @@ degraded path is what a test gets unless it asks for more. What it covers:
   cancellation, and the `POST /api/draft` body construction including the tone
   field (FR-06).
 - `src/components/*.test.jsx`, `src/views/*.test.jsx` — the app shell, the
-  reading pane, sign-in and the voice view rendered and driven: Summarise, Read
-  Aloud, Draft and Approve, the voice-order and attachment contracts, and the
-  command bar typed end to end (what is sent, what opens and runs, the pick-one
-  question below the confidence floor, empty input, busy and error states,
-  keyboard-only use). `ReadingPane.translate.test.jsx` and
+  reading pane and sign-in rendered and driven: Summarise, Read Aloud, Draft
+  and Approve, the voice-order and attachment contracts, and the command bar
+  typed end to end (what is sent, what opens and runs, the pick-one question
+  below the confidence floor, empty input, busy and error states,
+  keyboard-only use). `CommandBar.voice.test.jsx` drives the bar's microphone
+  with a stand-in recogniser: no microphone without speech support or with
+  voice switched off, the Settings language, what was heard filling the field
+  and running nothing until Run, the recogniser's other guesses sent only
+  while the text is as it was heard, the pick-one question, and the
+  blocked-microphone message. `Attachments.test.jsx` covers View and Save:
+  nothing fetched until one is asked for, the preview chosen from the type
+  the server sent, an HTML attachment never framed, one fetch at a time,
+  every `blob:` URL revoked, and a failed fetch reported.
+  `ReadingPane.translate.test.jsx` and
   `Dashboard.translate.test.jsx` cover FR-07: what is requested, switching
   language, loading, errors and late answers dropped, keyboard use; the draft
   translated in place, Undo, approval withdrawn, no send control; and the
@@ -481,10 +503,12 @@ The tooling:
 frontend/src/
   api/         client.js -- the single fetch client; attaches the JWT, handles every 401
   components/  Dashboard (app shell), ReadingPane (FR-01/03/04/06 in place),
-               CommandBar (typed FR-05), IntentChoice (section 6.3 question,
-               shared with Voice), GroundingNotice, SideItem, OpenAIMark
-  views/       Login, Inbox (FR-08), Voice (FR-05), Settings (section 5.5)
-  hooks/       useAuth, useInbox, useSpeech (FR-04), usePreference
+               Attachments (FR-08, View and Save), CommandBar (FR-05, typed or
+               spoken), IntentChoice (section 6.3 question), GroundingNotice,
+               SideItem, OpenAIMark
+  views/       Login, Inbox (FR-08), Settings (section 5.5)
+  hooks/       useAuth, useInbox, useSpeech (FR-04), useSpokenCommand (FR-05),
+               useDictation (FR-03), usePreference
   lib/         capabilities.js (SR-01), constants (categories, tones), search,
                highlight (provenance spans), format
 backend/
@@ -493,8 +517,9 @@ backend/
   run.py       dev entry point
   mailserver.py  local SMTP receiver -- the mail-server TIER, imported by nothing
                  under backend/ (asserted in tests/test_mailserver.py)
-  routes/      auth, health, inbox, ai (summarise/classify/draft), voice,
-               metrics (NFR-01), support.py (shared error translation)
+  routes/      auth, health, inbox, attachments (one file, when it is opened),
+               ai (summarise/classify/draft), voice, metrics (NFR-01),
+               support.py (shared error translation)
   orchestrator/  ALL LLM calls live here
     client.py      the only module that imports the OpenAI SDK
     schemas.py     JSON schemas; the category enum and the tone enum live here
@@ -509,7 +534,7 @@ backend/
     budget.py      per-session request cap
   adapters/    three email sources behind one interface -- fixture .eml mailbox,
                Gmail over the Gmail API (OAuth), Gmail over IMAP -- plus header
-               parsing and the committed demo fixtures
+               and attachment parsing and the committed demo fixtures
   middleware/  jwt guard, log redaction, timing.py (NFR-01 latency window)
   scripts/     hash_password, add_user, gmail_auth
 eval/          the labelled dataset (DR-01), the metric scripts (DR-02), the
@@ -526,7 +551,7 @@ tests/         backend suite (pytest); frontend tests sit beside their modules
   explicit two-entry allowlist. Forgetting to allowlist a new route makes it
   return 401 - visible and safe - rather than shipping it unauthenticated.
   `tests/test_auth.py` enumerates the URL map, so a route added later is
-  covered automatically; it currently checks eight protected routes.
+  covered automatically; it currently checks nine protected routes.
   `/api/metrics` needed no auth decorator and got none — it was covered by the
   401 test the moment it was registered, which is the whole argument for the
   guard being central rather than per-route.
@@ -551,6 +576,25 @@ tests/         backend suite (pytest); frontend tests sit beside their modules
   latency metadata about the server, not data about anyone's mail, and
   `tests/test_metrics.py` asserts that no concrete path, email id or body can
   reach the window or the response.
+- **Opening an attachment.** `GET /api/inbox/<id>/attachments/<n>` serves a
+  file chosen by whoever sent the email, from this application's own origin,
+  which is how a sender's `invoice.html` would become a page running with the
+  recipient's session. Four things stop that, each with a test in
+  `tests/test_attachment_route.py`. Only raster images, PDFs and plain text
+  are served under their own type; everything else, including `text/html` and
+  `image/svg+xml` (an SVG can carry script), goes out as
+  `application/octet-stream`. That download is marked
+  `Content-Disposition: attachment`. `X-Content-Type-Options: nosniff` stops a
+  browser re-guessing the type. And the file name, which the sender also
+  chose, is written into the header with quotes, backslashes, semicolons and
+  control characters removed, so it cannot add a header of its own. In the
+  browser the file is fetched through the API client and shown from a `blob:`
+  URL, because `<img src>` and `<a href>` cannot send the token; the token is
+  therefore never in a URL, the element used to show a file is picked from the
+  type the server sent, and each `blob:` URL is revoked when its preview
+  closes (`components/Attachments.test.jsx`). The PDF frame is not sandboxed:
+  a sandboxed frame stops the browser's own PDF viewer, and only a response
+  the server labelled `application/pdf` is ever put in it.
 - **Rule 4.** The OpenAI SDK is imported in exactly one file
   (`orchestrator/client.py`) and no model name appears outside `config.py`.
   Both are asserted in `tests/test_api_contract.py`, which also checks that no
