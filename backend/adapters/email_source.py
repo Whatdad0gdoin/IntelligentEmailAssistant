@@ -34,7 +34,7 @@ import threading
 from email import policy
 from email.parser import BytesParser
 
-from backend.adapters.headers import message_id_of, parse_message
+from backend.adapters.headers import attachment_content, message_id_of, parse_message
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +52,15 @@ class EmailSource:
 
     def get_email(self, email_id):
         """Return one message by id, or None."""
+        raise NotImplementedError
+
+    def get_attachment(self, email_id, index):
+        """Return the content of one attachment as an AttachmentContent, or None.
+
+        `index` is the attachment's position in that message's `attachments`
+        list. This is the only method that reads attachment bytes, and only
+        the route that serves an attachment a person opened calls it.
+        """
         raise NotImplementedError
 
 
@@ -106,13 +115,12 @@ class FixtureEmailSource(EmailSource):
     def list_emails(self):
         return self._read_all()
 
-    def get_email(self, email_id):
-        """Locate one message by id, parsing bodies for at most one file.
+    def _message(self, email_id):
+        """The parsed MIME message with this id, or None.
 
         A first pass reads headers only, which is enough to compute the id
         (see headers.message_id_of). Only the matching file is then parsed in
-        full. This is still stateless: nothing is retained between calls, and
-        no body is decoded except the one being returned.
+        full.
         """
         parser = BytesParser(policy=policy.default)
         for directory, name in self._files():
@@ -123,10 +131,24 @@ class FixtureEmailSource(EmailSource):
                 if message_id_of(headers) != email_id:
                     continue
                 with open(path, "rb") as handle:
-                    return parse_message(parser.parse(handle))
+                    return parser.parse(handle)
             except OSError as exc:
                 log.warning("Skipping unreadable message file %s: %s", name, exc.strerror)
         return None
+
+    def get_email(self, email_id):
+        """Locate one message by id, parsing bodies for at most one file.
+
+        This is still stateless: nothing is retained between calls, and no
+        body is decoded except the one being returned.
+        """
+        message = self._message(email_id)
+        return None if message is None else parse_message(message)
+
+    def get_attachment(self, email_id, index):
+        """Read one attachment out of the one file that holds it."""
+        message = self._message(email_id)
+        return None if message is None else attachment_content(message, index)
 
 
 _lock = threading.Lock()

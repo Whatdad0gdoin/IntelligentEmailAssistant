@@ -1,22 +1,21 @@
 /**
- * The shared "ask, never guess" card (FR-05, spec section 6.3), and the Voice
- * view still asking through it.
+ * The "ask, never guess" card (FR-05, spec section 6.3), and a spoken command
+ * asking through it.
  *
- * The card is shared so the spoken and the typed path cannot drift apart.
- * CommandBar.test.jsx covers the typed half; the spoken half is here, because
- * the Voice view's question used to be its own copy and no test exercised it.
+ * The card is one component so the spoken and the typed path cannot drift
+ * apart. CommandBar.test.jsx covers the typed half; the spoken half is here,
+ * driven through the command bar's microphone.
  *
- * jsdom has no SpeechRecognition, and Voice.jsx looks the constructor up once
- * at module load, so a stand-in is installed with vi.hoisted, ahead of the
- * imports, and every instance is recorded.
+ * jsdom has no SpeechRecognition, so a stand-in is installed ahead of the
+ * tests and every instance is recorded.
  */
 
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import CommandBar from "./CommandBar.jsx";
 import IntentChoice, { CONFIDENCE_FLOOR, intentCandidates, isConfident } from "./IntentChoice.jsx";
-import Voice from "../views/Voice.jsx";
 import * as api from "../api/client.js";
 
 vi.mock("../api/client.js", () => ({ voiceIntent: vi.fn() }));
@@ -101,26 +100,27 @@ describe("the question", () => {
   });
 });
 
-describe("the Voice view asks through it", () => {
+describe("a spoken command asks through it", () => {
   const EMAILS = [{ apiId: "a", from: "David Robinson", subject: "Deadline", receivedAt: "" }];
 
-  /** Starts listening and delivers one recognised utterance. */
+  /** Speaks one utterance into the command bar, then runs what was heard. */
   async function say(user, transcript) {
-    await user.click(screen.getByRole("button", { name: /start listening/i }));
+    await user.click(screen.getByRole("button", { name: "Speak a command" }));
     act(() => recognisers.at(-1).onresult({ results: [[{ transcript }]] }));
+    await user.click(screen.getByRole("button", { name: /^run$/i }));
   }
 
   it("below the floor, shows the choice and runs only the action picked", async () => {
     const user = userEvent.setup();
     const onRun = vi.fn(() => true);
     api.voiceIntent.mockResolvedValue({ intent: "summarise", target_email_id: "a", confidence: 0.3 });
-    render(<Voice emails={EMAILS} onRun={onRun} onBack={vi.fn()} />);
+    render(<CommandBar emails={EMAILS} onRun={onRun} voice />);
 
     await say(user, "summarise davids email");
     const group = await screen.findByRole("group", { name: /not confident enough/i });
     expect(onRun).not.toHaveBeenCalled();
-    // No Cancel here: the next utterance simply replaces the question.
-    expect(within(group).queryByRole("button", { name: /cancel/i })).toBeNull();
+    // The same card a typed command gets, Cancel included.
+    expect(within(group).getByRole("button", { name: /cancel/i })).toBeEnabled();
 
     await user.click(within(group).getByRole("button", { name: "Draft a reply" }));
     expect(onRun).toHaveBeenCalledTimes(1);
@@ -130,7 +130,7 @@ describe("the Voice view asks through it", () => {
   it("with no email to act on, says so instead of guessing", async () => {
     const user = userEvent.setup();
     api.voiceIntent.mockResolvedValue({ intent: "unknown", target_email_id: null, confidence: 0 });
-    render(<Voice emails={EMAILS} onRun={() => false} onBack={vi.fn()} />);
+    render(<CommandBar emails={EMAILS} onRun={() => false} voice />);
 
     await say(user, "do something");
     const group = await screen.findByRole("group", { name: /couldn't tell/i });

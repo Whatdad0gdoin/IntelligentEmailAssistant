@@ -10,8 +10,9 @@ API and only its transcript is posted here, so this server never receives
 audio -- a privacy property worth having, and the reason no audio format
 appears anywhere in this codebase. It is not a promise that the audio stays on
 the user's device: Chrome's recogniser sends it to Google unless on-device
-recognition is in use, and Edge's sends it to Microsoft. The Voice view says so
-rather than claiming more than the app controls.
+recognition is in use, and Edge's sends it to Microsoft. The command bar, where
+a command is spoken, and Settings both say so rather than claiming more than
+the app controls.
 """
 
 from datetime import datetime, timezone

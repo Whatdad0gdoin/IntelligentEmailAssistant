@@ -287,6 +287,69 @@ def test_no_command_can_change_the_mailbox(source, mailbox):
     assert sent <= {"login", "select", "SEARCH", "FETCH"}
 
 
+# --- opening one attachment ----------------------------------------------------
+
+
+def _message_with_files(message_id):
+    message = EmailMessage()
+    message["From"] = "Grace <grace@example.org>"
+    message["To"] = "you@example.com"
+    message["Subject"] = "Files"
+    message["Date"] = "Mon, 8 Sep 2025 09:15:00 +1000"
+    message["Message-ID"] = f"<{message_id}>"
+    message.set_content("Two files attached.")
+    message.add_attachment(b"%PDF-1.4 figures", maintype="application", subtype="pdf",
+                           filename="figures.pdf")
+    message.add_attachment(b"\x89PNG picture", maintype="image", subtype="png",
+                           filename="chart.png")
+    return message.as_bytes()
+
+
+def test_an_attachment_is_read_from_the_message_that_carries_it(source, mailbox):
+    mailbox({
+        b"1": (_message("One", "a@example.org", "First body.", "one@example.org"), b""),
+        b"2": (_message_with_files("files@example.org"), b""),
+    })
+
+    listed = source.get_email("files@example.org").attachments
+    first = source.get_attachment("files@example.org", 0)
+    second = source.get_attachment("files@example.org", 1)
+
+    assert [a.filename for a in listed] == ["figures.pdf", "chart.png"]
+    assert (first.filename, first.content_type, first.data) == (
+        "figures.pdf", "application/pdf", b"%PDF-1.4 figures")
+    assert (second.filename, second.content_type, second.data) == (
+        "chart.png", "image/png", b"\x89PNG picture")
+
+
+def test_an_attachment_that_is_not_there_is_none(source, mailbox):
+    mailbox({
+        b"1": (_message("One", "a@example.org", "b", "one@example.org"), b""),
+        b"2": (_message_with_files("files@example.org"), b""),
+    })
+
+    assert source.get_attachment("files@example.org", 2) is None
+    assert source.get_attachment("one@example.org", 0) is None
+    assert source.get_attachment("nothing@example.org", 0) is None
+
+
+def test_opening_an_attachment_marks_nothing_read_and_changes_nothing(source, mailbox):
+    """The claim that makes pointing this at real mail defensible has to hold
+    on the new path too: read-only mailbox, BODY.PEEK, and no other command."""
+    mailbox({b"1": (_message_with_files("files@example.org"), b"")})
+
+    source.get_attachment("files@example.org", 0)
+
+    server = FakeIMAP.instances[0]
+    assert server.readonly is True
+    fetches = [call for call in server.calls if call[0] == "FETCH"]
+    assert len(fetches) == 2                   # headers to find it, then that one message
+    for call in fetches:
+        assert "BODY.PEEK" in call[2] and "RFC822" not in call[2]
+    assert {call[0] for call in server.calls} <= {"login", "select", "SEARCH", "FETCH"}
+    assert server.logged_out is True
+
+
 def test_the_connection_is_closed_even_when_the_fetch_fails(source, mailbox):
     mailbox({b"1": (_message("One", "a@example.org", "b", "one@example.org"), b"")})
     server_box = []

@@ -2,8 +2,8 @@
  * Dictation: the browser's speech recogniser, kept running while the user
  * talks, handing each finished phrase to `onText`.
  *
- * Unlike Voice Commands (one utterance, then stop), dictation is continuous and
- * shows what it is hearing as it goes. The constructor is looked up when the
+ * Unlike a spoken command (hooks/useSpokenCommand.jsx: one utterance, then
+ * stop), dictation is continuous and shows what it is hearing as it goes. The constructor is looked up when the
  * hook runs rather than once at load, so a browser without it simply reports
  * `supported: false` (SR-01) and the caller renders nothing.
  *

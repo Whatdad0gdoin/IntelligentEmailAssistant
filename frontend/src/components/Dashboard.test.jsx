@@ -7,9 +7,8 @@
  *
  * The requirement is graceful degradation, and it has two halves that are easy
  * to get half-right. The notice must appear, and the controls that cannot work
- * must be gone rather than present and dead. A sidebar entry that leads to a
- * view saying "your browser cannot do this" is the failure mode this guards
- * against.
+ * must be gone rather than present and dead. A microphone that does nothing
+ * when pressed is the failure mode this guards against.
  *
  * Everything the app can do must still be reachable by clicking, so the test
  * does not stop at counting missing buttons -- it opens an email and uses the
@@ -70,11 +69,15 @@ describe("SR-01: a browser without speech", () => {
     expect(notice).toHaveTextContent(/clicking/i);
   });
 
-  it("removes the Voice Commands destination instead of leaving a dead end", async () => {
+  it("shows no microphone instead of a dead one, and keeps the command bar", async () => {
     renderDashboard();
     await inboxLoaded();
 
+    expect(screen.queryByRole("button", { name: /speak a command/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /voice commands/i })).toBeNull();
+    // What the microphone would have done can still be typed.
+    expect(screen.getByRole("textbox", { name: /command/i }))
+      .toHaveAttribute("placeholder", expect.stringMatching(/^type a command/i));
   });
 
   it("still offers the Inbox destination", async () => {

@@ -1,16 +1,16 @@
 /**
- * "Ask, never guess" (FR-05, spec section 6.3), shared by the Voice view and
- * the command bar.
+ * "Ask, never guess" (FR-05, spec section 6.3), for a command typed or spoken
+ * into the command bar.
  *
  * When POST /api/voice/intent answers `unknown`, or answers with confidence
- * below the floor, neither caller acts. Each shows this card instead: what the
+ * below the floor, the bar does not act. It shows this card instead: what the
  * app made of the command (nothing, or not enough) and one button per action,
  * so the user picks rather than the app guessing. Acting on a low-confidence
  * intent is how a command ends up summarising the wrong email.
  *
  * The floor, the wording, the buttons and the "which email?" message live here
- * so the spoken and the typed path cannot drift apart: a command that makes
- * the Voice view ask makes the command bar ask too.
+ * so the spoken and the typed path cannot drift apart: a command asks the same
+ * question at the same threshold however it reached the bar.
  */
 
 import { useId } from "react";
@@ -59,8 +59,8 @@ export function intentCandidates(emails) {
 
 /**
  * The question itself. `children` render above it, which is where the command
- * bar shows back what was typed; the Voice view shows its transcript on its
- * own. Cancel appears only when the caller passes `onCancel`.
+ * bar shows back what was typed or heard. Cancel appears only when the caller
+ * passes `onCancel`.
  */
 export default function IntentChoice({ result, onChoose, onCancel, children }) {
   const promptId = useId();

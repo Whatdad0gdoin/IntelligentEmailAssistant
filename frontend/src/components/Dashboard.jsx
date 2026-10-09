@@ -1,20 +1,21 @@
 /**
  * Authenticated app shell.
  *
- * Three destinations: Inbox, Voice Commands, Settings. The AI actions are not
- * destinations; Summarise, Read Aloud, Draft Reply and Translate act on the
- * open message inside the reading pane, and tone lives on the draft. The
- * translation language chosen in Settings is passed down as the language
- * Translate starts in.
+ * Two destinations: Inbox and Settings. The AI actions are not destinations;
+ * Summarise, Read Aloud, Draft Reply and Translate act on the open message
+ * inside the reading pane, and tone lives on the draft. The translation
+ * language chosen in Settings is passed down as the language Translate starts
+ * in.
+ *
+ * A command bar sits above both destinations, in every browser and whatever
+ * the voice setting. A command can be typed into it anywhere, and spoken into
+ * it where the browser can recognise speech: the bar carries the microphone,
+ * and there is no separate voice page. Typed or spoken, the text goes to the
+ * same intent route and is dispatched through the same runVoiceAction.
  *
  * Voice can be switched off in Settings. That hides the microphone and speaker
  * controls and nothing else: every voice action already has a click equivalent
- * (SR-01), so the app loses no capability, only two buttons.
- *
- * A command bar sits above every destination, in every browser and whatever
- * the voice setting. Typed text goes to the same intent route as speech and is
- * dispatched through the same runVoiceAction, so a browser that never gets the
- * Voice Commands destination (no speech recognition) can still give commands.
+ * (SR-01), so the app loses no capability, only its voice buttons.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -24,7 +25,6 @@ import CommandBar from "./CommandBar.jsx";
 import SideItem from "./SideItem.jsx";
 import InboxView from "../views/Inbox.jsx";
 import SettingsView from "../views/Settings.jsx";
-import VoiceView from "../views/Voice.jsx";
 import { useInbox } from "../hooks/useInbox.jsx";
 import { usePreference } from "../hooks/usePreference.jsx";
 import {
@@ -38,7 +38,6 @@ import { capabilities, voiceLimitation } from "../lib/capabilities.js";
 import { newestFirst } from "../lib/search.js";
 
 const INBOX_FEATURE = FEATURES.find((f) => f.id === "inbox");
-const VOICE_FEATURE = FEATURES.find((f) => f.id === "voice");
 
 export default function Dashboard({ user, onLogout }) {
   const [active, setActive] = useState("inbox");
@@ -68,16 +67,12 @@ export default function Dashboard({ user, onLogout }) {
     if (selected) loadBody(selected);
   }, [selected, loadBody]);
 
-  // Voice Commands needs speech recognition. Without it, or with voice turned
-  // off, the destination is removed rather than shown as a dead end.
+  // A spoken command needs speech recognition. Without it, or with voice
+  // turned off, the command bar shows no microphone rather than a dead one.
   const voiceAvailable = voiceEnabled && capabilities.stt;
-  useEffect(() => {
-    if (active === "voice" && !voiceAvailable) setActive("inbox");
-  }, [active, voiceAvailable]);
 
   const allEmails = Object.values(inbox.groups).flat();
-  // The candidates for a command, spoken or typed: one list, built once, for
-  // the Voice view and the command bar alike.
+  // The candidates for a command, spoken or typed: one list, built once.
   //
   // Newest first, because the backend reads the first candidate as "the latest
   // email" and keeps only the first 100. The inbox arrives grouped by category,
@@ -118,16 +113,7 @@ export default function Dashboard({ user, onLogout }) {
   const unreadCount = allEmails.filter((e) => e.unread).length;
 
   let main;
-  if (active === "voice") {
-    main = (
-      <VoiceView
-        emails={voiceEmails}
-        speechLang={speechLang}
-        onRun={runVoiceAction}
-        onBack={() => setActive("inbox")}
-      />
-    );
-  } else if (active === "settings") {
+  if (active === "settings") {
     main = (
       <SettingsView
         voiceEnabled={voiceEnabled}
@@ -173,12 +159,6 @@ export default function Dashboard({ user, onLogout }) {
         </div>
         <nav className="side-nav">
           <SideItem f={INBOX_FEATURE} active={active} onClick={setActive} badge={unreadCount} />
-          {voiceAvailable && (
-            <>
-              <div className="nav-group-label">Hands-free</div>
-              <SideItem f={VOICE_FEATURE} active={active} onClick={setActive} />
-            </>
-          )}
         </nav>
         <div className="side-foot">
           <button className={`side-mini ${active === "settings" ? "active" : ""}`} onClick={() => setActive("settings")}>
@@ -201,10 +181,16 @@ export default function Dashboard({ user, onLogout }) {
       <main className={active === "inbox" ? "dash-main dash-fill" : "dash-main"}>
         {/* SR-01: persistent, non-blocking, and never gates a feature. */}
         {voiceNotice && <div className="voice-notice" role="status">{voiceNotice}</div>}
-        {/* Outside the voice switch and the capability check on purpose: it
-            needs neither a microphone nor a recogniser, so it is the command
-            path every browser keeps. */}
-        <CommandBar emails={voiceEmails} onRun={runVoiceAction} />
+        {/* The bar itself is outside the voice switch and the capability check
+            on purpose: typing needs neither a microphone nor a recogniser, so
+            it is the command path every browser keeps. Only its microphone
+            depends on them. */}
+        <CommandBar
+          emails={voiceEmails}
+          onRun={runVoiceAction}
+          voice={voiceAvailable}
+          speechLang={speechLang}
+        />
         <div className="dash-view">{main}</div>
       </main>
     </div>

@@ -2,9 +2,10 @@
  * The command bar (FR-05, typed): the command path every browser keeps.
  *
  * This file runs in bare jsdom, which has neither speechSynthesis nor
- * SpeechRecognition: Firefox, in effect, where SR-01 removes Voice Commands.
- * That is the browser the bar exists for, so it is the default here rather
- * than a case that has to be set up.
+ * SpeechRecognition: Firefox, in effect, where SR-01 leaves the bar without
+ * its microphone. That is the browser the typed path exists for, so it is the
+ * default here rather than a case that has to be set up. The spoken path is
+ * in CommandBar.voice.test.jsx.
  *
  * The bar adds no interpreter of its own, and these tests hold it to that. The
  * request is the voice request (same call, same newest-first candidates), and
@@ -99,14 +100,14 @@ async function tabTo(user, target, limit = 30) {
 }
 
 describe("the bar is always there", () => {
-  it("is offered in a browser with no speech, where Voice Commands is removed", async () => {
+  it("is offered in a browser with no speech, without a microphone", async () => {
     renderDashboard();
 
     expect(await commandField()).toBeEnabled();
     expect(screen.getByRole("textbox", { name: /command/i }))
       .toHaveAttribute("placeholder", expect.stringMatching(/summarise the latest email/i));
-    // SR-01 is unchanged: the destination is still gone, not dead-ended.
-    expect(screen.queryByRole("button", { name: /voice commands/i })).toBeNull();
+    // SR-01: what cannot work here is absent, not present and dead.
+    expect(screen.queryByRole("button", { name: /speak a command/i })).toBeNull();
   });
 
   it("stays when voice is switched off", async () => {
@@ -144,7 +145,7 @@ describe("a typed command goes the way a spoken one does", () => {
     const [text, emails] = api.voiceIntent.mock.calls[0];
     expect(text).toBe("summarise the latest email");
     // Newest first across categories, the undated email last: the same list
-    // the Voice view sends (Dashboard.voice-order.test.jsx).
+    // a spoken command sends (Dashboard.voice-order.test.jsx).
     expect(emails.map((e) => e.id)).toEqual(["studies-new", "personal-mid", "work-old", "work-undated"]);
     expect(emails[0]).toEqual({
       id: "studies-new",

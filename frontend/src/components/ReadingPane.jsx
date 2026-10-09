@@ -9,9 +9,10 @@
  * Reply tone (FR-06) is here too, on the draft rather than in a settings
  * screen, because it changes the draft in front of you.
  *
- * Attachments are listed by name, type and size, and nothing more: the
- * backend never reads their content, so there is nothing to open, preview or
- * send to the AI, and the pane says so rather than offering a dead link.
+ * Attachments are listed by name, type and size, and each can be opened or
+ * saved (components/Attachments.jsx). One is fetched only when the user asks
+ * for it, and none is ever sent to the AI: Summarise, Draft and Translate
+ * work from the message text alone.
  *
  * Translation (FR-07) is here twice, because the RTM names two things to
  * translate. Translate in the toolbar opens a panel with the email's subject
@@ -22,36 +23,28 @@
  * the backend's check -- every number, link and address carried across -- in
  * the same notice summaries use.
  *
- * Voice Commands (FR-05) deliberately stays out of this pane: it is
- * inbox-wide, not a property of one email, so it does not belong on a
- * per-message toolbar.
+ * Commands (FR-05), typed or spoken, deliberately stay out of this pane: they
+ * are inbox-wide, not a property of one email, so they live in the command
+ * bar above every page rather than on a per-message toolbar.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Check, File as FileIcon, FileImage, FileText, Languages, Loader2, Mail,
-  MessageSquareReply, Mic, RefreshCw, Sparkles, Square, Undo2, Volume2, X,
+  ArrowLeft, Check, Languages, Loader2, MessageSquareReply, Mic, RefreshCw, Sparkles, Square,
+  Undo2, Volume2, X,
 } from "lucide-react";
 
 import * as api from "../api/client.js";
 import { useDictation } from "../hooks/useDictation.jsx";
 import { useSpeech } from "../hooks/useSpeech.jsx";
+import Attachments from "./Attachments.jsx";
 import GroundingNotice from "./GroundingNotice.jsx";
 import {
   CATEGORIES, DEFAULT_SPEECH_LANG, DEFAULT_TRANSLATION_LANGUAGE, LANGUAGES, TONES, languageCode,
 } from "../lib/constants.js";
 import { appendDictation } from "../lib/dictation.js";
 import { segment, toParagraphs } from "../lib/highlight.js";
-import { attachmentLabel, formatBytes, formatReceivedLong } from "../lib/format.js";
-
-function AttachmentIcon({ type }) {
-  const t = type || "";
-  let Icon = FileIcon;
-  if (t.startsWith("image/")) Icon = FileImage;
-  else if (t === "message/rfc822") Icon = Mail;
-  else if (t === "application/pdf" || t.startsWith("text/") || /word|document/.test(t)) Icon = FileText;
-  return <Icon size={14} strokeWidth={2.2} aria-hidden="true" />;
-}
+import { formatReceivedLong } from "../lib/format.js";
 
 function LanguageOptions() {
   return LANGUAGES.map(({ key }) => <option key={key} value={key}>{key}</option>);
@@ -315,7 +308,6 @@ export default function ReadingPane({
 
   const speaking = speech.speakingId === email.id;
   const initials = (email.sender_name || email.sender || "?").slice(0, 2).toUpperCase();
-  const attachments = Array.isArray(email.attachments) ? email.attachments : [];
 
   return (
     <div className="reader" key={email.id}>
@@ -341,26 +333,7 @@ export default function ReadingPane({
             <span className="reader-time">{formatReceivedLong(email.received_at)}</span>
           </div>
         </div>
-        {attachments.length > 0 && (
-          <div className="reader-attachments">
-            <ul
-              className="att-list"
-              aria-label={`${attachments.length} ${attachments.length === 1 ? "attachment" : "attachments"}`}
-            >
-              {attachments.map((attachment, i) => {
-                const size = formatBytes(attachment.size);
-                return (
-                  <li className="att-chip" key={`${i}-${attachment.filename}`} title={attachmentLabel(attachment)}>
-                    <AttachmentIcon type={attachment.content_type} />
-                    <span className="att-name">{attachmentLabel(attachment)}</span>
-                    {size && <span className="att-size">{size}</span>}
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="att-note">Listed only: attachments are not opened or sent to the AI.</p>
-          </div>
-        )}
+        <Attachments emailId={email.id} attachments={email.attachments} />
       </div>
 
       <div className="reader-body">

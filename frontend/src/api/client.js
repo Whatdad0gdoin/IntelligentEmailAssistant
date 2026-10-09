@@ -50,8 +50,10 @@ export class ApiError extends Error {
 }
 
 async function request(path, { method = "GET", body, signal, isAuthAttempt = false,
-                              timeoutMs = TIMEOUT_MS } = {}) {
-  const headers = { Accept: "application/json" };
+                              timeoutMs = TIMEOUT_MS, raw = false } = {}) {
+  // `raw` asks for the response's bytes as a Blob instead of parsed JSON. Only
+  // a success differs: a failure is still the backend's JSON { error }.
+  const headers = { Accept: raw ? "*/*" : "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
@@ -125,6 +127,8 @@ async function request(path, { method = "GET", body, signal, isAuthAttempt = fal
     if (unauthorizedHandler) unauthorizedHandler();
     throw new ApiError("Your session has ended. Please sign in again.", 401);
   }
+
+  if (raw && response.ok) return response.blob();
 
   let payload = null;
   if (response.status !== 204) {
@@ -251,6 +255,29 @@ export async function voiceIntent(transcript, emails = [], alternatives = [], { 
  */
 export async function getEmail(emailId, { signal } = {}) {
   return request(`/api/inbox/${encodeURIComponent(emailId)}`, { signal });
+}
+
+/**
+ * GET /api/inbox/:id/attachments/:index -> a Blob holding the attachment itself.
+ *
+ * `index` is the attachment's position in the email's `attachments` list. This
+ * is the only call that fetches attachment content, and it is made only when
+ * the user opens or saves that attachment.
+ *
+ * It has to be fetched rather than linked to. The token is sent as an
+ * Authorization header (section 5.1), and a browser does not put that header
+ * on an <img src> or an <a href>, so the caller shows or saves the Blob from a
+ * blob: URL instead. The token therefore never appears in a URL.
+ *
+ * The Blob's `type` is what the backend chose to serve: the attachment's own
+ * type when it is safe to show in the page, application/octet-stream when it
+ * is not.
+ */
+export async function fetchAttachment(emailId, index, { signal } = {}) {
+  return request(
+    `/api/inbox/${encodeURIComponent(emailId)}/attachments/${encodeURIComponent(index)}`,
+    { raw: true, signal }
+  );
 }
 
 export { request };

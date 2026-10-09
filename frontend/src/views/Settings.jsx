@@ -10,6 +10,9 @@
  *
  * Every voice-triggered action has a click equivalent (SR-01), so turning
  * voice off removes nothing but the microphone and speaker controls.
+ *
+ * The Voice section is also where the app says where spoken audio goes: not
+ * to our server, and possibly to the browser's own speech service.
  */
 
 import { ChevronRight, Languages, Mic, RefreshCw, Volume2 } from "lucide-react";
@@ -72,7 +75,7 @@ export default function Settings({
 
         <Row
           label="Voice features"
-          detail="Read Aloud and Voice Commands. Everything they do is also a button."
+          detail="Read Aloud, speaking a command into the command bar, and dictating a reply. Everything they do is also a button or can be typed."
         >
           <button
             className={`toggle ${voiceEnabled ? "on" : ""}`}
@@ -90,7 +93,7 @@ export default function Settings({
         {voiceEnabled && capabilities.stt && (
           <Row
             label="Recognition language"
-            detail="The English your voice commands listen for. Pick the accent closest to yours: the browser's own language setting is often not the one you speak."
+            detail="The English the microphone listens for, in the command bar and when dictating. Pick the accent closest to yours: the browser's own language setting is often not the one you speak."
           >
             {/* A native select gives keyboard and screen reader support for
                 free; .setting-select only matches it to the other controls. */}
@@ -105,6 +108,17 @@ export default function Settings({
               ))}
             </select>
           </Row>
+        )}
+
+        {/* Where the audio goes, said where voice is switched on and off. The
+            command bar repeats the short form while it listens. Shown only
+            where there is a microphone to speak into. */}
+        {voiceEnabled && capabilities.stt && (
+          <p className="setting-footnote">
+            Our server never receives your audio, only the text recognised from it. Your
+            browser's speech service may: Chrome sends it to Google unless on-device
+            recognition is used, and Edge sends it to Microsoft.
+          </p>
         )}
       </section>
 

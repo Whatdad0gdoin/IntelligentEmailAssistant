@@ -1,9 +1,15 @@
 """Attachment metadata (backend/adapters/headers.py).
 
 The inbox can now say "this email has a PDF". What it may say is bounded by
-headers.py's promise that attachment content is never read, never summarised
-and never leaves the source, so most of these tests are about what does NOT
-happen: no attachment text in the body, in a response, in a prompt or in a log.
+headers.py's promise that attachment content is never summarised, never sent
+to a model and never logged, so most of these tests are about what does NOT
+happen: no attachment text in the body, in the inbox's or the reading pane's
+response, in a prompt or in a log.
+
+The one way attachment bytes do leave the source is a person opening that
+attachment. The last section here covers reading the bytes of one listed
+attachment (attachment_content); the route that serves them is tested in
+tests/test_attachment_route.py.
 """
 
 import logging
@@ -12,7 +18,14 @@ from email import policy
 from email.message import EmailMessage
 from email.parser import BytesParser
 
-from backend.adapters.headers import MAX_ATTACHMENTS, Attachment, attachment_of, parse_message
+from backend.adapters.headers import (
+    INLINE_IMAGE_MIN_BYTES,
+    MAX_ATTACHMENTS,
+    Attachment,
+    attachment_content,
+    attachment_of,
+    parse_message,
+)
 from backend.orchestrator.schemas import CATEGORIES
 
 CONTENT_MARKER = "ATTACHMENT-CONTENT-MUST-NOT-LEAVE"
@@ -274,3 +287,126 @@ def test_hostile_attachment_headers_do_not_break_parsing():
     assert email.body_text.strip() == "Body text."
     assert len(email.attachments) == 2
     assert all(isinstance(a.filename, str) for a in email.attachments)
+
+
+# --- an image pasted into the message ---------------------------------------------
+
+
+def _with_embedded_image(data, filename="image.png"):
+    """A message whose HTML shows an image by Content-ID, as a pasted screenshot does."""
+    message = _message()
+    message.add_alternative('<p>Look: <img src="cid:pasted1"></p>', subtype="html")
+    message.get_payload()[1].add_related(data, maintype="image", subtype="png", cid="<pasted1>",
+                                         filename=filename, disposition="inline")
+    return message
+
+
+def test_a_large_image_the_html_embeds_is_listed():
+    """The app shows a message as plain text, so a pasted screenshot is on screen
+    nowhere unless it is listed. A logo-sized one stays unlisted (see above)."""
+    data = b"\x89PNG\r\n" + b"x" * INLINE_IMAGE_MIN_BYTES
+    assert _parse(_with_embedded_image(data)).attachments == [
+        Attachment(filename="image.png", content_type="image/png", size=len(data))]
+
+
+def test_the_size_that_separates_a_pasted_image_from_a_logo():
+    just_under = _with_embedded_image(b"x" * (INLINE_IMAGE_MIN_BYTES - 1))
+    exactly = _with_embedded_image(b"x" * INLINE_IMAGE_MIN_BYTES)
+    assert _parse(just_under).attachments == []
+    assert len(_parse(exactly).attachments) == 1
+
+
+def test_an_embedded_image_of_unknown_size_is_not_listed():
+    """A size the source did not report cannot be judged, so nothing changes."""
+    assert attachment_of("image/png", "inline", "image.png", "<pasted1>", None) is None
+
+
+def test_only_an_image_is_listed_for_being_embedded_and_large():
+    big = INLINE_IMAGE_MIN_BYTES * 10
+    assert attachment_of("application/octet-stream", "inline", "blob.bin", "<c1>", big) is None
+    assert attachment_of("text/html", "inline", "page.html", "<c1>", big) is None
+
+
+def test_a_large_embedded_image_is_never_read_as_body():
+    data = b"\x89PNG\r\n" + CONTENT_MARKER.encode() * 2000
+    email = _parse(_with_embedded_image(data))
+    assert len(email.attachments) == 1
+    assert CONTENT_MARKER not in email.body_text + email.body_html
+
+
+# --- reading one attachment, when a person opens it ------------------------------
+
+
+def _raw(message):
+    return BytesParser(policy=policy.default).parsebytes(message.as_bytes())
+
+
+def test_the_bytes_of_a_listed_attachment_can_be_read_by_its_position():
+    message = _message_with_attachments()
+    listed = _parse(message).attachments
+    pdf = attachment_content(_raw(message), 0)
+    text = attachment_content(_raw(message), 1)
+    assert (pdf.filename, pdf.content_type) == (listed[0].filename, listed[0].content_type)
+    assert pdf.data == b"%PDF-1.4 " + CONTENT_MARKER.encode()
+    assert (text.filename, text.content_type) == ("rubric.txt", "text/plain")
+    assert text.data.decode().strip() == CONTENT_MARKER
+    assert len(pdf.data) == listed[0].size and len(text.data) == listed[1].size
+
+
+def test_a_position_that_is_not_in_the_list_reads_nothing():
+    raw = _raw(_message_with_attachments())
+    for index in (2, 99, -1, None, "0", 1.0, True):
+        assert attachment_content(raw, index) is None, index
+    assert attachment_content(_raw(_message()), 0) is None
+
+
+def test_a_forwarded_message_is_read_as_the_email_it_is():
+    inner = EmailMessage()
+    inner["From"] = "someone@example.org"
+    inner["Subject"] = "Original"
+    inner.set_content("Original text.")
+    message = _message()
+    message.add_attachment(inner)
+    content = attachment_content(_raw(message), 0)
+    assert content.content_type == "message/rfc822"
+    reopened = BytesParser(policy=policy.default).parsebytes(content.data)
+    assert reopened["Subject"] == "Original"
+    assert "Original text." in reopened.get_content()
+
+
+def test_a_large_embedded_image_can_be_read():
+    data = b"\x89PNG\r\n" + b"x" * INLINE_IMAGE_MIN_BYTES
+    content = attachment_content(_raw(_with_embedded_image(data)), 0)
+    assert (content.filename, content.content_type, content.data) == ("image.png", "image/png", data)
+
+
+def test_a_position_means_the_same_attachment_when_listing_and_when_reading(monkeypatch):
+    """One walk serves both. If a malformed part were skipped by the list and
+    counted by the reader, opening the second attachment would serve the third."""
+    from backend.adapters import headers as headers_module
+
+    message = _message()
+    message.add_attachment(b"x", maintype="application", subtype="octet-stream", filename="bad.bin")
+    message.add_attachment(b"%PDF", maintype="application", subtype="pdf", filename="good.pdf")
+    real = headers_module._leaf_attachment
+
+    def flaky(part, content_type):
+        if part.get_filename() == "bad.bin":
+            raise ValueError("malformed")
+        return real(part, content_type)
+
+    monkeypatch.setattr(headers_module, "_leaf_attachment", flaky)
+    assert [a.filename for a in _parse(message).attachments] == ["good.pdf"]
+    content = attachment_content(_raw(message), 0)
+    assert (content.filename, content.data) == ("good.pdf", b"%PDF")
+    assert attachment_content(_raw(message), 1) is None
+
+
+def test_reading_stops_at_the_same_cap_as_the_list():
+    message = _message()
+    for n in range(MAX_ATTACHMENTS + 3):
+        message.add_attachment(b"x", maintype="application", subtype="octet-stream",
+                               filename=f"file{n}.bin")
+    raw = _raw(message)
+    assert attachment_content(raw, MAX_ATTACHMENTS - 1).filename == f"file{MAX_ATTACHMENTS - 1}.bin"
+    assert attachment_content(raw, MAX_ATTACHMENTS) is None

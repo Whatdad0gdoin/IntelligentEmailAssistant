@@ -12,14 +12,20 @@ per request and never writes anything down.
 
 ATTACHMENTS
 -----------
-Attachment content never reaches the body, a summary, an API response, a model
-or a log. What the app keeps is what a mail client shows before you open
-anything -- each attachment's file name, type and size -- so the inbox can say
-"this email has a PDF" without the PDF going anywhere. (For a source that
-delivers whole messages, the parser decodes an attachment only to count its
-bytes, then lets them go with the request.) Every source produces that list
-through attachment_of() below, so the rule for what counts as an attachment
-lives in one place.
+Attachment content never reaches the body, a summary, a model or a log. What
+the app keeps is what a mail client shows before you open anything -- each
+attachment's file name, type and size -- so the inbox can say "this email has
+a PDF" without the PDF going anywhere. (For a source that delivers whole
+messages, the parser decodes an attachment only to count its bytes, then lets
+them go with the request.) Every source produces that list through
+attachment_of() below, so the rule for what counts as an attachment lives in
+one place.
+
+There is one way an attachment's bytes leave the source: the signed-in person
+opens that attachment. attachment_content() below reads the bytes of a single
+listed attachment for the route that serves it (routes/attachments.py), and
+nothing else calls it. The inbox, the reading pane's JSON, every prompt and
+every log line still carry names, types and sizes only.
 """
 
 import datetime as _dt
@@ -40,6 +46,11 @@ _MAX_FILENAME = 120
 # A message with more attachments than this is pathological, and listing them
 # all would make one email dominate the inbox payload.
 MAX_ATTACHMENTS = 50
+# An image the HTML embeds by Content-ID is listed once it is at least this
+# big. The app shows a message as plain text, so a pasted screenshot or photo
+# would otherwise be nowhere on screen; below this size an embedded image is a
+# signature logo, a spacer or a tracking pixel, which no mail client lists.
+INLINE_IMAGE_MIN_BYTES = 20 * 1024
 
 
 @dataclass(frozen=True)
@@ -57,6 +68,20 @@ class Attachment:
     def as_dict(self):
         return {"filename": self.filename, "content_type": self.content_type,
                 "size": self.size}
+
+
+@dataclass(frozen=True)
+class AttachmentContent:
+    """One attachment's bytes, read because a person opened that attachment.
+
+    Built per request by a source's get_attachment() and dropped with the
+    response. It is never put on a SourceEmail, cached, logged or sent to a
+    model (NFR-03).
+    """
+
+    filename: str
+    content_type: str
+    data: bytes
 
 
 @dataclass
@@ -234,6 +259,9 @@ def attachment_of(content_type, disposition, filename, content_id, size):
       are the message, not attachments.
     * A part with a Content-ID and no attachment disposition is a resource the
       HTML embeds (a signature logo, a banner) -> not listed, as clients do.
+      The exception is an embedded image of INLINE_IMAGE_MIN_BYTES or more: a
+      client would show a pasted screenshot in the body, and this app shows
+      the body as plain text, so listing it is the only way it can be seen.
     * Any other part with a file name is an attachment (some mailers name a PDF
       without a Content-Disposition header, or mark it inline).
     * A forwarded message (message/rfc822) is an attachment even unnamed.
@@ -247,8 +275,13 @@ def attachment_of(content_type, disposition, filename, content_id, size):
         if content_type in ("text/plain", "text/html"):
             return None
         if content_id:
-            return None
-        if not filename and content_type != "message/rfc822":
+            # A size the source did not report cannot be judged, so the part
+            # stays unlisted, as every embedded image was before.
+            large_image = (content_type.startswith("image/") and isinstance(size, int)
+                           and size >= INLINE_IMAGE_MIN_BYTES)
+            if not large_image:
+                return None
+        elif not filename and content_type != "message/rfc822":
             return None
     return Attachment(
         filename=_clean_filename(filename),
@@ -257,9 +290,12 @@ def attachment_of(content_type, disposition, filename, content_id, size):
     )
 
 
-def _attachments(message):
-    """Attachments of a parsed MIME message, without reading their content
-    into anything but a byte count.
+def _attachment_parts(message):
+    """(part, Attachment) for each attachment of a parsed MIME message, in the
+    order they are listed.
+
+    The one walk behind both the list and attachment_content(), so "the second
+    attachment" names the same part whether it is being listed or opened.
 
     Unlike _bodies() this does not descend into an attached message/rfc822:
     a forwarded email is one attachment, not its parts.
@@ -283,10 +319,42 @@ def _attachments(message):
             # whole inbox down with it.
             found_one = None
         if found_one is not None:
-            found.append(found_one)
+            found.append((part, found_one))
 
     visit(message)
     return found
+
+
+def _attachments(message):
+    """Attachments of a parsed MIME message, without reading their content
+    into anything but a byte count."""
+    return [attachment for _part, attachment in _attachment_parts(message)]
+
+
+def attachment_content(message, index):
+    """The bytes of the index-th listed attachment of a parsed MIME message,
+    or None when there is no such attachment or its bytes cannot be decoded.
+
+    `index` is the attachment's position in SourceEmail.attachments. Called
+    only for the route that serves an attachment a person opened; see the
+    module docstring.
+    """
+    parts = _attachment_parts(message)
+    if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(parts):
+        return None
+    part, attachment = parts[index]
+    try:
+        if attachment.content_type == "message/rfc822":
+            # The forwarded email itself, as the .eml a mail client would save.
+            data = part.get_payload(0).as_bytes()
+        else:
+            data = part.get_payload(decode=True)
+    except Exception:
+        return None
+    if not isinstance(data, (bytes, bytearray)):
+        return None
+    return AttachmentContent(
+        filename=attachment.filename, content_type=attachment.content_type, data=bytes(data))
 
 
 def _leaf_attachment(part, content_type):
