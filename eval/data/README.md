@@ -16,7 +16,7 @@ folder-guess row win an id collision with a human-verified row, and because the
 sampler walks the archive in a fixed order it re-collects exactly the emails
 people already read: the documented command would have replaced all 120
 human-reviewed Work rows and reverted 26 human relabels. Human rows now always
-win, but a rebuild still adds nothing new — it samples the same 12 mailboxes.
+win, but a rebuild still adds nothing new: it samples the same 12 mailboxes.
 
 ## Schema
 
@@ -52,7 +52,7 @@ reader of the report needs to see. Always report accuracy **broken down by
 | `generated` | Produced by the project's own orchestrator | n/a | **Built** - 120 rows (Studies only) |
 | `huggingface` | [jason23322/high-accuracy-email-classifier](https://huggingface.co/datasets/jason23322/high-accuracy-email-classifier) | Apache-2.0 | **No longer used** - replaced by real Enron Promotions; see the analysis below for why |
 
-Current merged set: **400 rows, all four classes, 100 per class** — DR-01's
+Current merged set: **400 rows, all four classes, 100 per class**, which is DR-01's
 size:
 
 | provenance | text_origin | category | label_source | rows |
@@ -73,7 +73,7 @@ pool were read and confirmed (`review_work_new.csv`). Rows of equal quality are
 kept in id order, so Work kept its 100 lowest ids out of 106 verified rows, and
 six earlier Work rows now sit in `real_enron.csv` outside the set.
 
-**`holdout_unscored.csv` — 106 verified rows outside the set.** It began as the
+**`holdout_unscored.csv`: 106 verified rows outside the set.** It began as the
 123 verified rows the 94-per-class cut left out, minus four Promotions rows whose
 bodies are byte-identical to dataset rows (one mass mailing delivered to several
 mailboxes). It was scored once in each mode to confirm the switch to one email

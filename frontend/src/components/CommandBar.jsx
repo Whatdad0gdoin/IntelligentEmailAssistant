@@ -192,8 +192,8 @@ export default function CommandBar({ emails, onRun, voice = false, speechLang = 
             spoken.clearError();
           }}
           placeholder={micShown
-            ? "Type or say a command — e.g. summarise the latest email"
-            : "Type a command — e.g. summarise the latest email"}
+            ? "Type or say a command, e.g. summarise the latest email"
+            : "Type a command, e.g. summarise the latest email"}
           aria-label="Command"
           maxLength={MAX_CHARS}
           readOnly={busy}

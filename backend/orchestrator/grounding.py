@@ -42,7 +42,7 @@ log = logging.getLogger(__name__)
 _QUOTES = {
     "‘": "'", "’": "'", "‚": "'", "‛": "'",
     "“": '"', "”": '"', "„": '"',
-    "–": "-", "—": "-", "−": "-",
+    "–": "-", "\u2014": "-", "−": "-",   # en dash, em dash, minus sign
     " ": " ",
 }
 
@@ -215,8 +215,8 @@ _WEEKDAY_ABBREVIATIONS = {
 _AMBIGUOUS_ABBREVIATIONS = ("sat", "sun", "wed")
 _ANY_DAY = r"(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(?:day|nesday|sday|rsday|urday)?"
 _DATE_AFTER = re.compile(r"\.?,?\s*(?:\d|(?:" + _MONTHS + r")\b)", re.I)
-_RANGE_AFTER = re.compile(r"\.?\s*(?:[-–—/&,]|to\b|and\b)\s*" + _ANY_DAY + r"\b", re.I)
-_RANGE_BEFORE = re.compile(r"\b" + _ANY_DAY + r"\.?\s*(?:[-–—/&,]|to|and)\s*$", re.I)
+_RANGE_AFTER = re.compile(r"\.?\s*(?:[-–\u2014/&,]|to\b|and\b)\s*" + _ANY_DAY + r"\b", re.I)
+_RANGE_BEFORE = re.compile(r"\b" + _ANY_DAY + r"\.?\s*(?:[-–\u2014/&,]|to|and)\s*$", re.I)
 _WORD = re.compile(r"[A-Za-z]+")
 
 # A two-digit year only counts as one inside a numeric date ("6/1/99") or after

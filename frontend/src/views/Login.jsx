@@ -82,9 +82,11 @@ export default function Login() {
           </div>
         </div>
         <div className="hero-foot">
-          <div className="hero-stat"><b>120+</b><span>emails / day, sorted</span></div>
+          {/* Measured, not marketing: eval/BENCHMARKS.md, headline figures
+              (FR-02 run 13, strict, test split; NFR-01 cold load, median). */}
+          <div className="hero-stat"><b>89.8%</b><span>of test emails sorted correctly</span></div>
           <div className="hero-divider" />
-          <div className="hero-stat"><b>28%</b><span>of the week, reclaimed</span></div>
+          <div className="hero-stat"><b>2.0 s</b><span>to sort a fresh inbox of 25</span></div>
         </div>
       </aside>
 

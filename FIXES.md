@@ -7,8 +7,8 @@ like.
 Every figure here was measured, not estimated. Where something is a judgement
 call rather than a task, it says so.
 
-Status at time of writing (2026-10-08): **693 backend tests passing (2 skipped,
-8 expected failures), 229 frontend tests passing.**
+Status at time of writing (2026-10-09): **771 backend tests passing (2 skipped,
+8 expected failures), 299 frontend tests passing.**
 
 Item numbers are kept from earlier versions of this file, because code and other
 documents cite them; new items continue from 16.
@@ -17,7 +17,7 @@ documents cite them; new items continue from 16.
 
 ## Blocked on a person (nobody else can do these)
 
-### 1. Connect Gmail — 10 minutes
+### 1. Connect Gmail (10 minutes)
 
 The Gmail API source is built and tested but **has never touched real Gmail**.
 Every test uses a fake service, which is what lets the suite prove read-only,
@@ -45,13 +45,13 @@ classified, and Gmail still shows it unread.
 
 ---
 
-### 3. Browser smoke test (NFR-02, SR-01) — 15 minutes
+### 3. Browser smoke test, NFR-02 and SR-01 (15 minutes)
 
 **Partly done.** On 2026-10-07 the app was driven in headless Edge, which is
 Chromium: sign-in, the inbox at 1000, 1366 and 1920 pixels wide, a typed command
 end to end against the real model, and Settings scrolling. That check found a
-layout bug no jsdom test could — a long email or an open summary stretched the
-reader past the window and scrolled the whole page — which is fixed in
+layout bug no jsdom test could (a long email or an open summary stretched the
+reader past the window and scrolled the whole page), which is fixed in
 `styles.css` and pinned in `styles.test.js`.
 
 **Nobody has opened it in Firefox**, which is not installed on the development
@@ -66,7 +66,7 @@ question.
 
 ---
 
-### 14. The product has three names — a decision
+### 14. The product has three names (a decision)
 
 **MailKit** is the name in the code and the UI. **InboxIQ** survives only in
 comments in four frontend files; **Inbox AI** (`inboxai.app`) is in the Week 11
@@ -74,9 +74,9 @@ wireframes. Pick one before the demo and the report.
 
 ---
 
-### 17. Attachment text in summaries — a decision
+### 17. Attachment text in summaries (a decision)
 
-Attachments are now listed — name, type and size — and their content still
+Attachments are now listed (name, type and size) and their content still
 never reaches a body, a summary or a model. Reading PDF text for summaries would
 break that promise, which the README and the reading pane both make, so it needs
 a team decision and its own test set before any code. It is new scope beyond the
@@ -86,14 +86,7 @@ RTM.
 
 ## Code and data
 
-### 15. `.vscode/settings.json` is still tracked — 1 minute
-
-It is in `.gitignore` but was committed before that, so edits still show as
-changes. Run `git rm --cached .vscode/settings.json` and commit.
-
----
-
-### 18. The IMAP source still downloads every attachment — half a day
+### 18. The IMAP source still downloads every attachment (half a day)
 
 `backend/adapters/gmail_source.py` fetches `BODY.PEEK[]`, every byte of every
 attachment, to list names and sizes. The Gmail API source no longer does: it
@@ -144,11 +137,12 @@ re-run; the result is not kept.
 | 7 | FR-02 headline not reproducible | Run 12 recomputes from `test_preds_run12.csv`; `--out` now records the settings in every row and refuses to overwrite an earlier run |
 | 8 | Stale NFR-01 line | Replaced by a measured figure |
 | 9 | `dev_preds.csv` unexplained | Identified in `eval/BENCHMARKS.md` as a run that lost 18 rows |
-| 10 | NFR-01 cold load 8.2 s | One email per call, 25 at once: **median 2.0 s over 8 cold loads of 25 emails, all under 5 s** (`eval/cold_load.py`). The in-process latency window still resets on restart and would understate p95 behind several workers — a limitation, not a bug |
+| 10 | NFR-01 cold load 8.2 s | One email per call, 25 at once: **median 2.0 s over 8 cold loads of 25 emails, all under 5 s** (`eval/cold_load.py`). The in-process latency window still resets on restart and would understate p95 behind several workers: a limitation, not a bug |
 | 11 | Save `claims_checked` | `evaluate_grounding.py` writes it |
 | 12 | No React component tests | 178 frontend tests in 14 files, including component tests for the inbox, the reading pane, the voice view, the command bar and the shared intent question |
 | 13 | FR-04/05 priority | **HIGH.** The PDF draws an orange MED badge and then a red HIGH badge over the same cell; the rendered slide shows HIGH, and the README now says so |
 | 4 | Decide FR-07 (translation) | **Built** (2026-10-08). `POST /api/translate` translates an email or a drafted reply into one of 15 languages, from the reading pane, the draft panel and a Settings default; nothing translated is kept between calls (NFR-03). Every number, link and address is checked: figures preserved in 89.2% (Spanish) and 86.5% (Chinese, Simplified) of 37 test-split emails (`eval/BENCHMARKS.md`). Left out on purpose: a voice or typed "translate" command, which would change `INTENT_SYSTEM` and need FR-05 re-measured |
+| 15 | `.vscode/settings.json` tracked | No longer tracked, and ignored by `.gitignore` (`git ls-files .vscode/` is empty) |
 | 16 | DR-01's 400 emails | Twelve more Work emails read and confirmed (2026-10-08); the 100-per-class merge wrote **400 rows, 300 real**. Run 13 measures the shipped configuration on it: 89.8% strict, 86.9% on real email. The 17 holdout rows the merge took were dropped from `holdout_unscored.csv` |
 
 Found in the October review, not previously listed, and fixed:

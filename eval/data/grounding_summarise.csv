@@ -1,58 +1,56 @@
-task,id,category,text_origin,grounded,flag_count,flags,subject
-summarise,enron-0452049916fa,Personal,real,True,0,,Christmas party December 16th
-summarise,enron-088cc6495eff,Personal,real,True,0,,never mind
-summarise,enron-0989e979887a,Personal,real,True,0,,RE: I'm Leaving Enron
-summarise,enron-09d3432b2724,Personal,real,True,0,,Prayer for you
-summarise,enron-0c46f4281958,Personal,real,True,0,,RE: Christmas
-summarise,enron-0d3815dc2f15,Personal,real,False,1,the AOL Local Guide for Kingwood Cove Golf Course (name does not appear in the source email),Check out AOL Local Guide: Houston - What's Going On - Kingwood Cove Golf Cou
-summarise,enron-0e2651538daf,Personal,real,True,0,,drallion
-summarise,enron-0e8a95e47904,Personal,real,True,0,,The beginning of the end!!!!!!!!!!!!!!!!
-summarise,enron-1221d9e85cef,Personal,real,True,0,,email addresses
-summarise,enron-15c652b6770d,Personal,real,False,1,Call Crystal (name does not appear in the source email),Continental Schedule IAH SJU  1st class
-summarise,enron-197dd9a9ed67,Personal,real,True,0,,Personal Message
-summarise,enron-1c06b6324d7a,Personal,real,True,0,,Re: Curriculum
-summarise,enron-21eac3eb68b3,Personal,real,True,0,,trip
-summarise,enron-0044e7eaebff,Promotions,real,True,0,,"Enerfax Gas, Oil, Liquids,Derivatives' prices & info (text) Crude Oil Futures Rise as US Urges Tight"
-summarise,enron-00ecb971440c,Promotions,real,True,0,,Expand Your Business!                                                   [m6apa]
-summarise,enron-02761b49b55b,Promotions,real,True,0,,Something EVERY Business Needs!                                                   [10vh6l]
-summarise,enron-0537d7d93ffe,Promotions,real,True,0,,Free Vacation
-summarise,enron-07a248e756fd,Promotions,real,True,0,,Home Loan Center... Tremendous Savings!
-summarise,enron-07b69ad0557c,Promotions,real,True,0,,Pill to Increase Your Ejaculation by 581%
-summarise,enron-0f94d1b29059,Promotions,real,True,0,,"Earn an instant $1k+ weekly, from home!"
-summarise,enron-141c403a0ed1,Promotions,real,True,0,,Your children's future...                             QJ
-summarise,enron-14e460a4f709,Promotions,real,True,0,,Available Executives!
-summarise,enron-1e609ebe6755,Promotions,real,True,0,,Fwd: The Motley Fool Registration
-summarise,enron-2125d6998f58,Promotions,real,True,0,,Copy and make your own DVD movies                                                   [t4d10w]
-summarise,enron-21646d7fcefb,Promotions,real,True,0,,Stressed with Debt? We Can Help!
-summarise,enron-234f073d8013,Promotions,real,True,0,,Something EVERY Business Needs!                                                   [6q4pg]
-summarise,enron-2542653d1476,Promotions,real,True,0,,Be in shape and look great In ONE HOUR . . .
-summarise,generated-03ddea97bdf0,Studies,synthetic,True,0,,Update on Placement Application Status
-summarise,generated-0442968be243,Studies,synthetic,True,0,,Congratulations on Your Upcoming Graduation!
-summarise,generated-047ed0a4a54b,Studies,synthetic,True,0,,Urgent: Complete Your Academic Integrity Module by October 15
-summarise,generated-05ab934e247b,Studies,synthetic,True,0,,Urgent: Special Consideration Outcome Notification
-summarise,generated-07c00901e1e0,Studies,synthetic,True,0,,Textbook List for Next Semester
-summarise,generated-0af18da72bc3,Studies,synthetic,True,0,,Outcome of Your Scholarship Application
-summarise,generated-0b3214c4a7e4,Studies,synthetic,True,0,,Upcoming Thesis Supervision Meeting
-summarise,generated-0c7e527b7167,Studies,synthetic,True,0,,Feedback on Your Draft
-summarise,generated-0d63beab9986,Studies,synthetic,True,0,,Update on WAM and Results Release Timing
-summarise,generated-0f65b635803f,Studies,synthetic,True,0,,Urgent: Change of Tutorial Room for Unit XYZ101
-summarise,generated-11d612b3d367,Studies,synthetic,True,0,,Exam Timetable Release Notification
-summarise,generated-12921a0cb617,Studies,synthetic,True,0,,"Unit Enrolment Issue for Semester 1, 2024"
-summarise,generated-1308bb55599c,Studies,synthetic,True,0,,Release of Exam Timetable for Semester 2
-summarise,generated-1365650db950,Studies,synthetic,True,0,,Urgent: WAM and Results Release Information
-summarise,generated-1ce2ffca4e2d,Studies,synthetic,True,0,,Change in Assignment Deadline for SCI101
-summarise,enron-005ce258fefc,Work,real,True,0,,Re: Christmas names
-summarise,enron-01381c3e85c6,Work,real,True,0,,Sampling & Pigging
-summarise,enron-039bdefb9036,Work,real,False,1,the NYISO Market Orientation Course (name does not appear in the source email),NYISO Training
-summarise,enron-08d24e9ef5aa,Work,real,True,0,,RE: BADGE
-summarise,enron-094771a0b5fe,Work,real,False,1,January 17th (date does not appear in the source email),RE: ISAS Meeting Agenda 2/14&15/2002
-summarise,enron-0ad83856a4a6,Work,real,True,0,,FW: Greatest Savings
-summarise,enron-0e07207f269e,Work,real,True,0,,Contact info for Kevin Hyatt
-summarise,enron-1000f717ae1b,Work,real,True,0,,RE: BADGE
-summarise,enron-147a260a7723,Work,real,True,0,,Re: NJ Index plus
-summarise,enron-1c03255b2c0f,Work,real,True,0,,Enron/Dynegy Merger; Antitrust Issues
-summarise,enron-20c2e7e2b1a3,Work,real,True,0,,Re: Trust Agreement
-summarise,enron-20e4e20db049,Work,real,True,0,,URGENT - REQUIRES IMMEDIATE ACTION - UBS Orientation tomorrow @The Houstonian
-summarise,enron-2269cc89f867,Work,real,True,0,,RE: Statement
-summarise,enron-22ef170ac354,Work,real,True,0,,Wine Cellar Software
-summarise,enron-235bc3245835,Work,real,True,0,,RE: RE: Whats up!!!!!
+task,id,category,text_origin,grounded,flag_count,claims_checked,flags,subject
+summarise,enron-005ce258fefc,Personal,real,True,0,2,,Re: Christmas names
+summarise,enron-0452049916fa,Personal,real,True,0,2,,Christmas party December 16th
+summarise,enron-088cc6495eff,Personal,real,True,0,0,,never mind
+summarise,enron-0989e979887a,Personal,real,True,0,3,,RE: I'm Leaving Enron
+summarise,enron-09d3432b2724,Personal,real,True,0,2,,Prayer for you
+summarise,enron-0c46f4281958,Personal,real,True,0,1,,RE: Christmas
+summarise,enron-0d3815dc2f15,Personal,real,True,0,6,,Check out AOL Local Guide: Houston - What's Going On - Kingwood Cove Golf Cou
+summarise,enron-0e2651538daf,Personal,real,True,0,0,,drallion
+summarise,enron-0e8a95e47904,Personal,real,True,0,4,,The beginning of the end!!!!!!!!!!!!!!!!
+summarise,enron-1221d9e85cef,Personal,real,True,0,1,,email addresses
+summarise,enron-15c652b6770d,Personal,real,False,1,4,Call Crystal (name does not appear in the source email),Continental Schedule IAH SJU  1st class
+summarise,enron-197dd9a9ed67,Personal,real,True,0,2,,Personal Message
+summarise,enron-1c06b6324d7a,Personal,real,True,0,6,,Re: Curriculum
+summarise,enron-0044e7eaebff,Promotions,real,True,0,4,,"Enerfax Gas, Oil, Liquids,Derivatives' prices & info (text) Crude Oil Futures Rise as US Urges Tight"
+summarise,enron-00ecb971440c,Promotions,real,True,0,2,,Expand Your Business!                                                   [m6apa]
+summarise,enron-02761b49b55b,Promotions,real,True,0,2,,Something EVERY Business Needs!                                                   [10vh6l]
+summarise,enron-0537d7d93ffe,Promotions,real,True,0,4,,Free Vacation
+summarise,enron-07a248e756fd,Promotions,real,True,0,1,,Home Loan Center... Tremendous Savings!
+summarise,enron-07b69ad0557c,Promotions,real,True,0,6,,Pill to Increase Your Ejaculation by 581%
+summarise,enron-0f94d1b29059,Promotions,real,True,0,5,,"Earn an instant $1k+ weekly, from home!"
+summarise,enron-141c403a0ed1,Promotions,real,True,0,0,,Your children's future...                             QJ
+summarise,enron-14e460a4f709,Promotions,real,True,0,9,,Available Executives!
+summarise,enron-1e609ebe6755,Promotions,real,True,0,1,,Fwd: The Motley Fool Registration
+summarise,enron-2125d6998f58,Promotions,real,True,0,3,,Copy and make your own DVD movies                                                   [t4d10w]
+summarise,enron-21646d7fcefb,Promotions,real,True,0,3,,Stressed with Debt? We Can Help!
+summarise,enron-234f073d8013,Promotions,real,True,0,1,,Something EVERY Business Needs!                                                   [6q4pg]
+summarise,enron-2542653d1476,Promotions,real,True,0,5,,Be in shape and look great In ONE HOUR . . .
+summarise,generated-03ddea97bdf0,Studies,synthetic,True,0,2,,Update on Placement Application Status
+summarise,generated-0442968be243,Studies,synthetic,True,0,4,,Congratulations on Your Upcoming Graduation!
+summarise,generated-047ed0a4a54b,Studies,synthetic,True,0,6,,Urgent: Complete Your Academic Integrity Module by October 15
+summarise,generated-05ab934e247b,Studies,synthetic,True,0,3,,Urgent: Special Consideration Outcome Notification
+summarise,generated-07c00901e1e0,Studies,synthetic,True,0,6,,Textbook List for Next Semester
+summarise,generated-0af18da72bc3,Studies,synthetic,True,0,1,,Outcome of Your Scholarship Application
+summarise,generated-0b3214c4a7e4,Studies,synthetic,True,0,5,,Upcoming Thesis Supervision Meeting
+summarise,generated-0c7e527b7167,Studies,synthetic,True,0,0,,Feedback on Your Draft
+summarise,generated-0d63beab9986,Studies,synthetic,True,0,3,,Update on WAM and Results Release Timing
+summarise,generated-0f65b635803f,Studies,synthetic,True,0,10,,Urgent: Change of Tutorial Room for Unit XYZ101
+summarise,generated-11d612b3d367,Studies,synthetic,True,0,8,,Exam Timetable Release Notification
+summarise,generated-12921a0cb617,Studies,synthetic,True,0,7,,"Unit Enrolment Issue for Semester 1, 2024"
+summarise,generated-1308bb55599c,Studies,synthetic,True,0,5,,Release of Exam Timetable for Semester 2
+summarise,generated-1365650db950,Studies,synthetic,True,0,8,,Urgent: WAM and Results Release Information
+summarise,generated-1ce2ffca4e2d,Studies,synthetic,True,0,11,,Change in Assignment Deadline for SCI101
+summarise,enron-01381c3e85c6,Work,real,True,0,3,,Sampling & Pigging
+summarise,enron-039bdefb9036,Work,real,False,1,7,the NYISO Market Orientation Course (name does not appear in the source email),NYISO Training
+summarise,enron-08d24e9ef5aa,Work,real,True,0,1,,RE: BADGE
+summarise,enron-094771a0b5fe,Work,real,True,0,5,,RE: ISAS Meeting Agenda 2/14&15/2002
+summarise,enron-0ad83856a4a6,Work,real,True,0,0,,FW: Greatest Savings
+summarise,enron-0e07207f269e,Work,real,True,0,1,,Contact info for Kevin Hyatt
+summarise,enron-1000f717ae1b,Work,real,True,0,0,,RE: BADGE
+summarise,enron-147a260a7723,Work,real,True,0,1,,Re: NJ Index plus
+summarise,enron-1c03255b2c0f,Work,real,True,0,7,,Enron/Dynegy Merger; Antitrust Issues
+summarise,enron-20c2e7e2b1a3,Work,real,True,0,3,,Re: Trust Agreement
+summarise,enron-20e4e20db049,Work,real,True,0,9,,URGENT - REQUIRES IMMEDIATE ACTION - UBS Orientation tomorrow @The Houstonian
+summarise,enron-2269cc89f867,Work,real,True,0,2,,RE: Statement
+summarise,enron-2484a83a7d2e,Work,real,True,0,0,,Resume - Power/Gas trading position
