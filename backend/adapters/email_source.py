@@ -202,18 +202,79 @@ def _source_key(config, source=None):
     return ("fixture", config.email_fixture_dir, config.email_inbox_dir)
 
 
+# The sentence a user who connected Gmail from Settings sees when that
+# connection stops working. The gmail_auth script is for the server's own
+# mailbox; it would not help them.
+USER_RECONNECT = "Connect Gmail again in Settings."
+
+
+def _connected_gmail(config, user):
+    # Imported here: accounts pulls in sqlite3 and cryptography, which a
+    # fixture-only process and most tests never need.
+    from backend.accounts import connected_gmail
+
+    return connected_gmail(config, (user or "").strip().lower())
+
+
+def mailbox_of(config, user=None):
+    """What this user's inbox is, for the UI: their own Gmail, the server's
+    configured mailbox, or the demo mailbox.
+
+    The inbox says so on screen, because a demo inbox that looks like a real
+    one leaves a new user wondering where their own email is.
+    """
+    connection = _connected_gmail(config, user)
+    if connection:
+        return {"kind": "gmail", "address": connection["address"], "own": True}
+    source = effective_source(config, user)
+    if source == "gmail_imap":
+        return {"kind": "gmail", "address": config.gmail_user or None, "own": False}
+    if source == "gmail":
+        return {"kind": "gmail", "address": None, "own": False}
+    return {"kind": "demo", "address": None, "own": False}
+
+
+def forget_user_source(user):
+    """Drop a user's cached Gmail source, after they connect or disconnect, so
+    the next request reads the new token or none at all."""
+    user = (user or "").strip().lower()
+    with _lock:
+        for key in [k for k in _sources if k[0] == "gmail-user" and k[1] == user]:
+            del _sources[key]
+
+
 def get_email_source(config, user=None):
     """Return the source for this signed-in user. One instance per config.
 
-    `user` is the authenticated login. It only changes anything when
-    GMAIL_OWNER is set -- see effective_source() for why a real mailbox is
-    tied to one account.
+    `user` is the authenticated login. A user who connected their own Gmail
+    from Settings gets that mailbox, whatever EMAIL_SOURCE says. Otherwise it
+    only changes anything when GMAIL_OWNER is set -- see effective_source()
+    for why the server's real mailbox is tied to one account.
     """
     if config.email_source not in SOURCES:
         raise EmailSourceError(
             f"Unknown EMAIL_SOURCE '{config.email_source}'. "
             f"This build implements: {', '.join(SOURCES)}."
         )
+
+    if _connected_gmail(config, user):
+        login = user.strip().lower()
+        key = ("gmail-user", login, os.path.abspath(config.accounts_db),
+               config.gmail_mailbox, config.gmail_limit)
+        with _lock:
+            if key not in _sources:
+                from backend.accounts import UserTokenStore
+                from backend.adapters.gmail_api_source import GmailApiSource
+
+                _sources[key] = GmailApiSource(
+                    label=config.gmail_mailbox,
+                    limit=config.gmail_limit,
+                    timeout=config.gmail_timeout,
+                    token_store=UserTokenStore(config, login),
+                    reconnect=USER_RECONNECT,
+                )
+            return _sources[key]
+
     source = effective_source(config, user)
     key = _source_key(config, source)
     with _lock:

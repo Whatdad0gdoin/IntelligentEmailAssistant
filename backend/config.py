@@ -39,6 +39,18 @@ def _int(name, default):
     return int(_optional(name, default))
 
 
+def _bool(name, default):
+    value = _optional(name, None)
+    if value is None:
+        return default
+    lowered = value.strip().lower()
+    if lowered in ("1", "true", "yes", "on"):
+        return True
+    if lowered in ("0", "false", "no", "off"):
+        return False
+    raise ConfigError(f"{name} must be true or false (got {value!r}).")
+
+
 def _positive_int(name, default):
     # Zero or a negative count would not mean "off" to the code reading it --
     # a batch of 0 emails per call, or a pool of 0 workers, is a crash waiting
@@ -73,6 +85,18 @@ class Config:
             raise ConfigError(f"AUTH_USERS is not valid JSON: {exc}") from exc
         if not isinstance(self.auth_users, dict):
             raise ConfigError("AUTH_USERS must be a JSON object of email -> password hash")
+
+        # --- Sign-up and per-user Gmail (backend/accounts.py) -----------------
+        # Accounts created through the sign-up page, and each user's Gmail
+        # connection, live in one SQLite file in the gitignored secrets folder.
+        # AUTH_USERS above keeps working alongside it.
+        secrets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secrets")
+        self.accounts_db = _optional("ACCOUNTS_DB", os.path.join(secrets_dir, "accounts.db"))
+        # Sign-up is open by default, which suits a demo on localhost. Anything
+        # other people can reach should set SIGNUP_CODE, or anyone could make an
+        # account and spend the API budget.
+        self.signup_enabled = _bool("SIGNUP_ENABLED", True)
+        self.signup_code = _optional("SIGNUP_CODE", "")
 
         # --- LLM orchestrator (section 4.1) --------------------------------
         # require_llm is False for auth-only tests and for CI, which must not
@@ -189,12 +213,24 @@ class Config:
         # expect.
         self.gmail_owner = _optional("GMAIL_OWNER", "").strip().lower()
 
-        secrets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secrets")
         self.gmail_client_file = _optional(
             "GMAIL_CLIENT_FILE", os.path.join(secrets_dir, "gmail_client.json")
         )
         self.gmail_token_file = _optional(
             "GMAIL_TOKEN_FILE", os.path.join(secrets_dir, "gmail_token.json")
+        )
+
+        # --- Connect Gmail from Settings (routes/gmail.py) ---------------------
+        # Each signed-in user connects their own inbox in the browser. This needs
+        # an OAuth client of type "Web application", separate from the Desktop
+        # client the gmail_auth script uses, with GMAIL_REDIRECT_URI registered
+        # on it exactly. The default goes through the Vite proxy, so Google sends
+        # the user back to the same origin as the app.
+        self.gmail_web_client_file = _optional(
+            "GMAIL_WEB_CLIENT_FILE", os.path.join(secrets_dir, "gmail_web_client.json")
+        )
+        self.gmail_redirect_uri = _optional(
+            "GMAIL_REDIRECT_URI", "http://localhost:5173/api/gmail/callback"
         )
 
         # Length of the header-derived preview shown in the inbox list.

@@ -26,3 +26,9 @@ google-api-python-client==2.200.0
 google-auth==2.53.0
 google-auth-oauthlib==1.4.1
 google-auth-httplib2==0.4.2
+
+# Sign-up and Connect Gmail (backend/accounts.py, routes/gmail.py). cryptography
+# encrypts each user's stored Gmail token; requests asks Google to revoke one on
+# Disconnect (it is already installed as a dependency of google-auth-oauthlib).
+cryptography==48.0.0
+requests==2.34.2

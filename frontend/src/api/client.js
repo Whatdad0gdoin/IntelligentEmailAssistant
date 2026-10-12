@@ -164,7 +164,51 @@ export async function login(email, password) {
   });
 }
 
-/** GET /api/inbox -> { groups: { Work: [...], ..., Review: [...] } } (FR-08) */
+/** GET /api/auth/signup -> { enabled, invite_code_required }. Public. */
+export async function signupOptions() {
+  return request("/api/auth/signup", { isAuthAttempt: true });
+}
+
+/**
+ * POST /api/auth/signup -> { token, expires_in }
+ *
+ * Creates the account and signs it straight in. A 4xx carries the server's
+ * own sentence (address taken, password too short, wrong invite code), so it
+ * is treated like a sign-in attempt and reaches the form unchanged.
+ */
+export async function signup(email, password, inviteCode) {
+  const body = { email: email.trim(), password };
+  if (inviteCode && inviteCode.trim()) body.invite_code = inviteCode.trim();
+  return request("/api/auth/signup", { method: "POST", body, isAuthAttempt: true });
+}
+
+/** GET /api/gmail -> { available, connected, address, connected_at } */
+export async function gmailStatus({ signal } = {}) {
+  return request("/api/gmail", { signal });
+}
+
+/**
+ * POST /api/gmail/connect -> { auth_url }
+ *
+ * The caller opens auth_url in a popup: Google's consent page, read-only
+ * access. The page itself never leaves the app, so the in-memory token
+ * survives (section 5.1).
+ */
+export async function gmailConnect() {
+  return request("/api/gmail/connect", { method: "POST" });
+}
+
+/** POST /api/gmail/disconnect -> { connected: false, revoked } */
+export async function gmailDisconnect() {
+  return request("/api/gmail/disconnect", { method: "POST" });
+}
+
+/**
+ * GET /api/inbox -> { groups: { Work: [...], ..., Review: [...] }, mailbox } (FR-08)
+ *
+ * `mailbox` is { kind: "demo" | "gmail", address, own }: whether this is the
+ * demo inbox or a real one, so the inbox can say which.
+ */
 export async function fetchInbox({ signal } = {}) {
   return request("/api/inbox", { signal });
 }

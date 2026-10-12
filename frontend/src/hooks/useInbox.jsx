@@ -24,6 +24,8 @@ const EMPTY = { Work: [], Personal: [], Promotions: [], Studies: [], Review: [] 
 
 export function useInbox(enabled) {
   const [groups, setGroups] = useState(EMPTY);
+  // { kind: "demo" | "gmail", address, own }, from the same response.
+  const [mailbox, setMailbox] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -42,6 +44,7 @@ export function useInbox(enabled) {
     try {
       const data = await api.fetchInbox();
       setGroups({ ...EMPTY, ...(data.groups || {}) });
+      setMailbox(data.mailbox || null);
     } catch (err) {
       // A 401 is already handled by the client (it routes back to login), so
       // anything reaching here is a real failure worth showing.
@@ -55,6 +58,7 @@ export function useInbox(enabled) {
     if (enabled) load();
     else {
       setGroups(EMPTY);
+      setMailbox(null);
       setBodies({});
       setError(null);
     }
@@ -90,7 +94,7 @@ export function useInbox(enabled) {
   const findEmail = useCallback((id) => byId.get(id) || null, [byId]);
 
   return useMemo(
-    () => ({ groups, loading, error, reload: load, bodies, bodyLoading, loadBody, findEmail }),
-    [groups, loading, error, load, bodies, bodyLoading, loadBody, findEmail]
+    () => ({ groups, mailbox, loading, error, reload: load, bodies, bodyLoading, loadBody, findEmail }),
+    [groups, mailbox, loading, error, load, bodies, bodyLoading, loadBody, findEmail]
   );
 }

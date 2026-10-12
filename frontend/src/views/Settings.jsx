@@ -1,6 +1,9 @@
 /**
- * Settings (section 5.5): voice on/off, recognition language, translation
- * language, browser capability status, cache clear.
+ * Settings (section 5.5): the email account, voice on/off, recognition
+ * language, translation language, browser capability status, cache clear.
+ *
+ * The email account comes first because it decides what the rest of the app
+ * shows: until Gmail is connected, the inbox is the demo mailbox.
  *
  * Deliberately small. The FIT3163 wireframe also listed a default reply tone;
  * tone lives on the draft itself, where it applies. The wireframe's
@@ -17,6 +20,7 @@
 
 import { ChevronRight, Languages, Mic, RefreshCw, Volume2 } from "lucide-react";
 
+import GmailConnect from "../components/GmailConnect.jsx";
 import { useSpeech } from "../hooks/useSpeech.jsx";
 import { capabilities } from "../lib/capabilities.js";
 import { DEFAULT_TRANSLATION_LANGUAGE, LANGUAGES, SPEECH_LANGS } from "../lib/constants.js";
@@ -51,6 +55,7 @@ export default function Settings({
   setTranslationLang,
   onReloadInbox,
   reloading,
+  onMailboxChanged,
   onBack,
 }) {
   const speech = useSpeech();
@@ -66,9 +71,14 @@ export default function Settings({
       <header className="feature-head">
         <div>
           <h1 className="main-title">Settings</h1>
-          <p className="main-sub">Voice, translation, browser support, and cached data.</p>
+          <p className="main-sub">Your email account, voice, translation, browser support, and cached data.</p>
         </div>
       </header>
+
+      <section className="setting-group">
+        <h2 className="setting-group-title">Email account</h2>
+        <GmailConnect onMailboxChanged={onMailboxChanged} />
+      </section>
 
       <section className="setting-group">
         <h2 className="setting-group-title">Voice</h2>

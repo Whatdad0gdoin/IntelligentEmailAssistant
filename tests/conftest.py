@@ -56,6 +56,11 @@ def config(monkeypatch, tmp_path):
         json.dumps({TEST_EMAIL: generate_password_hash(TEST_PASSWORD)}),
     )
     monkeypatch.setenv("EMAIL_FIXTURE_DIR", FIXTURE_DIR)
+    # Sign-ups and Gmail connections go to a database in the test's own temp
+    # dir, never the developer's backend/secrets/accounts.db, and no test sees
+    # a real Google OAuth client.
+    monkeypatch.setenv("ACCOUNTS_DB", str(tmp_path / "accounts.db"))
+    monkeypatch.setenv("GMAIL_WEB_CLIENT_FILE", str(tmp_path / "no_gmail_web_client.json"))
     # The shipped default classifies one email per model call, several calls
     # at once (backend/orchestrator/classify.py), while StubLLM.queue() answers
     # in call order. Tests written against the queue -- one classification

@@ -18,6 +18,7 @@ from backend.middleware import timing
 from backend.routes import ai as ai_routes
 from backend.routes import attachments as attachment_routes
 from backend.routes import auth as auth_routes
+from backend.routes import gmail as gmail_routes
 from backend.routes import health as health_routes
 from backend.routes import inbox as inbox_routes
 from backend.routes import metrics as metrics_routes
@@ -47,6 +48,7 @@ def create_app(config=None):
 
     app.register_blueprint(health_routes.bp)
     app.register_blueprint(auth_routes.bp)
+    app.register_blueprint(gmail_routes.bp)   # connect a user's own Gmail
     app.register_blueprint(inbox_routes.bp)   # FR-08
     app.register_blueprint(attachment_routes.bp)  # FR-08: open one attachment
     app.register_blueprint(ai_routes.bp)      # FR-01, FR-02, FR-03, FR-07

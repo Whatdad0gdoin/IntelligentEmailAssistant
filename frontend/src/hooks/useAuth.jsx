@@ -31,6 +31,15 @@ export function AuthProvider({ children }) {
     setExpiredNotice(false);
   }, []);
 
+  // A new account is signed in by the same token sign-in would return, so
+  // there is no second form to fill in after creating it.
+  const signUp = useCallback(async (email, password, inviteCode) => {
+    const { token } = await api.signup(email, password, inviteCode);
+    api.setToken(token);
+    setUser({ email: email.trim().toLowerCase() });
+    setExpiredNotice(false);
+  }, []);
+
   const signOut = useCallback(() => {
     api.clearToken();
     setUser(null);
@@ -38,8 +47,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, signIn, signOut, expiredNotice, dismissExpiredNotice: () => setExpiredNotice(false) }),
-    [user, signIn, signOut, expiredNotice]
+    () => ({ user, signIn, signUp, signOut, expiredNotice, dismissExpiredNotice: () => setExpiredNotice(false) }),
+    [user, signIn, signUp, signOut, expiredNotice]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -35,7 +35,7 @@ says how.
 | NFR-01 | AI responses returned and displayed within a few seconds | HIGH | Done · measured | A cold inbox load (the slowest routine request, because every email is classified inside it): **median 2.0 s, worst 2.7 s over 8 loads of a 25-email inbox, all under the 5 s target**, against the real model (`eval/cold_load.py`, `eval/BENCHMARKS.md`). Batched, the same load took 13.5 s; one email per call with 25 calls at once is what brought it under. `middleware/timing.py` times every route into a bounded in-process ring, and `GET /api/metrics` reports nearest-rank p50/p95/max against the target, returning `null` rather than `0` on an empty window (`tests/test_metrics.py`). The inbox renders a skeleton while a load is in flight |
 | NFR-02 | Browser-accessible; no install or plugin; works in Chrome | HIGH | Done by construction, not by test | A React SPA over a REST API; `npm run build` produces a static bundle and nothing needs an extension. There is no browser-driven or end-to-end test in this repo, so "fully functional in Chrome" rests on manual use, not on a green tick. A manual check (2026-10-07, headless Edge, which is Chromium) covered sign-in, the inbox layout at three window sizes and a typed command end to end; Firefox was not available. The latest (2026-10-09, headless Edge and Chrome, driven by a throwaway script that is not in this repo) covered opening and saving attachments (image, PDF and text previews, and an HTML attachment downloading without being rendered) and the command bar's microphone with a stand-in recogniser. The PDF preview inside the reading pane was confirmed in Chrome; in Edge the same file was confirmed only through its open-in-a-new-tab link. Voice is the one browser-gated part, and SR-01 covers it |
 | NFR-03 | Email content not stored permanently; no body data between calls | HIGH | Done | Bodies are fetched per request, preprocessed in memory and dropped; the cache holds summaries and labels only: a translation, being the whole body in another language, is never kept; logs carry character counts rather than content. An attachment's bytes are read only when the signed-in user opens that attachment, go out with that one response, and are never cached, logged, written to disk or sent to a model (`tests/test_attachment_route.py`). `tests/test_no_body_in_logs.py` runs a full session against a real log file on disk and greps it |
-| NFR-04 | Login required before email data or assistant features | HIGH | Done | One fail-closed `before_request` guard with a two-entry public allowlist. `tests/test_auth.py` enumerates the URL map rather than listing routes by hand, so it covers all nine protected routes and picked up `/api/metrics`, `/api/translate` and the attachment route the moment each was registered |
+| NFR-04 | Login required before email data or assistant features | HIGH | Done | One fail-closed `before_request` guard with a four-entry public allowlist: login, sign-up, the Google callback for Connect Gmail, and health. `tests/test_auth.py` enumerates the URL map rather than listing routes by hand, so it covers all twelve protected routes and picked up `/api/metrics`, `/api/translate`, the attachment route and the Gmail routes the moment each was registered. New users create their own account on the login page and connect their own Gmail from Settings ([how](#let-users-connect-their-own-gmail)) |
 | SR-01 | Voice restricted to Chrome/Edge; notify on unsupported browsers | MED | Done | `lib/capabilities.js` reads `speechSynthesis` and `SpeechRecognition` once at load. Without STT the command bar shows no microphone rather than a dead one; without TTS the Read Aloud button is not rendered; a persistent, non-blocking notice says which one is missing. Every voice action is also a button, and every voice command can also be typed into the command bar, which needs no speech support |
 | DR-01 | Labelled dataset of 400 emails, 100 per category | MED | Done | `eval/data/dataset.csv`: **400 rows, 100 per class, 300 real / 100 synthetic, every real label read and verified by a person**. It was 480; reading the folder-labelled Work rows found 27 of 120 were not Work, so the set was rebalanced to 94 per class rather than topped up with unverified rows, then brought to 100 with twelve more Work emails read and confirmed. The RTM asks for an AI-generated set; the Week 11 dataset slide asks for real mail. The slide won: generation fills Studies only, the class no real corpus covers. See below |
 | DR-02 | Labelled set as ground truth: accuracy, precision, recall, F1, matrix | MED | Done | `eval/evaluate_classifier.py` prints coverage, accuracy and strict accuracy, per-class precision/recall/F1, macro-F1 and a confusion matrix. Every run is logged in `eval/BENCHMARKS.md` |
@@ -95,14 +95,20 @@ over the same cell for FR-04 and FR-05, so text extraction reads both
 
 Every route below is in the live URL map, checked against it rather than written
 from memory. All of them require
-`Authorization: Bearer <jwt>` except `POST /api/auth/login` and
-`GET /api/healthz`, which are the entire public allowlist.
+`Authorization: Bearer <jwt>` except login, the two sign-up calls, the Google
+callback and `GET /api/healthz`, which are the entire public allowlist.
 
 | Route | Requirement | Response, and what it does |
 |---|---|---|
 | `POST /api/auth/login` | NFR-04 | `{token, expires_in}`. Public. No user enumeration: unknown email and wrong password are indistinguishable in body, status and timing. |
+| `GET /api/auth/signup` | NFR-04 | `{enabled, invite_code_required}`. Public. What the sign-up form should show. |
+| `POST /api/auth/signup` | NFR-04 | `{email, password, invite_code?}` → `201 {token, expires_in}`: creates the account and signs it in. `400` an unusable address or a password outside 8 to 128 characters, `403` sign-up turned off or a wrong invite code (checked before the address, so without the code it reveals nothing), `409` the address already has an account. Public. |
 | `GET /api/healthz` | - | `{status: "ok"}`. Public. Liveness only; returns no user or email data. |
-| `GET /api/inbox` | FR-08, FR-02 | `{groups: {Work, Personal, Promotions, Studies, Review}}`. **Snippets only, no bodies.** Classifies the inbox itself (one model call per uncached email, up to 25 at once) and caches labels per email id, so a re-fetch costs no API calls. Each email carries `attachments: [{filename, content_type, size}]`: names, types and byte sizes parsed from MIME structure, **never content**. |
+| `GET /api/gmail` | FR-08 | `{available, connected, address, connected_at}`: whether Connect Gmail is set up on this server, and this user's connection. |
+| `POST /api/gmail/connect` | FR-08 | `{auth_url}`: Google's consent page for `gmail.readonly`, with PKCE, which Settings opens in a popup. Sets a ten-minute HttpOnly cookie the callback checks. `503` when no web OAuth client is configured. |
+| `GET /api/gmail/callback` | FR-08 | HTML, not JSON: where Google sends the popup back. Public; [what protects it](#let-users-connect-their-own-gmail). |
+| `POST /api/gmail/disconnect` | FR-08 | `{connected: false, revoked}`: revokes the token at Google (best effort) and deletes it. |
+| `GET /api/inbox` | FR-08, FR-02 | `{groups: {Work, Personal, Promotions, Studies, Review}, mailbox}`. `mailbox` is `{kind: "demo" or "gmail", address, own}`, so the inbox can say when it is the demo one. **Snippets only, no bodies.** Classifies the inbox itself (one model call per uncached email, up to 25 at once) and caches labels per email id, so a re-fetch costs no API calls. Each email carries `attachments: [{filename, content_type, size}]`: names, types and byte sizes parsed from MIME structure, **never content**. |
 | `GET /api/inbox/<id>` | FR-08 | One message with its **preprocessed** body (quoted chains, signatures and HTML already stripped), so the reader shows the same text the orchestrator summarises, plus the same `attachments` list. Fetched fresh every time and never cached (NFR-03). Attachment content is not read, returned, or sent to a model by this route. |
 | `GET /api/inbox/<id>/attachments/<n>` | FR-08 | **The bytes of one attachment**, the only non-JSON response in the API. `<n>` is the attachment's position in the `attachments` list. A PNG, JPEG, GIF, WebP or BMP image, a PDF or a plain-text or CSV file is served under its own type with `Content-Disposition: inline`; everything else, HTML and SVG included, is served as `application/octet-stream` with `Content-Disposition: attachment`, so a browser saves it and never renders it. Every response carries `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox` and `Cache-Control: no-store`. Read from the mailbox on each request; never cached, logged or sent to a model. |
 | `POST /api/summarise` | FR-01 | `{email_id, summary[], action_items[], provenance[], grounded, ungrounded_flags[]}`. 2–3 sentences, enforced in Python with one retry. `action_items` are `{text, source_sentence}`; `provenance` is `{sentence, spans[]}` with character offsets into the preprocessed body, computed deterministically and never asked of the model. Cached per email id. |
@@ -197,6 +203,9 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 python -m backend.scripts.hash_password
 ```
 
+or skip the account: anyone can create one on the login page with *Create an
+account* (set `SIGNUP_CODE` to require an invite code).
+
 and add your `OPENAI_API_KEY`. Without it the app runs and login works, but
 summarise, classify and draft return 503.
 
@@ -236,6 +245,64 @@ separate processes, and `tests/test_mailserver.py` asserts that no module under
 `backend/` imports the mail server. Received mail is delivered to
 `backend/mailbox/`, which is gitignored and kept apart from the committed demo
 fixtures so the test suite always sees the same six messages.
+
+### Let users connect their own Gmail
+
+This is how a new user's email gets into the app, end to end:
+
+1. **Sign up.** The login page has *Create an account*. The account is stored in
+   `backend/secrets/accounts.db` (gitignored) with the password as a one-way
+   hash, and it signs straight in.
+2. **See the demo inbox.** A new account has no mailbox yet, so it is shown the
+   demo fixtures, and the inbox says so: *"This is a demo inbox. Connect your
+   Gmail to see your own email here."*
+3. **Connect Gmail** (Settings, Email account). Google's consent page opens in a
+   popup and asks for read-only access (`gmail.readonly`). On *Allow*, the
+   backend stores that user's token, encrypted, and the inbox reloads with
+   their own mail.
+4. **Every inbox load** fetches the newest messages from the Gmail API, sends
+   each email's text to the model to sort it, and keeps only the label. A body
+   is fetched again when the email is opened and is never stored (NFR-03).
+   Nothing is imported or copied out of Gmail.
+5. **Disconnect** in Settings revokes the token at Google and deletes it, and
+   the user is back on the demo inbox.
+
+One-time Google Cloud setup, in the same project as the next section:
+
+1. **APIs & Services → Credentials → Create credentials → OAuth client ID**,
+   application type **Web application**.
+2. **Authorised redirect URIs**: add `http://localhost:5173/api/gmail/callback`
+   exactly (or whatever `GMAIL_REDIRECT_URI` is set to).
+3. Download the JSON and save it as `backend/secrets/gmail_web_client.json`.
+   No restart is needed: Settings offers *Connect Gmail* once the file exists.
+4. **Audience → Test users**: add each Gmail address that should be able to
+   connect.
+
+**Google's limits, which no code here can change.** `gmail.readonly` is a
+restricted scope. While the app is in Testing, only listed test users can
+connect, at most 100; anyone else gets Google's *access blocked* page, and the
+popup explains why. Google ends each connection 7 days after consent, and the
+inbox then says *"Connect Gmail again in Settings."* Lifting both needs Google's
+restricted-scope verification and an independent security assessment
+([Google's page](https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification)),
+which is out of scope for this project.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `SIGNUP_ENABLED` | `true` | `false` turns sign-up off; the form says so |
+| `SIGNUP_CODE` | empty | When set, sign-up needs this invite code. Set it on anything other people can reach, or anyone can make an account and spend the API budget |
+| `ACCOUNTS_DB` | `backend/secrets/accounts.db` | Accounts made by sign-up, and Gmail connections |
+| `GMAIL_WEB_CLIENT_FILE` | `backend/secrets/gmail_web_client.json` | The Web application client |
+| `GMAIL_REDIRECT_URI` | `http://localhost:5173/api/gmail/callback` | Must match the client's redirect URI exactly |
+
+**What protects it.** The callback is public, because Google's redirect carries
+no login token. It accepts only a `state` value the server issued in the last
+ten minutes, once, and only from the browser that started the connection (a
+cookie set by *Connect Gmail*), so a Google link sent to someone else cannot
+attach their Gmail to another person's account. The PKCE verifier never leaves
+the server. Tokens are encrypted with a key derived from `JWT_SECRET`; changing
+it disconnects everyone, and they connect again. Accounts in `AUTH_USERS` keep
+working alongside sign-ups.
 
 ### Read a real Gmail inbox (so someone can email the app)
 
@@ -280,7 +347,8 @@ Set `EMAIL_SOURCE=gmail` in `backend/.env` and restart with `.\start.ps1`.
 
 - **Access expires every 7 days** while the app is in Testing. Google's rule,
   not this app's. The inbox shows *"Gmail access has expired... Reconnect
-  with: python -m backend.scripts.gmail_auth"*: run it, and it is back.
+  with: python -m backend.scripts.gmail_auth"*: run it, and it is back. A user
+  who connected from Settings sees *"Connect Gmail again in Settings"* instead.
   Check the day before with `python -m backend.scripts.gmail_auth --check`.
 - **New mail does not appear by itself.** There is no push; press
   **Settings → Reload inbox** after someone sends. Say so out loud in a demo so
@@ -337,8 +405,8 @@ npm run dev                        # http://localhost:5173
 ## Tests
 
 ```bash
-python -m pytest tests/ -q     # 771 passed, 2 skipped, 8 xfailed
-cd frontend && npx vitest run  # 299 passed, in 19 files
+python -m pytest tests/ -q     # 819 passed, 2 skipped, 8 xfailed
+cd frontend && npx vitest run  # 323 passed, in 21 files
 ```
 
 The two skips are deliberate: they are the FR-05 accuracy criterion, on the
@@ -505,8 +573,8 @@ frontend/src/
   components/  Dashboard (app shell), ReadingPane (FR-01/03/04/06 in place),
                Attachments (FR-08, View and Save), CommandBar (FR-05, typed or
                spoken), IntentChoice (section 6.3 question), GroundingNotice,
-               SideItem, OpenAIMark
-  views/       Login, Inbox (FR-08), Settings (section 5.5)
+               SideItem, OpenAIMark, GmailConnect (Settings: connect a user's Gmail)
+  views/       Login (sign in and sign up), Inbox (FR-08), Settings (section 5.5)
   hooks/       useAuth, useInbox, useSpeech (FR-04), useSpokenCommand (FR-05),
                useDictation (FR-03), usePreference
   lib/         capabilities.js (SR-01), constants (categories, tones), search,
@@ -514,10 +582,12 @@ frontend/src/
 backend/
   app.py       application factory
   config.py    every setting, environment-driven
+  accounts.py  sign-up accounts and each user's Gmail token, encrypted (SQLite)
   run.py       dev entry point
   mailserver.py  local SMTP receiver -- the mail-server TIER, imported by nothing
                  under backend/ (asserted in tests/test_mailserver.py)
-  routes/      auth, health, inbox, attachments (one file, when it is opened),
+  routes/      auth (login, sign-up), gmail (Connect Gmail), health, inbox,
+               attachments (one file, when it is opened),
                ai (summarise/classify/draft), voice, metrics (NFR-01),
                support.py (shared error translation)
   orchestrator/  ALL LLM calls live here
@@ -548,10 +618,11 @@ tests/         backend suite (pytest); frontend tests sit beside their modules
 
 - **NFR-04.** Auth is a single fail-closed `before_request` guard, not per-route
   decorators. Everything under `/api` requires a token unless it is on an
-  explicit two-entry allowlist. Forgetting to allowlist a new route makes it
-  return 401 - visible and safe - rather than shipping it unauthenticated.
-  `tests/test_auth.py` enumerates the URL map, so a route added later is
-  covered automatically; it currently checks nine protected routes.
+  explicit four-entry allowlist (login, sign-up, the Google callback, health).
+  Forgetting to allowlist a new route makes it return 401 - visible and safe -
+  rather than shipping it unauthenticated. `tests/test_auth.py` enumerates the
+  URL map, so a route added later is covered automatically; it currently
+  checks twelve protected routes.
   `/api/metrics` needed no auth decorator and got none: it was covered by the
   401 test the moment it was registered, which is the whole argument for the
   guard being central rather than per-route.

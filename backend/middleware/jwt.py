@@ -17,6 +17,11 @@ from flask import current_app, g, jsonify, request
 # Endpoint names (Flask's "blueprint.function" form) reachable without a token.
 PUBLIC_ENDPOINTS = frozenset({
     "auth.login",
+    # Creating an account, and asking whether sign-up needs an invite code.
+    "auth.signup",
+    # Google sends the Connect Gmail popup back here with no token; the route
+    # finds the user from a single-use state value plus a browser cookie.
+    "gmail.callback",
     "health.healthz",
 })
 

@@ -124,6 +124,7 @@ export default function Dashboard({ user, onLogout }) {
         setTranslationLang={setTranslationLang}
         onReloadInbox={inbox.reload}
         reloading={inbox.loading}
+        onMailboxChanged={inbox.reload}
         onBack={() => setActive("inbox")}
       />
     );
@@ -131,6 +132,8 @@ export default function Dashboard({ user, onLogout }) {
     main = (
       <InboxView
         groups={inbox.groups}
+        mailbox={inbox.mailbox}
+        onConnectGmail={() => setActive("settings")}
         loading={inbox.loading}
         error={inbox.error}
         filter={filter}

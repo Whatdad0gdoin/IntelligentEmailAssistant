@@ -59,7 +59,9 @@ def test_unmatched_api_path_requires_auth_too(client):
 
 def test_public_endpoints_are_deliberately_short(app):
     """A tripwire: widening the public allowlist should be a conscious act."""
-    assert PUBLIC_ENDPOINTS == frozenset({"auth.login", "health.healthz"})
+    assert PUBLIC_ENDPOINTS == frozenset(
+        {"auth.login", "auth.signup", "gmail.callback", "health.healthz"}
+    )
 
 
 # --- login behaviour -------------------------------------------------------

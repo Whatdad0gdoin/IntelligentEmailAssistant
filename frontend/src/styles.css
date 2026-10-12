@@ -78,6 +78,9 @@
 @keyframes spin { to{transform:rotate(360deg);} }
 .card-note { display:flex; align-items:center; gap:8px; margin-top:22px; font-size:12px; color:var(--grey); justify-content:center; }
 .card-note .dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 0 3px rgba(35,178,109,0.16); animation:pulse 2s ease-in-out infinite; }
+.card-switch-row { margin-top:16px; text-align:center; font-size:13px; color:var(--grey); }
+.iq button.card-switch { padding:0; font-size:13px; font-weight:600; color:var(--blue-deep); }
+.iq button.card-switch:hover { text-decoration:underline; }
 @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 .panel-foot { position:absolute; bottom:28px; font-size:12px; color:var(--grey-2); letter-spacing:0.02em; }
 
@@ -728,3 +731,13 @@ body { background:var(--paper); overflow:hidden; }
 .iq button.ai-dictate-btn.on svg { animation:pulse 1.2s ease-in-out infinite; }
 .iq button.ai-dictate-btn:disabled { background:var(--paper-2); border-color:var(--line); color:var(--grey); cursor:not-allowed; }
 .ai-dictate-status { flex:1; min-width:180px; font-size:12.5px; line-height:1.45; color:var(--grey-2); }
+
+/* ===== DEMO INBOX NOTICE AND CONNECT GMAIL =====
+   A new account starts on the demo mailbox, and the inbox says so where the
+   mail is. Light blue like the other informational surfaces, not a warning:
+   nothing is wrong. */
+.demo-banner { display:flex; align-items:center; gap:12px; margin:0 0 14px; padding:11px 14px; background:var(--blue-wash); border:1.5px solid #BFDBFE; border-radius:var(--r-md); font-size:13.5px; line-height:1.45; color:var(--ink); }
+.demo-banner span { flex:1; }
+.demo-banner-icon { flex-shrink:0; color:var(--blue-deep); }
+.iq .demo-banner button.action-btn { flex-shrink:0; padding:7px 13px; }
+.setting-footnote a { color:var(--blue-deep); font-weight:600; }

@@ -7,8 +7,8 @@ like.
 Every figure here was measured, not estimated. Where something is a judgement
 call rather than a task, it says so.
 
-Status at time of writing (2026-10-09): **771 backend tests passing (2 skipped,
-8 expected failures), 299 frontend tests passing.**
+Status at time of writing (2026-10-12): **819 backend tests passing (2 skipped,
+8 expected failures), 323 frontend tests passing.**
 
 Item numbers are kept from earlier versions of this file, because code and other
 documents cite them; new items continue from 16.
@@ -39,6 +39,13 @@ Google setting.
 
 **Done when:** someone emails the project address, Reload inbox shows it
 classified, and Gmail still shows it unread.
+
+**Also untested against real Google: Connect Gmail in Settings** (each user's
+own inbox, added 2026-10-12). It needs a second OAuth client of type *Web
+application* with the redirect URI registered, and each address added as a
+test user; the README section *Let users connect their own Gmail* has the
+steps. Done when a test user signs up, presses Connect Gmail, and sees their
+own inbox.
 
 > The token expires every 7 days while the app is in Testing. Run
 > `python -m backend.scripts.gmail_auth --check` the day before any demo.
@@ -144,6 +151,7 @@ re-run; the result is not kept.
 | 4 | Decide FR-07 (translation) | **Built** (2026-10-08). `POST /api/translate` translates an email or a drafted reply into one of 15 languages, from the reading pane, the draft panel and a Settings default; nothing translated is kept between calls (NFR-03). Every number, link and address is checked: figures preserved in 89.2% (Spanish) and 86.5% (Chinese, Simplified) of 37 test-split emails (`eval/BENCHMARKS.md`). Left out on purpose: a voice or typed "translate" command, which would change `INTENT_SYSTEM` and need FR-05 re-measured |
 | 15 | `.vscode/settings.json` tracked | No longer tracked, and ignored by `.gitignore` (`git ls-files .vscode/` is empty) |
 | 16 | DR-01's 400 emails | Twelve more Work emails read and confirmed (2026-10-08); the 100-per-class merge wrote **400 rows, 300 real**. Run 13 measures the shipped configuration on it: 89.8% strict, 86.9% on real email. The 17 holdout rows the merge took were dropped from `holdout_unscored.csv` |
+| 22 | New users could not sign up, and only one Gmail inbox could be read (peer feedback: "how will the app get emails from the user?") | **Built** (2026-10-12). *Create an account* on the login page, and *Connect Gmail* in Settings: Google's read-only consent in a popup, one encrypted token per user, Disconnect revokes it. A new account sees the demo inbox and is told so. 48 backend and 22 frontend tests; checked in a real browser up to Google's page |
 
 Found in the October review, not previously listed, and fixed:
 
@@ -181,4 +189,6 @@ These look like gaps and are not. Each is a decision with a reason.
 | **One email per call costs 2.5× as much to classify** | US$0.15 per 1,000 emails against US$0.06, for +13.5 points strict and a cold load under 5 s. About 38 users still fit inside the US$5/week budget on the comparison report's usage profile. `CLASSIFY_BATCH_SIZE=20` reverts it. |
 | **Joined words are matched exactly, never fuzzily** | "git hub" must match a sender or subject exactly to count as GitHub. Fuzzy-matching the joins was tried: "read the one from the deals team" joined to "thedeals", 0.82 similar to "techdeals", and an unrelated request went to TechDeals. A wrong email is worse than being asked. A single misheard name is still fuzzy-matched, scored below an exact match. |
 | **A bare "14/7" in an email does not vouch for "July 14"** | A numeric date in the source needs its year, or "24/7" and "1/2" vouch for dates nobody wrote. A false flag is the cheaper mistake. |
+| **Sign-up does not confirm the email address** | Confirming it would mean sending mail, and the backend has no way to (the FR-03 guard). An account holds no mail of its own: it sees the demo inbox until Gmail is connected, and that step is where Google checks who the user is. `SIGNUP_CODE` limits who can sign up. |
+| **Connect Gmail works for test users only, for 7 days at a time** | Google's rule for a restricted scope in Testing. Lifting it needs restricted-scope verification and a paid security assessment, repeated yearly: out of scope for a student project, and said in the README. |
 | **Typed commands run without a confirm step** | The same 0.6 confidence floor as voice; the actions are summarise, read and draft, and nothing is ever sent. Typed text cannot be misheard. |

@@ -22,6 +22,8 @@ import * as api from "../api/client.js";
 
 vi.mock("../api/client.js", () => ({
   login: vi.fn(),
+  signup: vi.fn(),
+  signupOptions: vi.fn(),
   setToken: vi.fn(),
   clearToken: vi.fn(),
   setUnauthorizedHandler: vi.fn(),
@@ -148,5 +150,112 @@ describe("a session that ended elsewhere", () => {
     act(() => onUnauthorized());
 
     expect(await screen.findByText(/your session ended/i)).toBeVisible();
+  });
+});
+
+
+describe("creating an account", () => {
+  const OPEN = { enabled: true, invite_code_required: false };
+
+  async function openSignup(user, options = OPEN) {
+    api.signupOptions.mockResolvedValue(options);
+    renderLogin();
+    await user.click(screen.getByRole("button", { name: /create an account/i }));
+    await screen.findByRole("heading", { name: /create your account/i });
+  }
+
+  async function fill(user, { email = "new.user@example.com", password = "a-long-password", confirm = password } = {}) {
+    await user.type(screen.getByLabelText("Email address"), email);
+    await user.type(screen.getByLabelText(/^password/i), password);
+    await user.type(screen.getByLabelText(/^confirm password/i), confirm);
+  }
+
+  it("says a new account starts on the demo inbox, and Gmail is connected from Settings", async () => {
+    const user = userEvent.setup();
+    await openSignup(user);
+
+    expect(screen.getByText(/demo inbox/i)).toHaveTextContent(/connect your gmail from settings/i);
+  });
+
+  it("creates the account and signs straight in", async () => {
+    const user = userEvent.setup();
+    api.signup.mockResolvedValue({ token: "jwt-new", expires_in: 3600 });
+    await openSignup(user);
+
+    await fill(user);
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(api.signup).toHaveBeenCalledWith("new.user@example.com", "a-long-password", "");
+    expect(api.setToken).toHaveBeenCalledWith("jwt-new");
+    expect(api.login).not.toHaveBeenCalled();
+  });
+
+  it("will not submit a short password or two that differ", async () => {
+    const user = userEvent.setup();
+    await openSignup(user);
+
+    await fill(user, { password: "short", confirm: "short" });
+    expect(screen.getByRole("button", { name: /create account/i })).toBeDisabled();
+
+    await user.clear(screen.getByLabelText(/^password/i));
+    await user.type(screen.getByLabelText(/^password/i), "a-long-password");
+    expect(screen.getByText(/do not match/i)).toBeVisible();
+    expect(screen.getByRole("button", { name: /create account/i })).toBeDisabled();
+
+    await user.clear(screen.getByLabelText(/^confirm password/i));
+    await user.type(screen.getByLabelText(/^confirm password/i), "a-long-password");
+    expect(screen.getByRole("button", { name: /create account/i })).toBeEnabled();
+  });
+
+  it("asks for an invite code only when the server needs one", async () => {
+    const user = userEvent.setup();
+    api.signup.mockResolvedValue({ token: "jwt-new", expires_in: 3600 });
+    await openSignup(user, { enabled: true, invite_code_required: true });
+
+    await fill(user);
+    expect(screen.getByRole("button", { name: /create account/i })).toBeDisabled();
+
+    await user.type(screen.getByLabelText("Invite code"), "let-me-in");
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(api.signup).toHaveBeenCalledWith("new.user@example.com", "a-long-password", "let-me-in");
+  });
+
+  it("has no invite code field when none is needed", async () => {
+    const user = userEvent.setup();
+    await openSignup(user);
+
+    expect(screen.queryByLabelText("Invite code")).toBeNull();
+  });
+
+  it("shows the server's reason when the account cannot be made", async () => {
+    const user = userEvent.setup();
+    api.signup.mockRejectedValue(new Error("An account with this email already exists. Sign in instead."));
+    await openSignup(user);
+
+    await fill(user);
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/already exists/i);
+    expect(api.setToken).not.toHaveBeenCalled();
+  });
+
+  it("says so when sign-up is turned off, and cannot be submitted", async () => {
+    const user = userEvent.setup();
+    await openSignup(user, { enabled: false, invite_code_required: false });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/turned off/i);
+    await fill(user);
+    expect(screen.getByRole("button", { name: /create account/i })).toBeDisabled();
+  });
+
+  it("goes back to signing in", async () => {
+    const user = userEvent.setup();
+    await openSignup(user);
+
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
+
+    expect(screen.getByRole("heading", { name: /sign in to your inbox/i })).toBeVisible();
+    expect(screen.queryByLabelText(/^confirm password/i)).toBeNull();
   });
 });

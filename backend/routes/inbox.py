@@ -21,7 +21,7 @@ by routes/attachments.py, which addresses it by its position in this list.
 
 from flask import Blueprint, jsonify
 
-from backend.adapters.email_source import get_email_source
+from backend.adapters.email_source import get_email_source, mailbox_of
 from backend.orchestrator.classify import classify_emails
 from backend.orchestrator.preprocess import preprocess_email, snippet
 from backend.orchestrator.schemas import CATEGORIES, REVIEW_CATEGORY
@@ -99,7 +99,9 @@ def inbox():
             "attachments": [a.as_dict() for a in message.attachments],
         })
 
-    return jsonify({"groups": groups}), 200
+    # Which mailbox this is, so a new user looking at the demo inbox is told
+    # so, and where to connect their own.
+    return jsonify({"groups": groups, "mailbox": mailbox_of(settings, user)}), 200
 
 
 @bp.get("/inbox/<path:email_id>")

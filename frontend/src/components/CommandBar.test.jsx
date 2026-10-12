@@ -23,6 +23,9 @@ import Dashboard from "./Dashboard.jsx";
 import * as api from "../api/client.js";
 
 vi.mock("../api/client.js", () => ({
+  gmailStatus: vi.fn(),
+  gmailConnect: vi.fn(),
+  gmailDisconnect: vi.fn(),
   fetchInbox: vi.fn(),
   getEmail: vi.fn(),
   summarise: vi.fn(),

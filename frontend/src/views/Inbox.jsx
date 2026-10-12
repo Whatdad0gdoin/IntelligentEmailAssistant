@@ -12,7 +12,7 @@
  */
 
 import { useState } from "react";
-import { AlertCircle, Inbox as InboxIcon, Paperclip, Search, X } from "lucide-react";
+import { AlertCircle, Inbox as InboxIcon, Mail, Paperclip, Search, X } from "lucide-react";
 
 import ReadingPane from "../components/ReadingPane.jsx";
 import { CATEGORIES, REVIEW_CATEGORY } from "../lib/constants.js";
@@ -83,6 +83,8 @@ function MailRow({ email, selected, onSelect, index }) {
 
 export default function Inbox({
   groups,
+  mailbox,
+  onConnectGmail,
   loading,
   error,
   filter,
@@ -130,6 +132,19 @@ export default function Inbox({
             {loading && <p className="main-sub">Classifying…</p>}
           </div>
         </header>
+
+        {/* A new account starts on the demo mailbox. Said here, where the
+            mail is, so nobody mistakes it for their own inbox or wonders how
+            theirs gets in. */}
+        {mailbox?.kind === "demo" && (
+          <div className="demo-banner" role="note">
+            <Mail size={17} className="demo-banner-icon" />
+            <span><b>This is a demo inbox.</b> Connect your Gmail to see your own email here.</span>
+            {onConnectGmail && (
+              <button className="action-btn" onClick={onConnectGmail}>Connect Gmail</button>
+            )}
+          </div>
+        )}
 
         <div className="search-box wide">
           <Search size={16} className="search-icon" />

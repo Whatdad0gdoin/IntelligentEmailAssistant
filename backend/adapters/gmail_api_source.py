@@ -109,6 +109,31 @@ class _BodyNotInline(Exception):
 # --- credentials ---------------------------------------------------------------
 
 
+class _FileTokenStore:
+    """The token file the gmail_auth script writes: one mailbox for the server."""
+
+    def __init__(self, path):
+        self.path = path
+
+    def load(self):
+        if not os.path.exists(self.path):
+            return None
+        with open(self.path, encoding="utf-8") as handle:
+            return handle.read()
+
+    def save(self, text):
+        # Atomic, and owner-readable only where the OS supports it: this file
+        # is a live credential for someone's mailbox.
+        temp = self.path + ".tmp"
+        with open(temp, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        try:
+            os.chmod(temp, 0o600)
+        except OSError:
+            pass
+        os.replace(temp, self.path)
+
+
 class _Credentials:
     """Loads the saved OAuth token, refreshes it, and writes refreshes back.
 
@@ -116,10 +141,16 @@ class _Credentials:
     threaded and two requests refreshing at once would each spend a refresh and
     race to write the file. The Credentials object is safe to share; the HTTP
     transport is not, which is why a fresh one is built per call below.
+
+    Where the token lives is the store's business: the gmail_auth script's file
+    by default, or one user's encrypted entry in the accounts database
+    (accounts.UserTokenStore) when they connected Gmail from Settings.
+    `reconnect` is the sentence that tells that person how to fix a dead token.
     """
 
-    def __init__(self, token_path):
-        self.token_path = token_path
+    def __init__(self, token_path=None, store=None, reconnect=_RECONNECT):
+        self.store = store or _FileTokenStore(token_path)
+        self.reconnect = reconnect
         self._creds = None
         self._lock = threading.Lock()
 
@@ -134,15 +165,14 @@ class _Credentials:
     def _load(self):
         from google.oauth2.credentials import Credentials
 
-        if not os.path.exists(self.token_path):
-            raise EmailSourceError(
-                "Gmail is not connected yet. " + _RECONNECT
-            )
+        text = self.store.load()
+        if text is None:
+            raise EmailSourceError("Gmail is not connected yet. " + self.reconnect)
         try:
-            creds = Credentials.from_authorized_user_file(self.token_path, SCOPES)
+            creds = Credentials.from_authorized_user_info(json.loads(text), SCOPES)
         except (ValueError, KeyError, json.JSONDecodeError) as exc:
             raise EmailSourceError(
-                f"The saved Gmail token at {self.token_path} is unreadable. " + _RECONNECT
+                "The saved Gmail token is unreadable. " + self.reconnect
             ) from exc
 
         # A token granted a different scope would fail on the first call with
@@ -150,7 +180,7 @@ class _Credentials:
         granted = set(creds.scopes or [])
         if granted and not set(SCOPES) <= granted:
             raise EmailSourceError(
-                "The saved Gmail token was not granted read access. " + _RECONNECT
+                "The saved Gmail token was not granted read access. " + self.reconnect
             )
         return creds
 
@@ -160,7 +190,7 @@ class _Credentials:
 
         if not self._creds.refresh_token:
             raise EmailSourceError(
-                "The saved Gmail token cannot be renewed. " + _RECONNECT
+                "The saved Gmail token cannot be renewed. " + self.reconnect
             )
         try:
             self._creds.refresh(Request())
@@ -171,23 +201,11 @@ class _Credentials:
             self._creds = None
             raise EmailSourceError(
                 "Gmail access has expired or was revoked. While the Google app "
-                "is in Testing, Google ends access every 7 days. " + _RECONNECT
+                "is in Testing, Google ends access every 7 days. " + self.reconnect
             ) from exc
         except OSError as exc:
             raise EmailSourceError("Could not reach Google to renew Gmail access.") from exc
-        self._save()
-
-    def _save(self):
-        # Atomic, and owner-readable only where the OS supports it: this file
-        # is a live credential for someone's mailbox.
-        temp = self.token_path + ".tmp"
-        with open(temp, "w", encoding="utf-8") as handle:
-            handle.write(self._creds.to_json())
-        try:
-            os.chmod(temp, 0o600)
-        except OSError:
-            pass
-        os.replace(temp, self.token_path)
+        self.store.save(self._creds.to_json())
 
 
 # --- source ------------------------------------------------------------------
@@ -196,11 +214,13 @@ class _Credentials:
 class GmailApiSource(EmailSource):
     """Reads the newest `limit` messages under one Gmail label."""
 
-    def __init__(self, token_path, label="INBOX", limit=25, timeout=20, service=None):
+    def __init__(self, token_path=None, label="INBOX", limit=25, timeout=20, service=None,
+                 token_store=None, reconnect=_RECONNECT):
         self.label = (label or "INBOX").strip()
         self.limit = max(1, min(int(limit), 500))
         self.timeout = timeout
-        self._credentials = _Credentials(token_path)
+        self.reconnect = reconnect
+        self._credentials = _Credentials(token_path, store=token_store, reconnect=reconnect)
         # Tests inject a fake service; nothing else should.
         self._injected = service
         self._label_id = None
@@ -234,7 +254,7 @@ class GmailApiSource(EmailSource):
         except EmailSourceError:
             raise
         except HttpError as exc:
-            raise _explain_http_error(exc, what, self.label) from exc
+            raise _explain_http_error(exc, what, self.label, self.reconnect) from exc
         except Exception as exc:
             # httplib2 raises its own error types, socket timeouts surface as
             # OSError, and the transport can raise from deep inside a refresh.
@@ -675,7 +695,7 @@ def _full_attachments(payload):
     return [attachment for _part, attachment in _full_attachment_parts(payload)]
 
 
-def _explain_http_error(exc, what, label):
+def _explain_http_error(exc, what, label, reconnect=_RECONNECT):
     """A sentence a person can act on. Status and reason only are logged."""
     status = getattr(getattr(exc, "resp", None), "status", None)
     try:
@@ -686,7 +706,7 @@ def _explain_http_error(exc, what, label):
     log.warning("gmail api: %s -> HTTP %s (%s)", what, status, reason or "no reason")
 
     if status == 401:
-        return EmailSourceError("Gmail rejected the saved sign-in. " + _RECONNECT)
+        return EmailSourceError("Gmail rejected the saved sign-in. " + reconnect)
     if status == 403:
         if reason in ("accessNotConfigured", "SERVICE_DISABLED"):
             return EmailSourceError(
@@ -695,11 +715,11 @@ def _explain_http_error(exc, what, label):
             )
         if reason in ("insufficientPermissions", "ACCESS_TOKEN_SCOPE_INSUFFICIENT"):
             return EmailSourceError(
-                "The saved Gmail token does not have read access. " + _RECONNECT
+                "The saved Gmail token does not have read access. " + reconnect
             )
         if reason in ("rateLimitExceeded", "userRateLimitExceeded", "RATE_LIMIT_EXCEEDED"):
             return EmailSourceError("Gmail is rate limiting this app. Wait a minute and reload.")
-        return EmailSourceError(f"Gmail refused to {what}. " + _RECONNECT)
+        return EmailSourceError(f"Gmail refused to {what}. " + reconnect)
     if status == 404:
         return EmailSourceError(
             f"Gmail could not find {label!r}. Set GMAIL_MAILBOX to a label that exists."
