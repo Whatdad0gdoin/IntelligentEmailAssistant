@@ -30,6 +30,10 @@ eval/data/interim/
 backend/mailbox/
 .logs/
 
+# The demo mailbox written by tools/build_demo_mailbox.py. It is generated, and
+# dated from the day it was built, so it is rebuilt when needed, not committed.
+backend/demo_mailbox/
+
 # OAuth client file and token for the Gmail API source. The token is a live,
 # refreshable credential for someone's mailbox.
 backend/secrets/

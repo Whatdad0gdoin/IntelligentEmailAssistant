@@ -36,16 +36,20 @@ export const ROTATING = [
 // Sidebar destinations. Summarise, Read Aloud, Draft Reply and Translate are
 // not here: they act on an open message and live on the reading pane. Tone and
 // the draft's translation are on the draft. Commands, typed or spoken, are not
-// here either: they go in the command bar above every page.
+// here either: they go in the command bar above every page. The categories and
+// quick filters under Inbox are not destinations: they narrow the inbox, and
+// Dashboard builds them from CATEGORIES and lib/search.js.
 export const FEATURES = [
   { id: "inbox", label: "Inbox", icon: Inbox, group: "main" },
 ];
 
+// `tint` is the same hue lightened for the dark sidebar, where `color` is too
+// dark to pick out: #2563EB is 2.8:1 against the sidebar's #1E293B.
 export const CATEGORIES = [
-  { key: "work", label: "Work", color: "#2563EB" },
-  { key: "personal", label: "Personal", color: "#0891B2" },
-  { key: "promo", label: "Promotions", color: "#D97706" },
-  { key: "studies", label: "Studies", color: "#059669" },
+  { key: "work", label: "Work", color: "#2563EB", tint: "#60A5FA" },
+  { key: "personal", label: "Personal", color: "#0891B2", tint: "#22D3EE" },
+  { key: "promo", label: "Promotions", color: "#D97706", tint: "#FBBF24" },
+  { key: "studies", label: "Studies", color: "#059669", tint: "#34D399" },
 ];
 
 /**
@@ -57,6 +61,7 @@ export const REVIEW_CATEGORY = {
   key: "review",
   label: "Review",
   color: "#64748B",
+  tint: "#94A3B8",
   explanation: "Low confidence, unverified label",
 };
 

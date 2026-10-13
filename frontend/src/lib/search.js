@@ -63,6 +63,24 @@ export function searchEmails(emails, query) {
 }
 
 /**
+ * Filters that cut across the categories, offered in the sidebar beside them.
+ * Each reads only what the list endpoint already sends, so choosing one costs
+ * no request. `empty` is what the inbox says when nothing passes.
+ */
+export const QUICK_FILTERS = {
+  unread: {
+    label: "Unread",
+    empty: "No unread mail",
+    test: (email) => Boolean(email?.unread),
+  },
+  attachments: {
+    label: "With attachments",
+    empty: "No mail with attachments",
+    test: (email) => Array.isArray(email?.attachments) && email.attachments.length > 0,
+  },
+};
+
+/**
  * Decide what the inbox should render.
  *
  * Extracted from the view because the bug it replaces was invisible there: the
@@ -70,16 +88,31 @@ export function searchEmails(emails, query) {
  * one, so clicking "Promotions" showed the whole inbox. Logic that decides
  * what a user sees is worth testing without a browser.
  *
- * Returns either a flat list (All, or any search) or exactly one named group.
+ * Returns either a flat list (All, a quick filter, or any search) or exactly
+ * one named group. A quick filter's list carries its `heading`, and `empty`
+ * when nothing passes it.
  */
 export function selectView({ groups, order, filter, query }) {
   const q = normaliseQuery(query);
   const searching = q.length > 0;
-  const flat = searching || filter === "all";
+  const everything = () => order.flatMap((name) => groups[name] || []);
 
-  if (flat) {
-    const all = order.flatMap((name) => groups[name] || []);
-    return { mode: "flat", searching, list: searchEmails(all, q), names: [] };
+  if (searching || filter === "all") {
+    return { mode: "flat", searching, list: searchEmails(everything(), q), names: [] };
+  }
+  // hasOwn, so a filter named "constructor" is unknown rather than a filter.
+  if (Object.hasOwn(QUICK_FILTERS, filter)) {
+    const quick = QUICK_FILTERS[filter];
+    const list = searchEmails(everything().filter(quick.test), "");
+    return {
+      mode: "flat",
+      searching,
+      list,
+      names: [],
+      heading: quick.label,
+      empty: list.length === 0,
+      emptyTitle: quick.empty,
+    };
   }
   return {
     mode: "grouped",

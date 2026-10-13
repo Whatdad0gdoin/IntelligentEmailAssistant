@@ -1,10 +1,11 @@
 /**
- * Whose mailbox is on screen. A new account starts on the demo inbox, and the
- * inbox says so where the mail is, with the way to connect Gmail one click
- * away. Once the user's own Gmail is connected the notice goes.
+ * Whose mailbox is on screen. A new account starts on the demo inbox. The
+ * inbox looks the same whichever mailbox it is showing: it carries no notice
+ * about that. Settings is where the app says which mailbox this is, and where
+ * Gmail is connected and disconnected.
  */
 
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -52,27 +53,31 @@ function inboxLoaded() {
   return screen.findByRole("button", { name: /project deadline moved to friday/i });
 }
 
-describe("the demo inbox", () => {
-  it("says it is the demo inbox, and leads to Connect Gmail in Settings", async () => {
-    const user = userEvent.setup();
-    renderDashboard();
-    await inboxLoaded();
-
-    const notice = screen.getByRole("note");
-    expect(notice).toHaveTextContent(/this is a demo inbox/i);
-    await user.click(within(notice).getByRole("button", { name: /connect gmail/i }));
-
-    expect(await screen.findByRole("heading", { name: /email account/i })).toBeVisible();
-    expect(await screen.findByRole("button", { name: /connect gmail/i })).toBeEnabled();
-  });
-
-  it("is not mentioned once the inbox is the user's own Gmail", async () => {
-    api.fetchInbox.mockResolvedValue({ groups: { Work: [EMAIL] }, mailbox: OWN });
+describe("the inbox", () => {
+  it.each([
+    ["the demo mailbox", DEMO],
+    ["the user's own Gmail", OWN],
+  ])("carries no notice about whose mail it is, on %s", async (_name, mailbox) => {
+    api.fetchInbox.mockResolvedValue({ groups: { Work: [EMAIL] }, mailbox });
     renderDashboard();
     await inboxLoaded();
 
     expect(screen.queryByRole("note")).toBeNull();
     expect(screen.queryByText(/demo inbox/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: /connect gmail/i })).toBeNull();
+  });
+});
+
+describe("connecting Gmail", () => {
+  it("is offered in Settings to an account still on the demo mailbox", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+    await inboxLoaded();
+
+    await user.click(screen.getByRole("button", { name: /^settings$/i }));
+
+    expect(await screen.findByRole("heading", { name: /email account/i })).toBeVisible();
+    expect(await screen.findByRole("button", { name: /connect gmail/i })).toBeEnabled();
   });
 });
 

@@ -31,6 +31,12 @@
  * Our server never receives audio, only the text recognised from it. The
  * browser's speech service may, and the bar says so while it listens; Settings
  * says it in full.
+ *
+ * The bar is a band across the top of the page with the microphone as its
+ * largest control. Under the field it shows one row: what it is doing or has
+ * just done, or, when it has nothing to say, a few example commands. An
+ * example fills the field like a spoken command does and runs nothing until
+ * Run is pressed.
  */
 
 import { useRef, useState } from "react";
@@ -53,7 +59,28 @@ export const LISTENING_HINT =
   "Listening… say a command. Our server never receives your audio; your browser's speech service may.";
 export const HEARD_HINT = "That is what was heard. Fix it if it is wrong, then press Run.";
 
-export default function CommandBar({ emails, onRun, voice = false, speechLang = DEFAULT_SPEECH_LANG }) {
+// Examples that work whatever is open: "the latest email" resolves to the
+// first candidate (backend/orchestrator/intent.py). Only summarise, read and
+// draft are intents, so nothing else is suggested. Reading aloud is offered
+// only where the browser can speak and voice is on.
+export const EXAMPLES = ["Summarise the latest email", "Draft a reply to the latest email"];
+export const READ_EXAMPLE = "Read the latest email aloud";
+
+// The moving bars shown in the field while it listens. They say the microphone
+// is open; they are not a level meter, because the recogniser reports no
+// volume. Heights and delays are fixed, so the pattern is the same every time.
+const WAVE = Array.from({ length: 64 }, (_, i) => ({
+  height: 8 + Math.round(22 * Math.abs(Math.sin(i * 0.9))),
+  animationDelay: `${((i * 37) % 11) / 10}s`,
+}));
+
+export default function CommandBar({
+  emails,
+  onRun,
+  voice = false,
+  readAloud = false,
+  speechLang = DEFAULT_SPEECH_LANG,
+}) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -167,6 +194,22 @@ export default function CommandBar({ emails, onRun, voice = false, speechLang = 
     else if (!inFlight.current) spoken.start();
   };
 
+  // An example goes into the field as a typed command and waits for Run, so
+  // it can be changed first. With no email to name there is nothing to try.
+  let examples = [];
+  if (emails.length > 0) {
+    examples = readAloud ? [EXAMPLES[0], READ_EXAMPLE, EXAMPLES[1]] : EXAMPLES;
+  }
+  const fillExample = (example) => {
+    setText(example);
+    setHeard(null);
+    setQuestion(null);
+    setError(null);
+    setOutcome("");
+    spoken.clearError();
+    inputRef.current?.focus();
+  };
+
   let hint = outcome;
   if (busy) hint = "Working out what you meant…";
   else if (spoken.listening) hint = LISTENING_HINT;
@@ -180,54 +223,80 @@ export default function CommandBar({ emails, onRun, voice = false, speechLang = 
 
   return (
     <div className="command-bar" onKeyDown={onKeyDown}>
-      <form className="command-field" onSubmit={submit} aria-busy={busy}>
-        <Sparkles size={16} strokeWidth={2.2} className="command-icon" aria-hidden="true" />
-        <input
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={(event) => {
-            setText(event.target.value);
-            setOutcome("");
-            spoken.clearError();
-          }}
-          placeholder={micShown
-            ? "Type or say a command, e.g. summarise the latest email"
-            : "Type a command, e.g. summarise the latest email"}
-          aria-label="Command"
-          maxLength={MAX_CHARS}
-          readOnly={busy}
-          autoComplete="off"
-        />
-        {/* Only where it can work (SR-01): a recogniser in this browser, and
-            voice switched on. type="button", or pressing it would submit. */}
-        {micShown && (
-          <button
-            type="button"
-            className={`command-mic ${spoken.listening ? "on" : ""}`}
-            onClick={toggleMic}
-            aria-pressed={spoken.listening}
-            aria-label={spoken.listening ? "Stop listening" : "Speak a command"}
-            aria-disabled={busy || undefined}
-            title="Speak a command. Our server never receives your audio; your browser's speech service may."
-          >
-            {spoken.listening
-              ? <Square size={13} strokeWidth={2.6} aria-hidden="true" />
-              : <Mic size={15} strokeWidth={2.2} aria-hidden="true" />}
-          </button>
-        )}
-        {/* Not disabled while busy: disabling the focused control drops focus
-            to the page, and a keyboard user would have to find the field again.
-            The in-flight guard in submit is what stops a second request. */}
-        <button type="submit" className="command-run" disabled={!command} aria-disabled={busy || undefined}>
-          {busy
-            ? <Loader2 size={14} strokeWidth={2.4} className="spin" aria-hidden="true" />
-            : <CornerDownLeft size={14} strokeWidth={2.4} aria-hidden="true" />}
-          <span>Run</span>
-        </button>
-      </form>
+      <div className="command-band">
+        <form className="command-row" onSubmit={submit} aria-busy={busy}>
+          {/* Only where it can work (SR-01): a recogniser in this browser, and
+              voice switched on. type="button", or pressing it would submit. */}
+          {micShown && (
+            <button
+              type="button"
+              className={`command-mic ${spoken.listening ? "on" : ""}`}
+              onClick={toggleMic}
+              aria-pressed={spoken.listening}
+              aria-label={spoken.listening ? "Stop listening" : "Speak a command"}
+              aria-disabled={busy || undefined}
+              title="Speak a command. Our server never receives your audio; your browser's speech service may."
+            >
+              {spoken.listening
+                ? <Square size={18} strokeWidth={2.6} fill="currentColor" aria-hidden="true" />
+                : <Mic size={24} strokeWidth={2.2} aria-hidden="true" />}
+            </button>
+          )}
+          <div className={`command-field ${spoken.listening ? "listening" : ""}`}>
+            {/* Without a microphone the field keeps a mark of its own. */}
+            {!micShown && <Sparkles size={16} strokeWidth={2.2} className="command-icon" aria-hidden="true" />}
+            <input
+              ref={inputRef}
+              type="text"
+              value={text}
+              onChange={(event) => {
+                setText(event.target.value);
+                setOutcome("");
+                spoken.clearError();
+              }}
+              placeholder={spoken.listening
+                ? "Listening…"
+                : micShown
+                  ? "Type or say a command, e.g. summarise the latest email"
+                  : "Type a command, e.g. summarise the latest email"}
+              aria-label="Command"
+              maxLength={MAX_CHARS}
+              readOnly={busy}
+              autoComplete="off"
+            />
+            {spoken.listening && (
+              <span className="command-wave" aria-hidden="true">
+                {WAVE.map((bar, i) => <span key={i} style={bar} />)}
+              </span>
+            )}
+            {/* Not disabled while busy: disabling the focused control drops
+                focus to the page, and a keyboard user would have to find the
+                field again. The in-flight guard in submit is what stops a
+                second request. */}
+            <button type="submit" className="command-run" disabled={!command} aria-disabled={busy || undefined}>
+              {busy
+                ? <Loader2 size={14} strokeWidth={2.4} className="spin" aria-hidden="true" />
+                : <CornerDownLeft size={14} strokeWidth={2.4} aria-hidden="true" />}
+              <span>Run</span>
+            </button>
+          </div>
+        </form>
 
-      <p className="command-hint" aria-live="polite">{hint}</p>
+        <p className="command-hint" aria-live="polite">{hint}</p>
+
+        {/* The row under the field is the line above when it has something to
+            say, and these otherwise, so the band keeps its height. */}
+        {!hint && examples.length > 0 && (
+          <div className="command-examples" role="group" aria-label="Example commands">
+            <span className="command-examples-label" aria-hidden="true">Try</span>
+            {examples.map((example) => (
+              <button className="command-example" type="button" key={example} onClick={() => fillExample(example)}>
+                {example}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {failure && (
         <div className="feature-error" role="alert">

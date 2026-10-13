@@ -7,6 +7,11 @@
  * language chosen in Settings is passed down as the language Translate starts
  * in.
  *
+ * Under Inbox the sidebar lists what narrows it: the five categories with
+ * their counts, and two quick filters (unread, with attachments). They are one
+ * choice, held here as `filter`; Inbox itself is "all". At its foot the
+ * sidebar says what state voice is in, and that card opens Settings.
+ *
  * A command bar sits above both destinations, in every browser and whatever
  * the voice setting. A command can be typed into it anywhere, and spoken into
  * it where the browser can recognise speech: the bar carries the microphone,
@@ -19,7 +24,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { LogOut, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, Mail, Mic, MicOff, Paperclip, Settings as SettingsIcon } from "lucide-react";
 
 import CommandBar from "./CommandBar.jsx";
 import SideItem from "./SideItem.jsx";
@@ -28,16 +33,25 @@ import SettingsView from "../views/Settings.jsx";
 import { useInbox } from "../hooks/useInbox.jsx";
 import { usePreference } from "../hooks/usePreference.jsx";
 import {
+  CATEGORIES,
   DEFAULT_SPEECH_LANG,
   DEFAULT_TRANSLATION_LANGUAGE,
   FEATURES,
+  REVIEW_CATEGORY,
+  SPEECH_LANGS,
   speechLangOrDefault,
   translationLangOrDefault,
 } from "../lib/constants.js";
 import { capabilities, voiceLimitation } from "../lib/capabilities.js";
-import { newestFirst } from "../lib/search.js";
+import { QUICK_FILTERS, newestFirst } from "../lib/search.js";
+import { voiceStatus } from "../lib/voiceStatus.js";
 
 const INBOX_FEATURE = FEATURES.find((f) => f.id === "inbox");
+
+// The five buckets the inbox is grouped into, in the order it lists them.
+const SIDE_CATEGORIES = [...CATEGORIES, REVIEW_CATEGORY];
+
+const QUICK_FILTER_ICONS = { unread: Mail, attachments: Paperclip };
 
 export default function Dashboard({ user, onLogout }) {
   const [active, setActive] = useState("inbox");
@@ -110,7 +124,21 @@ export default function Dashboard({ user, onLogout }) {
   };
 
   const openEmail = selected ? inbox.findEmail(selected) : null;
-  const unreadCount = allEmails.filter((e) => e.unread).length;
+  const unreadCount = allEmails.filter(QUICK_FILTERS.unread.test).length;
+
+  // The sidebar's categories and quick filters are one choice. Picking one
+  // from Settings also brings the inbox back, as picking Inbox does.
+  const showFilter = (name) => {
+    setFilter(name);
+    setActive("inbox");
+  };
+  const showing = (name) => active === "inbox" && filter === name;
+
+  const voice = voiceStatus(
+    voiceEnabled,
+    SPEECH_LANGS.find((lang) => lang.key === speechLang)?.label,
+    capabilities
+  );
 
   let main;
   if (active === "settings") {
@@ -132,8 +160,6 @@ export default function Dashboard({ user, onLogout }) {
     main = (
       <InboxView
         groups={inbox.groups}
-        mailbox={inbox.mailbox}
-        onConnectGmail={() => setActive("settings")}
         loading={inbox.loading}
         error={inbox.error}
         filter={filter}
@@ -160,10 +186,65 @@ export default function Dashboard({ user, onLogout }) {
           <div className="brand-glyph sm"><span className="glyph-mk sm">MK</span></div>
           <span className="brand-name sm">Mail<b>Kit</b></span>
         </div>
-        <nav className="side-nav">
-          <SideItem f={INBOX_FEATURE} active={active} onClick={setActive} badge={unreadCount} />
+        <nav className="side-nav" aria-label="Mailbox">
+          <SideItem
+            f={INBOX_FEATURE}
+            active={showing("all") ? INBOX_FEATURE.id : null}
+            onClick={() => showFilter("all")}
+            badge={unreadCount}
+          />
+
+          {/* Counts wait for the load: while the inbox is being classified
+              every one of them would read 0. The title names the item when
+              the sidebar is collapsed to icons on a narrow window. */}
+          <div className="nav-group-label">Categories</div>
+          {SIDE_CATEGORIES.map(({ label, tint }) => (
+            <button
+              className={`nav-item ${showing(label) ? "active" : ""}`}
+              key={label}
+              title={label}
+              aria-current={showing(label) ? "true" : undefined}
+              onClick={() => showFilter(label)}
+            >
+              <span className="nav-icon"><span className="nav-dot" style={{ background: tint }} /></span>
+              <span className="nav-label">{label}</span>
+              {!inbox.loading && <span className="nav-count">{(inbox.groups[label] || []).length}</span>}
+            </button>
+          ))}
+
+          <div className="nav-group-label">Filters</div>
+          {Object.entries(QUICK_FILTERS).map(([key, { label, test }]) => {
+            const Icon = QUICK_FILTER_ICONS[key];
+            return (
+              <button
+                className={`nav-item ${showing(key) ? "active" : ""}`}
+                key={key}
+                title={label}
+                aria-current={showing(key) ? "true" : undefined}
+                onClick={() => showFilter(key)}
+              >
+                <span className="nav-icon"><Icon size={16} strokeWidth={2.2} /></span>
+                <span className="nav-label">{label}</span>
+                {!inbox.loading && <span className="nav-count">{allEmails.filter(test).length}</span>}
+              </button>
+            );
+          })}
         </nav>
         <div className="side-foot">
+          {/* Says what voice is doing by its words and its icon, not only the
+              dot. It opens Settings, where voice is switched and explained. */}
+          <button className="side-voice" title="Change this in Settings" onClick={() => setActive("settings")}>
+            <span className={`side-voice-icon ${voice.live ? "live" : ""}`}>
+              {voice.live
+                ? <Mic size={16} strokeWidth={2.2} aria-hidden="true" />
+                : <MicOff size={16} strokeWidth={2.2} aria-hidden="true" />}
+            </span>
+            <span className="side-voice-text">
+              <span className="side-voice-title">{voice.title}</span>
+              <span className="side-voice-detail">{voice.detail}</span>
+            </span>
+            <span className={`side-voice-dot ${voice.live ? "live" : ""}`} />
+          </button>
           <button className={`side-mini ${active === "settings" ? "active" : ""}`} onClick={() => setActive("settings")}>
             <SettingsIcon size={17} /> <span>Settings</span>
           </button>
@@ -192,6 +273,7 @@ export default function Dashboard({ user, onLogout }) {
           emails={voiceEmails}
           onRun={runVoiceAction}
           voice={voiceAvailable}
+          readAloud={voiceEnabled && capabilities.tts}
           speechLang={speechLang}
         />
         <div className="dash-view">{main}</div>

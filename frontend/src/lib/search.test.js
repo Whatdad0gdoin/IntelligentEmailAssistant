@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { matchesQuery, newestFirst, normaliseQuery, searchEmails, selectView } from "./search.js";
+import {
+  QUICK_FILTERS,
+  matchesQuery,
+  newestFirst,
+  normaliseQuery,
+  searchEmails,
+  selectView,
+} from "./search.js";
 
 const EMAILS = [
   { id: "1", sender_name: "Sarah Chen", sender: "sarah.chen.mel@gmail.com",
@@ -173,5 +180,61 @@ describe("which view the inbox shows", () => {
 
   it("an unknown filter shows nothing rather than everything", () => {
     expect(view("Nonsense").names).toEqual([]);
+  });
+});
+
+describe("quick filters cut across the categories", () => {
+  const ORDER = ["Work", "Personal", "Promotions", "Studies", "Review"];
+  const GROUPS = {
+    Work: [{ ...EMAILS[1], unread: true, attachments: [{ filename: "plan.pdf" }] }],
+    Personal: [{ ...EMAILS[0], unread: false, attachments: [] }],
+    Promotions: [],
+    Studies: [{ ...EMAILS[2], unread: true }],
+    Review: [],
+  };
+  const view = (filter, query = "", groups = GROUPS) =>
+    selectView({ groups, order: ORDER, filter, query });
+
+  it("Unread is one flat list of unread mail from every category, newest first", () => {
+    const v = view("unread");
+    expect(v.mode).toBe("flat");
+    expect(v.list.map((e) => e.id)).toEqual(["2", "3"]);
+    expect(v.heading).toBe("Unread");
+    expect(v.empty).toBe(false);
+  });
+
+  it("With attachments keeps only mail that has one", () => {
+    const v = view("attachments");
+    expect(v.list.map((e) => e.id)).toEqual(["2"]);
+    expect(v.heading).toBe("With attachments");
+  });
+
+  it("an email with no attachments field, or an empty one, has none", () => {
+    expect(QUICK_FILTERS.attachments.test({})).toBe(false);
+    expect(QUICK_FILTERS.attachments.test({ attachments: [] })).toBe(false);
+    expect(QUICK_FILTERS.attachments.test({ attachments: null })).toBe(false);
+    expect(QUICK_FILTERS.attachments.test(null)).toBe(false);
+  });
+
+  it("a filter nothing passes says so in its own words", () => {
+    const groups = { ...GROUPS, Work: [{ ...EMAILS[1], unread: false }], Studies: [EMAILS[2]] };
+    const unread = view("unread", "", groups);
+    expect(unread.list).toEqual([]);
+    expect(unread.empty).toBe(true);
+    expect(unread.emptyTitle).toBe("No unread mail");
+    expect(view("attachments", "", groups).emptyTitle).toBe("No mail with attachments");
+  });
+
+  it("a search looks through the whole inbox, not only what the filter kept", () => {
+    const v = view("unread", "sarah");
+    expect(v.searching).toBe(true);
+    expect(v.list.map((e) => e.id)).toEqual(["1"]);
+    expect(v.heading).toBeUndefined();
+  });
+
+  it("a filter is a name on the list, not any property an object happens to have", () => {
+    const v = view("constructor");
+    expect(v.mode).toBe("grouped");
+    expect(v.names).toEqual([]);
   });
 });
