@@ -207,6 +207,208 @@ describe("reader layout", () => {
     expect(rows.length).toBeGreaterThan(0);
     for (const value of rows) expect(value).toMatch(/^minmax\(\s*0\s*,\s*1fr\s*\)$/);
   });
+
+  // The list has the page until an email is open (the last section of
+  // styles.css): the first column is the whole width, an open email brings it
+  // in to 400px, and the change between the two is animated. None of that
+  // happens in jsdom, so what it rests on is read from the sheet.
+  const sheet = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const squash = (text) => text.replace(/\s+/g, "");
+
+  /** Every `@media <query>` block: where it starts and what is inside it. */
+  const mediaBlocks = (query) => {
+    const found = [];
+    for (const m of sheet.matchAll(/@media([^{]+)\{/g)) {
+      if (squash(m[1]) !== squash(query)) continue;
+      const start = m.index + m[0].length;
+      // Rules nest one level inside the block, so count braces to its end.
+      let depth = 1;
+      let end = start;
+      while (end < sheet.length) {
+        if (sheet[end] === "{") depth += 1;
+        if (sheet[end] === "}") depth -= 1;
+        if (depth === 0) break;
+        end += 1;
+      }
+      found.push({ at: m.index, text: sheet.slice(start, end) });
+    }
+    return found;
+  };
+
+  /** The declarations of the first rule in `text` written with this selector. */
+  const ruleBody = (text, selector) => {
+    for (const m of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (squash(m[1]) === squash(selector)) return m[2];
+    }
+    return null;
+  };
+
+  /** The value of `prop` among a rule's declarations, or null. */
+  const decl = (body, prop) => {
+    const m = (body || "").match(new RegExp("(?:^|;)\\s*" + prop + "\\s*:\\s*([^;]+)"));
+    return m ? m[1].trim() : null;
+  };
+
+  const px = (value) => {
+    expect(value).toMatch(/^-?[\d.]+px$/);
+    return parseFloat(value);
+  };
+
+  // The one-pane rule's query, and its exact opposite: every width gets one
+  // layout or the other. `min-width:1081px` would leave 1080.5px with neither.
+  const NARROW = "(max-width:1080px)";
+  const WIDE = `not all and ${NARROW}`;
+
+  const wideBlock = () => {
+    const blocks = mediaBlocks(WIDE);
+    expect(blocks, `expected one "@media ${WIDE}" block`).toHaveLength(1);
+    return blocks[0];
+  };
+
+  /** The base rule, and the split's two states on a wide window. */
+  const splitStates = () => {
+    const wide = wideBlock().text;
+    return {
+      base: ruleBody(sheet, ".inbox-split"),
+      closed: ruleBody(wide, ".inbox-split"),
+      open: ruleBody(wide, ".inbox-split.has-selection"),
+    };
+  };
+
+  const tracks = (body) => {
+    const value = decl(body, "grid-template-columns");
+    expect(value, "no grid-template-columns").not.toBeNull();
+    const [, first, rest] = value.match(/^(\S+)\s+(.+)$/);
+    return { first, rest: squash(rest) };
+  };
+
+  it("with nothing open the list's column is the whole width, and an open email restores the split", () => {
+    const { base, closed, open } = splitStates();
+
+    expect(tracks(closed).first).toBe("100%");
+    // No gap beside a column that is already the full width: 100% and 20px
+    // more is 20px wider than the page.
+    expect(parseFloat(decl(closed, "column-gap"))).toBe(0);
+    // The column and the gap the split has always had.
+    expect(tracks(open).first).toBe(tracks(base).first);
+    expect(decl(open, "column-gap")).toBe(decl(base, "gap"));
+  });
+
+  it("the two states are track lists a browser can animate between", () => {
+    const { closed, open } = splitStates();
+
+    // A length or a percentage first in both: 100% to 400px interpolates. 1fr
+    // to 400px does not, and the list would jump instead of narrowing.
+    expect(tracks(closed).first).toMatch(/^[\d.]+(%|px)$/);
+    expect(tracks(open).first).toMatch(/^[\d.]+(%|px)$/);
+    // Then the same flexible track, which is the reading pane at no width.
+    expect(tracks(closed).rest).toBe("minmax(0,1fr)");
+    expect(tracks(open).rest).toBe(tracks(closed).rest);
+  });
+
+  it("the split animates its columns, and the gap in step with them", () => {
+    const transition = decl(splitStates().closed, "transition");
+    expect(transition, "the split has no transition").not.toBeNull();
+    const timing = Object.fromEntries(
+      transition.split(/,(?![^(]*\))/).map((part) => {
+        const [prop, ...rest] = part.trim().split(/\s+/);
+        return [prop, rest.join(" ")];
+      })
+    );
+
+    expect(parseFloat(timing["grid-template-columns"])).toBeGreaterThan(0);
+    // Same duration and easing. A gap that opened at once, beside a column
+    // still close to 100%, would push the page 20px too wide for a moment.
+    expect(timing["column-gap"]).toBe(timing["grid-template-columns"]);
+  });
+
+  it("the animation is switched off for anyone who asks for reduced motion", () => {
+    const off = mediaBlocks("(prefers-reduced-motion:reduce)")
+      .filter((block) => decl(ruleBody(block.text, ".inbox-split"), "transition") === "none");
+
+    expect(off, "no reduced-motion rule turns the split's transition off").toHaveLength(1);
+    // It has the selector of the rule that sets the transition, so it wins
+    // only by coming after it.
+    expect(off[0].at).toBeGreaterThan(wideBlock().at);
+  });
+
+  it("neither state touches the bounded row", () => {
+    // The test above reads rules written exactly `.inbox-split`. This one
+    // reads the split in any state, and looks for the shorthands and the
+    // `display` that would undo the rows without naming them.
+    const onSplit = rules().filter((r) => /^\.inbox-split(\.[\w-]+)*$/.test(r.selector));
+    expect(onSplit.map((r) => r.selector)).toContain(".inbox-split.has-selection");
+
+    for (const { selector, body } of onSplit) {
+      const rows = decl(body, "grid-template-rows");
+      if (rows !== null) expect(squash(rows), selector).toBe("minmax(0,1fr)");
+      expect(decl(body, "grid-template"), selector).toBeNull();
+      expect(decl(body, "grid"), selector).toBeNull();
+      expect(decl(body, "display") ?? "grid", selector).toBe("grid");
+    }
+    const { base } = splitStates();
+    expect(decl(base, "display")).toBe("grid");
+    expect(squash(decl(base, "grid-template-rows"))).toBe("minmax(0,1fr)");
+  });
+
+  it("the reader's minimum width fits the pane in the narrowest window that splits", () => {
+    const wide = wideBlock().text;
+    const { open } = splitStates();
+    // One pixel past the widest window the one-pane rule covers, less the
+    // sidebar, the page's padding on both sides, the list and the gap: 329px.
+    const narrowest = px(NARROW.match(/max-width:([\d.]+px)/)[1]) + 1;
+    const sidebar = px(decl(ruleBody(sheet, ".dash-root"), "grid-template-columns").split(/\s+/)[0]);
+    const pagePadding = px(decl(ruleBody(sheet, ".dash-main"), "padding").split(/\s+/)[1]);
+    const pane = narrowest - sidebar - 2 * pagePadding - px(tracks(open).first) - px(decl(open, "column-gap"));
+
+    const minimum = px(decl(ruleBody(wide, ".inbox-right > *"), "min-width"));
+    expect(minimum).toBeGreaterThan(0);
+    // Any larger and the reader's right edge is cut off there for good.
+    expect(minimum).toBeLessThanOrEqual(pane);
+    // A minimum only uncovers the reader, rather than overflowing the page,
+    // if the pane clips it.
+    expect(decl(ruleBody(wide, ".inbox-right"), "overflow")).toBe("hidden");
+  });
+
+  it("an open pane is padded in by what it overhangs, with room for the reader's shadow", () => {
+    const pane = ruleBody(wideBlock().text, ".inbox-split.has-selection .inbox-right");
+    const sides = (value) => {
+      const p = value.split(/\s+/).map(px);
+      return [p[0], p[1] ?? p[0], p[2] ?? p[0], p[3] ?? p[1] ?? p[0]];
+    };
+    const padding = sides(decl(pane, "padding"));
+
+    // Equal and opposite on every side, or the reader is no longer the size
+    // and in the place it was before the pane started clipping.
+    expect(sides(decl(pane, "margin")).map((v) => -v)).toEqual(padding);
+    // --shadow-md, the reader's shadow: its larger layer is `0 <y> <blur>`.
+    const [offsetY, blur] = css.match(/--shadow-md:\s*0\s+(\d+)px\s+(\d+)px/).slice(1).map(Number);
+    const [top, right, bottom, left] = padding;
+    expect(top).toBeGreaterThanOrEqual(blur - offsetY);
+    expect(right).toBeGreaterThanOrEqual(blur);
+    expect(bottom).toBeGreaterThanOrEqual(blur + offsetY);
+    expect(left).toBeGreaterThanOrEqual(blur);
+  });
+
+  it("none of it applies at 1080px and below, where the split is still one pane at a time", () => {
+    const narrow = mediaBlocks(NARROW).map((block) => block.text).join(" ");
+    expect(squash(decl(ruleBody(narrow, ".inbox-split"), "grid-template-columns"))).toBe("1fr");
+    expect(decl(ruleBody(narrow, ".inbox-right"), "display")).toBe("none");
+    expect(decl(ruleBody(narrow, ".inbox-split.has-selection .inbox-left"), "display")).toBe("none");
+    expect(decl(ruleBody(narrow, ".inbox-split.has-selection .inbox-right"), "display")).toBe("block");
+
+    // With the wide-window block taken out, nothing left animates the split,
+    // clips the pane or holds the reader to a width.
+    const rest = sheet.replace(wideBlock().text, "");
+    const own = /(^|\s)\.inbox-(split(\.[\w-]+)*|right(\s*>\s*\*)?)$/;
+    for (const m of rest.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selector = m[1].trim();
+      if (!own.test(selector)) continue;
+      expect(decl(m[2], "transition") ?? "none", selector).toBe("none");
+      expect(decl(m[2], "overflow"), selector).toBeNull();
+      expect(parseFloat(decl(m[2], "min-width") ?? "0"), selector).toBe(0);
+    }
+  });
 });
 
 describe("translation (FR-07)", () => {
@@ -253,5 +455,52 @@ describe("the selected row is not clipped", () => {
     for (const side of sides) {
       expect(parseFloat(side), `padding side "${side}" leaves no room for the ring`).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("the inbox is one divided list", () => {
+  /** Rules whose selector passes `match` and that declare `prop`, in file order. */
+  const declaring = (match, prop) => {
+    const pattern = new RegExp("(?:^|;)\\s*" + prop + "\\s*:\\s*([^;]+)");
+    return rules()
+      .filter((r) => match(r.selector) && pattern.test(r.body))
+      .map((r) => ({ selector: r.selector, value: r.body.match(pattern)[1].trim() }));
+  };
+  /** The cascade's choice among them: the most specific, and the later on a tie. */
+  const winner = (found) =>
+    found.reduce(
+      (best, r) => (best && beats(specificity(best.selector), specificity(r.selector)) ? best : r),
+      null
+    );
+
+  // The line between two emails is the second one's top border.
+  const divider = winner(declaring((s) => /button\.mail-row\s*\+\s*\.mail-row$/.test(s), "border-top"));
+
+  it("the rows touch, so the line is all that separates them", () => {
+    const gap = winner(declaring((s) => /\.mail-list$/.test(s), "gap"));
+    expect(gap, ".mail-list has no gap rule").not.toBeNull();
+    expect(parseFloat(gap.value)).toBe(0);
+  });
+
+  it("a line separates each row from the one before, and survives the button reset", () => {
+    // .mail-row is a <button>, and `.iq button` sets border:none.
+    expect(divider, "no border-top rule for button.mail-row + .mail-row").not.toBeNull();
+    expect(parseFloat(divider.value)).toBeGreaterThan(0);
+    expect(divider.value).toMatch(/\bsolid\b/);
+    expect(beats(specificity(divider.selector), RESET)).toBe(true);
+  });
+
+  it("the line is not one of the two pale greys, which do not show on a white row", () => {
+    const colour = divider && divider.value.match(/#[0-9A-Fa-f]{6}/);
+    expect(colour, "the divider colour should be a literal hex").not.toBeNull();
+    const pale = ["line", "line-2"].map(
+      (name) => css.match(new RegExp(`--${name}\\s*:\\s*(#[0-9A-Fa-f]{6})`))[1].toUpperCase()
+    );
+    expect(pale).not.toContain(colour[0].toUpperCase());
+  });
+
+  it("a row does not move on hover, now that there is a row against it", () => {
+    const moved = winner(declaring((s) => s.includes(".mail-row") && s.includes(":hover"), "transform"));
+    expect(moved ? moved.value : "none").toBe("none");
   });
 });

@@ -3,16 +3,23 @@
  *
  * Renders the five buckets the server already grouped: Work, Personal,
  * Promotions, Studies and Review. The user does no sorting -- that is the
- * requirement. The category chips filter which groups are shown; they narrow
- * the view rather than reordering it, so the grouping always holds.
+ * requirement. The categories and quick filters in the sidebar (Dashboard
+ * holds the choice) decide which mail is shown; they narrow the view rather
+ * than reordering it, so the grouping always holds.
  *
  * Review carries its explanation inline (section 4.3): an email lands there
  * when the classifier's evidence failed verification or its confidence was
  * below threshold. It is never a silent fallback to Work.
+ *
+ * Layout: the list has the whole page until an email is open. Opening one
+ * marks the split `has-selection`, and the stylesheet brings the list in to
+ * its column while the reading pane widens beside it. On a narrow window the
+ * same class swaps the list for the reader instead. There is no "select an
+ * email" card: a pane with nothing in it takes no room.
  */
 
 import { useState } from "react";
-import { AlertCircle, Inbox as InboxIcon, Mail, Paperclip, Search, X } from "lucide-react";
+import { AlertCircle, Paperclip, Search, X } from "lucide-react";
 
 import ReadingPane from "../components/ReadingPane.jsx";
 import { CATEGORIES, REVIEW_CATEGORY } from "../lib/constants.js";
@@ -83,8 +90,6 @@ function MailRow({ email, selected, onSelect, index }) {
 
 export default function Inbox({
   groups,
-  mailbox,
-  onConnectGmail,
   loading,
   error,
   filter,
@@ -109,22 +114,29 @@ export default function Inbox({
   const matches = (email) => matchesQuery(email, q);
 
 
-  // "All" and any search render as one flat list. Choosing a category shows
-  // that category and nothing else, still headed so Review keeps its
-  // explanation. Decided in lib/search.js so it can be tested without a
-  // browser: the bug this replaces (every group rendering regardless of the
-  // chosen chip) was invisible in the JSX.
+  // "All", a quick filter and any search render as one flat list. Choosing a
+  // category shows that category and nothing else, still headed so Review
+  // keeps its explanation. Decided in lib/search.js so it can be tested
+  // without a browser: the bug this replaces (every group rendering regardless
+  // of the chosen category) was invisible in the JSX.
   const view = selectView({ groups, order: GROUP_ORDER, filter, query });
   const searching = view.searching;
   const showFlat = view.mode === "flat";
   const flatList = view.list;
   const groupedNames = view.names;
-  const selectedIsEmpty = Boolean(view.empty);
+  // A chosen category or filter with nothing in it shows a message in place of
+  // a bare heading. An empty mailbox says so once, not once for the mailbox
+  // and again for whichever category happens to be chosen.
+  const nothingHere = Boolean(view.empty);
+  const selectedIsEmpty = nothingHere && total > 0;
 
   let rowIndex = 0;
 
+  // The split follows the email that is actually open, not the id chosen. An
+  // id that matches nothing, as after the mailbox is reloaded or changed, has
+  // no reader to show, and would shrink the list beside a blank.
   return (
-    <div className={`inbox-split ${selected ? "has-selection" : ""}`}>
+    <div className={`inbox-split ${openEmail ? "has-selection" : ""}`}>
       <div className="inbox-left">
         <header className="main-head">
           <div>
@@ -132,19 +144,6 @@ export default function Inbox({
             {loading && <p className="main-sub">Classifying…</p>}
           </div>
         </header>
-
-        {/* A new account starts on the demo mailbox. Said here, where the
-            mail is, so nobody mistakes it for their own inbox or wonders how
-            theirs gets in. */}
-        {mailbox?.kind === "demo" && (
-          <div className="demo-banner" role="note">
-            <Mail size={17} className="demo-banner-icon" />
-            <span><b>This is a demo inbox.</b> Connect your Gmail to see your own email here.</span>
-            {onConnectGmail && (
-              <button className="action-btn" onClick={onConnectGmail}>Connect Gmail</button>
-            )}
-          </div>
-        )}
 
         <div className="search-box wide">
           <Search size={16} className="search-icon" />
@@ -162,26 +161,6 @@ export default function Inbox({
           )}
         </div>
 
-        <div className="filter-row">
-          <button className={`chip ${filter === "all" ? "on" : ""}`} onClick={() => setFilter("all")}>
-            All <span className="chip-count">{total}</span>
-          </button>
-          {GROUP_ORDER.map((name) => {
-            const n = (groups[name] || []).length;
-            if (n === 0) return null;
-            return (
-              <button
-                key={name}
-                className={`chip ${filter === name ? "on" : ""}`}
-                onClick={() => setFilter(name)}
-                style={{ "--chip": COLOR_BY_LABEL[name] }}
-              >
-                <span className="chip-dot" /> {name} <span className="chip-count">{n}</span>
-              </button>
-            );
-          })}
-        </div>
-
         {loading && <InboxSkeleton />}
 
         {error && !loading && (
@@ -195,10 +174,13 @@ export default function Inbox({
           </div>
         )}
 
+        {/* The way back is here as well as in the sidebar, which is only icons
+            on a narrow window. */}
         {!loading && !error && selectedIsEmpty && (
           <div className="reader-empty">
-            <h3>Nothing in {filter}</h3>
-            <p>No messages were filed here. Choose another category, or All.</p>
+            <h3>{view.emptyTitle || `Nothing in ${filter}`}</h3>
+            <p>Choose another category or filter in the sidebar, or go back to the whole inbox.</p>
+            <button className="chip" onClick={() => setFilter("all")}>Show all mail</button>
           </div>
         )}
 
@@ -215,8 +197,16 @@ export default function Inbox({
           </p>
         )}
 
-        {/* One flat list: either a search result set, or the "All" view. */}
-        {!loading && !error && showFlat && (
+        {/* A quick filter says which one it is, as a category's heading does. */}
+        {!loading && !error && showFlat && view.heading && !nothingHere && (
+          <h2 className="mail-group-head">
+            {view.heading}
+            <span className="mail-group-count">{flatList.length}</span>
+          </h2>
+        )}
+
+        {/* One flat list: a search result set, a quick filter, or the "All" view. */}
+        {!loading && !error && showFlat && !nothingHere && (
           <div className="mail-list">
             {flatList.map((email) => (
               <MailRow
@@ -231,7 +221,7 @@ export default function Inbox({
         )}
 
         {/* A single category, still headed so the Review explanation has a home. */}
-        {!loading && !error && groupedNames.map((name) => (
+        {!loading && !error && !nothingHere && groupedNames.map((name) => (
           <section className="mail-group" key={name}>
             <h2 className="mail-group-head" style={{ "--c": COLOR_BY_LABEL[name] }}>
               <span className="chip-dot" />
@@ -258,8 +248,12 @@ export default function Inbox({
         ))}
       </div>
 
+      {/* Always in the page, and empty until an email is open. The stylesheet
+          keeps it at no width and widens it when the split is marked; a pane
+          that only appeared then would have nothing to grow from, and the
+          change would be a jump. */}
       <div className="inbox-right">
-        {openEmail ? (
+        {openEmail && (
           <ReadingPane
             email={openEmail}
             body={openBody}
@@ -271,12 +265,6 @@ export default function Inbox({
             translationLang={translationLang}
             speechLang={speechLang}
           />
-        ) : (
-          <div className="reader-empty">
-            <div className="reader-empty-icon"><InboxIcon size={40} strokeWidth={1.6} /></div>
-            <h3>Select an email to read</h3>
-            <p>Choose a message to view it here and use the AI tools on it.</p>
-          </div>
         )}
       </div>
     </div>

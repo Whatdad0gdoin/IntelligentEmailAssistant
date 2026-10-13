@@ -99,8 +99,8 @@ def inbox():
             "attachments": [a.as_dict() for a in message.attachments],
         })
 
-    # Which mailbox this is, so a new user looking at the demo inbox is told
-    # so, and where to connect their own.
+    # Which mailbox this is: the demo one, the server's, or the user's own
+    # Gmail. The inbox screen does not show it; Settings says which is connected.
     return jsonify({"groups": groups, "mailbox": mailbox_of(settings, user)}), 200
 
 

@@ -227,7 +227,10 @@ describe("section 6.3: below the floor it asks instead of acting", () => {
     }
     expect(api.summarise).not.toHaveBeenCalled();
     expect(api.draft).not.toHaveBeenCalled();
-    expect(screen.getByText("Select an email to read")).toBeInTheDocument();
+    // And no email was opened: the reading pane is in the page with nothing
+    // in it, and the list still has the whole width.
+    expect(document.querySelector(".inbox-right")).toBeEmptyDOMElement();
+    expect(document.querySelector(".inbox-split")).not.toHaveClass("has-selection");
   });
 
   it("on low confidence, asks too, and the pick runs on the email the server found", async () => {

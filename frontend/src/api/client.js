@@ -207,7 +207,7 @@ export async function gmailDisconnect() {
  * GET /api/inbox -> { groups: { Work: [...], ..., Review: [...] }, mailbox } (FR-08)
  *
  * `mailbox` is { kind: "demo" | "gmail", address, own }: whether this is the
- * demo inbox or a real one, so the inbox can say which.
+ * demo inbox or a real one. The hook keeps it; no screen shows it.
  */
 export async function fetchInbox({ signal } = {}) {
   return request("/api/inbox", { signal });

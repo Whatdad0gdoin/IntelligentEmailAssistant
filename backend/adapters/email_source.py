@@ -220,8 +220,9 @@ def mailbox_of(config, user=None):
     """What this user's inbox is, for the UI: their own Gmail, the server's
     configured mailbox, or the demo mailbox.
 
-    The inbox says so on screen, because a demo inbox that looks like a real
-    one leaves a new user wondering where their own email is.
+    It goes out with the inbox so a client can tell which one it has. The inbox
+    screen does not show it: the sign-up form and Settings are what tell a new
+    user they start on the demo mailbox, and where to connect their own.
     """
     connection = _connected_gmail(config, user)
     if connection:
