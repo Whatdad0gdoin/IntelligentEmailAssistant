@@ -16,9 +16,13 @@
  * its column while the reading pane widens beside it. On a narrow window the
  * same class swaps the list for the reader instead. There is no "select an
  * email" card: a pane with nothing in it takes no room.
+ *
+ * A row is a toggle: the open email's row closes it, and the list has the
+ * page again. Closing is the opening run backwards, so the reader stays in
+ * the pane, out of reach, until the list has finished widening over it.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Paperclip, Search, X } from "lucide-react";
 
 import ReadingPane from "../components/ReadingPane.jsx";
@@ -32,6 +36,23 @@ const COLOR_BY_LABEL = CATEGORIES.reduce((acc, c) => {
   acc[c.label] = c.color;
   return acc;
 }, { Review: REVIEW_CATEGORY.color });
+
+/** How long a closed reader is kept when the split never says its slide has
+ *  ended: the transition was cancelled, or the browser cannot animate a grid's
+ *  columns. The stylesheet's slide is 0.5s, and this has to outlast it or the
+ *  reader would go while it could still be seen (styles.test.js holds the two
+ *  together). */
+const CLOSE_FALLBACK_MS = 600;
+
+/** Whether closing an email is animated in this window. These are the
+ *  stylesheet's own two queries: it slides the split only where both panes
+ *  fit, and not for anyone who asked for reduced motion. Where the question
+ *  cannot be asked, nothing is assumed to move. */
+function closeIsAnimated() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return !window.matchMedia("(max-width:1080px)").matches
+    && !window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+}
 
 /** NFR-01 mitigation: the inbox classifies on load, so show real structure
  *  while that round trip is in flight rather than an empty screen. */
@@ -56,10 +77,14 @@ function MailRow({ email, selected, onSelect, index }) {
   const color = COLOR_BY_LABEL[email.category] || REVIEW_CATEGORY.color;
   const initials = (email.sender_name || email.sender || "?").slice(0, 2).toUpperCase();
   const attachmentCount = Array.isArray(email.attachments) ? email.attachments.length : 0;
+  // aria-pressed says which row is open and that pressing it again closes it.
+  // It is a state, not part of the name, so the row is still found by its
+  // sender and subject.
   return (
     <button
       className={`mail-row ${email.unread ? "unread" : ""} ${selected ? "sel" : ""}`}
       style={{ animationDelay: `${index * 45}ms` }}
+      aria-pressed={selected}
       onClick={() => onSelect(email.id)}
     >
       <span className="mail-avatar" style={{ background: color }}>{initials}</span>
@@ -108,6 +133,53 @@ export default function Inbox({
 }) {
   const [query, setQuery] = useState("");
 
+  // What the reading pane holds. `open` is the email that is open now. When
+  // it stops being open on a window that animates, what the pane last held is
+  // kept as `leaving`, so the same reader, with whatever it was showing, is
+  // still there while the list widens back. It is worked out here, as the
+  // change is rendered, and not in an effect: a render with the pane empty in
+  // between would unmount the reader, and there would be nothing to slide away.
+  const open = openEmail ? { email: openEmail, body: openBody, bodyLoading } : null;
+  const [last, setLast] = useState(open);
+  const [leaving, setLeaving] = useState(null);
+  if (open) {
+    if (!last || last.email !== open.email || last.body !== open.body || last.bodyLoading !== open.bodyLoading) {
+      setLast(open);
+    }
+    // An email opened during a close takes the pane back, and the effect
+    // below drops the removal it had pending.
+    if (leaving) setLeaving(null);
+  } else if (last) {
+    setLast(null);
+    if (closeIsAnimated()) setLeaving(last);
+  }
+  const reader = open || leaving;
+  const closing = !open && leaving !== null;
+
+  // The reader goes when the split says the list's column has finished
+  // widening. That is the one transition that ends the slide: the gap ends
+  // with it, and everything else that bubbles up to the split is a row or a
+  // button finishing a hover. The timer is for when that is never said.
+  const splitRef = useRef(null);
+  useEffect(() => {
+    if (!leaving) return undefined;
+    const split = splitRef.current;
+    const remove = () => setLeaving(null);
+    const slideEnded = (event) => {
+      if (event.target === split && event.propertyName === "grid-template-columns") remove();
+    };
+    split.addEventListener("transitionend", slideEnded);
+    const timer = window.setTimeout(remove, CLOSE_FALLBACK_MS);
+    return () => {
+      split.removeEventListener("transitionend", slideEnded);
+      window.clearTimeout(timer);
+    };
+  }, [leaving]);
+
+  // A row is a toggle. Only a row is: a command goes through Dashboard's
+  // runVoiceAction, which selects its email and so can never close one.
+  const toggleEmail = (id) => setSelected(id === selected ? null : id);
+
   const total = GROUP_ORDER.reduce((n, g) => n + (groups[g]?.length || 0), 0);
 
   const q = normaliseQuery(query);
@@ -134,9 +206,11 @@ export default function Inbox({
 
   // The split follows the email that is actually open, not the id chosen. An
   // id that matches nothing, as after the mailbox is reloaded or changed, has
-  // no reader to show, and would shrink the list beside a blank.
+  // no reader to show, and would shrink the list beside a blank. The mark goes
+  // the moment an email is closed, which is what starts the list widening; the
+  // reader it is closing over is taken out when that has finished.
   return (
-    <div className={`inbox-split ${openEmail ? "has-selection" : ""}`}>
+    <div ref={splitRef} className={`inbox-split ${openEmail ? "has-selection" : ""}`}>
       <div className="inbox-left">
         <header className="main-head">
           <div>
@@ -214,7 +288,7 @@ export default function Inbox({
                 email={email}
                 index={rowIndex++}
                 selected={selected === email.id}
-                onSelect={setSelected}
+                onSelect={toggleEmail}
               />
             ))}
           </div>
@@ -240,7 +314,7 @@ export default function Inbox({
                   email={email}
                   index={rowIndex++}
                   selected={selected === email.id}
-                  onSelect={setSelected}
+                  onSelect={toggleEmail}
                 />
               ))}
             </div>
@@ -251,14 +325,22 @@ export default function Inbox({
       {/* Always in the page, and empty until an email is open. The stylesheet
           keeps it at no width and widens it when the split is marked; a pane
           that only appeared then would have nothing to grow from, and the
-          change would be a jump. */}
-      <div className="inbox-right">
-        {openEmail && (
+          change would be a jump.
+
+          A reader on its way out is not there to be used. `inert` takes it
+          out of the tab order, away from the pointer and out of the
+          accessibility tree, and aria-hidden says the last of those again for
+          anything that does not know `inert`. It is written as an empty
+          string because React 18 passes that through as the attribute and
+          drops `true`; React 19 reads it the other way round. A command is
+          never handed to a reader that is leaving. */}
+      <div className="inbox-right" inert={closing ? "" : undefined} aria-hidden={closing ? "true" : undefined}>
+        {reader && (
           <ReadingPane
-            email={openEmail}
-            body={openBody}
-            bodyLoading={bodyLoading}
-            pendingAction={pendingAction}
+            email={reader.email}
+            body={reader.body}
+            bodyLoading={reader.bodyLoading}
+            pendingAction={closing ? null : pendingAction}
             onActionConsumed={onActionConsumed}
             onBack={() => setSelected(null)}
             voiceEnabled={voiceEnabled}

@@ -30,14 +30,19 @@
  * sandboxed frame; granting it back allow-scripts and allow-same-origin would
  * amount to no sandbox while looking like one. What contains the frame is that
  * only a Blob the server labelled application/pdf is ever put in it.
+ *
+ * The sentence saying all this to the user (fetched only when asked for, never
+ * sent to the AI) is a small popup beside the list. It is open until it is
+ * closed, closing it is remembered, and the info button brings it back.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
-  Download, Eye, EyeOff, File as FileIcon, FileImage, FileText, Loader2, Mail, X,
+  Download, Eye, EyeOff, File as FileIcon, FileImage, FileText, Info, Loader2, Mail, X,
 } from "lucide-react";
 
 import * as api from "../api/client.js";
+import { usePreference } from "../hooks/usePreference.jsx";
 import { attachmentLabel, formatBytes } from "../lib/format.js";
 
 // The types the backend serves under their own type (INLINE_TYPES in
@@ -83,6 +88,13 @@ export default function Attachments({ emailId, attachments }) {
   // The one fetch in flight: { index, action } where action is "view" or "save".
   const [pending, setPending] = useState(null);
   const [error, setError] = useState(null);
+
+  // Whether the note about where attachments go has been closed. It is kept as
+  // a preference, which holds no email content, so that closing it once is
+  // enough: it would otherwise come back with every email that has a file.
+  const [noteClosed, setNoteClosed] = usePreference("attachmentNoteClosed", false);
+  const noteId = useId();
+  const infoButton = useRef(null);
 
   const previewUrl = useRef(null);
   const inFlight = useRef(null);
@@ -188,6 +200,13 @@ export default function Attachments({ emailId, attachments }) {
     if (previewUrl.current) window.open(previewUrl.current, "_blank", "noopener");
   }
 
+  // The close button goes away with the note, so focus returns to the button
+  // that opens it and does not fall back to the top of the page.
+  function closeNote() {
+    setNoteClosed(true);
+    infoButton.current?.focus();
+  }
+
   const busy = pending !== null;
   const shown = preview && list[preview.index] ? attachmentLabel(list[preview.index]) : "";
 
@@ -245,6 +264,36 @@ export default function Attachments({ emailId, attachments }) {
         })}
       </ul>
 
+      {/* After the list in the page, so it is reached after the files it is
+          about; the stylesheet puts it at the top right of the block. */}
+      <button
+        type="button"
+        className="att-info"
+        ref={infoButton}
+        onClick={() => setNoteClosed((closed) => !closed)}
+        aria-expanded={!noteClosed}
+        aria-controls={noteClosed ? undefined : noteId}
+        aria-label="About attachments"
+      >
+        <Info size={15} strokeWidth={2.2} aria-hidden="true" />
+      </button>
+
+      {/* Escape closes it from its own button, the only place focus can be
+          inside it. */}
+      {!noteClosed && (
+        <div
+          className="att-pop"
+          id={noteId}
+          role="note"
+          onKeyDown={(event) => { if (event.key === "Escape") closeNote(); }}
+        >
+          <p>An attachment is fetched only when you open or save it, and is never sent to the AI.</p>
+          <button type="button" className="ai-close" onClick={closeNote} aria-label="Close this note">
+            <X size={14} aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
       {error && list[error.index] && (
         <p className="ai-error" role="alert">
           {attachmentLabel(list[error.index])}: {error.message}
@@ -288,10 +337,6 @@ export default function Attachments({ emailId, attachments }) {
           )}
         </div>
       )}
-
-      <p className="att-note">
-        An attachment is fetched only when you open or save it, and is never sent to the AI.
-      </p>
     </div>
   );
 }

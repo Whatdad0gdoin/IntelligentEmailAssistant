@@ -12,17 +12,29 @@
  *  - the reading pane is in the page in both states, the same element, and
  *    empty until then. A pane that only mounted with the email would have no
  *    width to grow from, and the change would be a jump, not a transition;
- *  - the "Select an email to read" card is not rendered anywhere.
+ *  - the "Select an email to read" card is not rendered anywhere;
+ *  - a row is a toggle and says so: the open email's row closes it. A command
+ *    is not one, and never closes an email;
+ *  - where the stylesheet slides the split, a closed reader stays in the
+ *    pane, out of reach, until the split reports the end of its slide or a
+ *    timer runs out, so that closing is opening backwards. Anywhere else the
+ *    pane is emptied at once.
+ *
+ * jsdom has no matchMedia, which is how Inbox finds out whether the split
+ * slides here. Without it Inbox assumes nothing moves and empties the pane at
+ * once, so that is what a test gets unless it says which window it is on
+ * (`onWindow`).
  *
  * Driven through Dashboard, the real shell, because that is what decides which
  * email is open: a row's click and the command bar both end in its `selected`.
  */
 
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Dashboard from "../components/Dashboard.jsx";
+import Inbox from "./Inbox.jsx";
 import * as api from "../api/client.js";
 
 vi.mock("../api/client.js", () => ({
@@ -69,6 +81,38 @@ beforeEach(() => {
     ungrounded_flags: [],
   }));
 });
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
+
+// Inbox.jsx's CLOSE_FALLBACK_MS: how long a closed reader is kept when the
+// split never reports the end of its slide.
+const CLOSE_FALLBACK_MS = 600;
+
+/** Says which window this is. Inbox asks two things before it keeps a closed
+ *  reader for the slide: is the window too narrow to show both panes, and has
+ *  reduced motion been asked for. With no argument it is a wide window that
+ *  animates, which is the one the slide is for. */
+function onWindow({ narrow = false, reducedMotion = false } = {}) {
+  vi.stubGlobal("matchMedia", (query) => {
+    let matches = false;
+    if (/max-width/.test(query)) matches = narrow;
+    else if (/prefers-reduced-motion/.test(query)) matches = reducedMotion;
+    return { media: query, matches };
+  });
+}
+
+/** What a browser sends when one of an element's transitions has finished.
+ *  jsdom runs none, so the event is made by hand. */
+function transitionEnds(element, propertyName) {
+  const event = new Event("transitionend", { bubbles: true });
+  Object.defineProperty(event, "propertyName", { value: propertyName });
+  act(() => {
+    element.dispatchEvent(event);
+  });
+}
 
 /** Renders the shell. The two elements the stylesheet lays out have no role,
  *  so they are found by the class the stylesheet itself uses. */
@@ -198,8 +242,285 @@ describe("opening an email splits the page", () => {
   });
 });
 
-describe("when no email is open any more", () => {
-  it("going back to the list unmarks the split and empties the pane, which stays", async () => {
+describe("a row is a toggle", () => {
+  it("each row says whether it is the open one, under the name it always had", async () => {
+    const user = userEvent.setup();
+    renderDashboard();
+    await loaded();
+    const dinner = () => row(/dinner this weekend/i);
+    const deadline = () => row(/project deadline moved to friday/i);
+
+    expect(dinner()).toHaveAttribute("aria-pressed", "false");
+    expect(deadline()).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(dinner());
+    expect(dinner()).toHaveAttribute("aria-pressed", "true");
+    expect(deadline()).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(deadline());
+    expect(dinner()).toHaveAttribute("aria-pressed", "false");
+    expect(deadline()).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("clicking the open email's row closes it, and the list has the page again", async () => {
+    const user = userEvent.setup();
+    const { split, list, pane } = renderDashboard();
+    await loaded();
+    const paneBefore = pane();
+    await user.click(row(/dinner this weekend/i));
+    await within(pane()).findByRole("heading", { name: "Dinner this weekend?" });
+
+    await user.click(row(/dinner this weekend/i));
+
+    // As it was before anything was opened. No window was named, so nothing
+    // slides and the pane is empty at once.
+    expect(split()).not.toHaveClass("has-selection");
+    expect(pane()).toBe(paneBefore);
+    expect(pane()).toBeEmptyDOMElement();
+    expect(row(/dinner this weekend/i)).not.toHaveClass("sel");
+    expect(row(/dinner this weekend/i)).toHaveAttribute("aria-pressed", "false");
+    expect(within(list()).getByRole("button", { name: /project deadline moved to friday/i })).toBeVisible();
+
+    // And a third click opens it again.
+    await user.click(row(/dinner this weekend/i));
+    expect(await within(pane()).findByRole("heading", { name: "Dinner this weekend?" })).toBeVisible();
+    expect(split()).toHaveClass("has-selection");
+  });
+});
+
+describe("a command does not close an email", () => {
+  // On a window that slides, where a close would leave the pane marked.
+  beforeEach(() => onWindow());
+
+  it("naming the email that is already open keeps it open, and runs the action there", async () => {
+    const user = userEvent.setup();
+    api.voiceIntent.mockResolvedValue({ intent: "summarise", target_email_id: "work-1", confidence: 0.9 });
+    const { split, pane } = renderDashboard();
+    await loaded();
+    await user.click(row(/project deadline moved to friday/i));
+    await within(pane()).findByText("The body of work-1.");
+
+    await runCommand(user, "summarise the email from David");
+
+    expect(await within(pane()).findByText("Summary of work-1.")).toBeVisible();
+    expect(split()).toHaveClass("has-selection");
+    expect(pane()).not.toHaveAttribute("inert");
+    expect(row(/project deadline moved to friday/i)).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("naming no email works on the open one, and keeps it open", async () => {
+    const user = userEvent.setup();
+    api.voiceIntent.mockResolvedValue({ intent: "summarise", target_email_id: null, confidence: 0.9 });
+    const { split, pane } = renderDashboard();
+    await loaded();
+    await user.click(row(/dinner this weekend/i));
+    await within(pane()).findByText("The body of personal-1.");
+
+    await runCommand(user, "summarise this");
+
+    expect(await within(pane()).findByText("Summary of personal-1.")).toBeVisible();
+    expect(split()).toHaveClass("has-selection");
+    expect(pane()).not.toHaveAttribute("inert");
+    expect(row(/dinner this weekend/i)).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+describe("closing an email on a window that slides", () => {
+  beforeEach(() => onWindow());
+
+  /** Renders, and opens the dinner email with its body loaded. */
+  async function withDinnerOpen() {
+    const user = userEvent.setup();
+    const found = renderDashboard();
+    await loaded();
+    await user.click(row(/dinner this weekend/i));
+    await within(found.pane()).findByText("The body of personal-1.");
+    return { user, ...found };
+  }
+
+  it("the mark goes at once, and the reader stays, out of reach, until the list's column has finished widening", async () => {
+    const { user, split, pane } = await withDinnerOpen();
+    const paneBefore = pane();
+    expect(pane()).not.toHaveAttribute("inert");
+    expect(pane()).not.toHaveAttribute("aria-hidden");
+
+    await user.click(row(/dinner this weekend/i));
+
+    // Closed, as far as the layout and the list go: this is what starts the
+    // list widening.
+    expect(split()).not.toHaveClass("has-selection");
+    expect(row(/dinner this weekend/i)).not.toHaveClass("sel");
+    expect(row(/dinner this weekend/i)).toHaveAttribute("aria-pressed", "false");
+    // The reader is still drawn, as it was, for the slide to take away...
+    expect(pane()).toBe(paneBefore);
+    expect(within(pane()).getByText("The body of personal-1.")).toBeInTheDocument();
+    // ...and is not there to be used.
+    expect(pane()).toHaveAttribute("inert");
+    expect(pane()).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryByRole("heading", { name: "Dinner this weekend?" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^summarise$/i })).toBeNull();
+
+    transitionEnds(split(), "grid-template-columns");
+
+    expect(pane()).toBe(paneBefore);
+    expect(pane()).toBeEmptyDOMElement();
+    expect(pane()).not.toHaveAttribute("inert");
+    expect(pane()).not.toHaveAttribute("aria-hidden");
+  });
+
+  it("no other transition ending takes the reader away", async () => {
+    const { user, split, pane } = await withDinnerOpen();
+    await user.click(row(/dinner this weekend/i));
+
+    // The gap ends with the column, and the rest bubble up from inside: a
+    // row's hover, the pane's own fade.
+    transitionEnds(split(), "column-gap");
+    transitionEnds(row(/dinner this weekend/i), "background-color");
+    transitionEnds(row(/dinner this weekend/i), "grid-template-columns");
+    transitionEnds(pane(), "opacity");
+
+    expect(within(pane()).getByText("The body of personal-1.")).toBeInTheDocument();
+    expect(pane()).toHaveAttribute("inert");
+  });
+
+  it("if the end of the slide is never reported, a timer takes the reader away", async () => {
+    const { pane } = await withDinnerOpen();
+    // The clock is stopped from here, and user-event waits on it, so the
+    // click is sent directly.
+    vi.useFakeTimers();
+
+    fireEvent.click(row(/dinner this weekend/i));
+    expect(pane()).toHaveAttribute("inert");
+
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_FALLBACK_MS - 1);
+    });
+    expect(within(pane()).getByText("The body of personal-1.")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(pane()).toBeEmptyDOMElement();
+    expect(pane()).not.toHaveAttribute("inert");
+  });
+
+  it("opening another email while one is closing drops the removal and shows the new one", async () => {
+    const { split, pane } = await withDinnerOpen();
+    vi.useFakeTimers();
+    fireEvent.click(row(/dinner this weekend/i));
+    expect(pane()).toHaveAttribute("inert");
+
+    fireEvent.click(row(/project deadline moved to friday/i));
+    await act(async () => {});   // the new email's body
+
+    expect(split()).toHaveClass("has-selection");
+    expect(pane()).not.toHaveAttribute("inert");
+    expect(pane()).not.toHaveAttribute("aria-hidden");
+    expect(within(pane()).getByRole("heading", { name: "Project deadline moved to Friday" })).toBeInTheDocument();
+    expect(within(pane()).queryByRole("heading", { name: "Dinner this weekend?" })).toBeNull();
+
+    // Nothing is left waiting to empty the pane: not the timer, and not the
+    // end of the slide that the opening itself runs.
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_FALLBACK_MS * 5);
+    });
+    transitionEnds(split(), "grid-template-columns");
+
+    expect(within(pane()).getByRole("heading", { name: "Project deadline moved to Friday" })).toBeInTheDocument();
+    expect(within(pane()).getByText("The body of work-1.")).toBeInTheDocument();
+    expect(split()).toHaveClass("has-selection");
+  });
+
+  it("the same email opened again while it is closing is the reader that was there, with what it held", async () => {
+    const { user, split, pane } = await withDinnerOpen();
+    await user.click(within(pane()).getByRole("button", { name: /^summarise$/i }));
+    await within(pane()).findByText("Summary of personal-1.");
+    vi.useFakeTimers();
+
+    fireEvent.click(row(/dinner this weekend/i));
+    expect(pane()).toHaveAttribute("inert");
+    fireEvent.click(row(/dinner this weekend/i));
+
+    expect(split()).toHaveClass("has-selection");
+    expect(pane()).not.toHaveAttribute("inert");
+    // The removal was dropped, so nothing was unmounted and the summary is
+    // still open. Once the reader has gone, opening the email starts clean.
+    expect(within(pane()).getByText("Summary of personal-1.")).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_FALLBACK_MS * 5);
+    });
+    transitionEnds(split(), "grid-template-columns");
+    expect(within(pane()).getByText("Summary of personal-1.")).toBeInTheDocument();
+    expect(api.summarise).toHaveBeenCalledTimes(1);
+  });
+
+  it("another row switches email without closing anything", async () => {
+    const { user, split, pane } = await withDinnerOpen();
+    const paneBefore = pane();
+
+    await user.click(row(/project deadline moved to friday/i));
+
+    expect(split()).toHaveClass("has-selection");
+    expect(pane()).toBe(paneBefore);
+    expect(pane()).not.toHaveAttribute("inert");
+    expect(await within(pane()).findByRole("heading", { name: "Project deadline moved to Friday" })).toBeVisible();
+    expect(within(pane()).queryByRole("heading", { name: "Dinner this weekend?" })).toBeNull();
+  });
+
+  it("a reader that is leaving is not handed a command", () => {
+    // Inbox on its own: Dashboard never has a command for an email it has
+    // closed, short of the mailbox changing under an open one.
+    const props = {
+      groups: GROUPS,
+      loading: false,
+      error: null,
+      filter: "all",
+      setFilter: vi.fn(),
+      setSelected: vi.fn(),
+      bodyLoading: false,
+      onRetry: vi.fn(),
+      onActionConsumed: vi.fn(),
+      voiceEnabled: true,
+    };
+    const { container, rerender } = render(
+      <Inbox {...props} selected="work-1" openEmail={BY_ID["work-1"]} openBody="The body of work-1." pendingAction={null} />
+    );
+
+    rerender(
+      <Inbox
+        {...props}
+        selected={null}
+        openEmail={null}
+        openBody={undefined}
+        pendingAction={{ intent: "summarise", emailId: "work-1" }}
+      />
+    );
+
+    const pane = container.querySelector(".inbox-right");
+    expect(pane).toHaveAttribute("inert");
+    expect(within(pane).getByText("The body of work-1.")).toBeInTheDocument();
+    expect(api.summarise).not.toHaveBeenCalled();
+  });
+});
+
+describe("closing an email where nothing slides", () => {
+  it("with reduced motion asked for, the pane is emptied at once", async () => {
+    onWindow({ reducedMotion: true });
+    const user = userEvent.setup();
+    const { split, pane } = renderDashboard();
+    await loaded();
+    await user.click(row(/dinner this weekend/i));
+    await within(pane()).findByRole("heading", { name: "Dinner this weekend?" });
+
+    await user.click(row(/dinner this weekend/i));
+
+    expect(split()).not.toHaveClass("has-selection");
+    expect(pane()).toBeEmptyDOMElement();
+    expect(pane()).not.toHaveAttribute("inert");
+  });
+
+  it("on a narrow window, going back to the list unmarks the split and empties the pane, which stays", async () => {
+    onWindow({ narrow: true });
     const user = userEvent.setup();
     const { split, pane } = renderDashboard();
     await loaded();
@@ -208,15 +529,20 @@ describe("when no email is open any more", () => {
     await within(pane()).findByRole("heading", { name: "Dinner this weekend?" });
 
     // The reader's way back. The stylesheet shows it on a narrow window only,
-    // where the reader replaces the list; jsdom has it either way.
+    // where the reader replaces the list and there is no row to press; jsdom
+    // has it either way. One pane is swapped for the other with no slide, so
+    // there is nothing to keep the reader for.
     await user.click(screen.getByRole("button", { name: "Back to inbox" }));
 
     expect(split()).not.toHaveClass("has-selection");
     expect(pane()).toBe(paneBefore);
     expect(pane()).toBeEmptyDOMElement();
+    expect(pane()).not.toHaveAttribute("inert");
     expect(row(/dinner this weekend/i)).not.toHaveClass("sel");
   });
+});
 
+describe("when the email chosen is not in the inbox", () => {
   it("a command naming an email that is not in the inbox does not split the page beside a blank", async () => {
     const user = userEvent.setup();
     api.voiceIntent.mockResolvedValue({ intent: "summarise", target_email_id: "not-in-the-inbox", confidence: 0.9 });

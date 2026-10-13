@@ -70,7 +70,7 @@ export const READ_EXAMPLE = "Read the latest email aloud";
 // is open; they are not a level meter, because the recogniser reports no
 // volume. Heights and delays are fixed, so the pattern is the same every time.
 const WAVE = Array.from({ length: 64 }, (_, i) => ({
-  height: 8 + Math.round(22 * Math.abs(Math.sin(i * 0.9))),
+  height: 6 + Math.round(16 * Math.abs(Math.sin(i * 0.9))),
   animationDelay: `${((i * 37) % 11) / 10}s`,
 }));
 
@@ -238,8 +238,8 @@ export default function CommandBar({
               title="Speak a command. Our server never receives your audio; your browser's speech service may."
             >
               {spoken.listening
-                ? <Square size={18} strokeWidth={2.6} fill="currentColor" aria-hidden="true" />
-                : <Mic size={24} strokeWidth={2.2} aria-hidden="true" />}
+                ? <Square size={14} strokeWidth={2.6} fill="currentColor" aria-hidden="true" />
+                : <Mic size={20} strokeWidth={2.2} aria-hidden="true" />}
             </button>
           )}
           <div className={`command-field ${spoken.listening ? "listening" : ""}`}>

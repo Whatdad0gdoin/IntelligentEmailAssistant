@@ -210,8 +210,9 @@ describe("reader layout", () => {
 
   // The list has the page until an email is open (the last section of
   // styles.css): the first column is the whole width, an open email brings it
-  // in to 400px, and the change between the two is animated. None of that
-  // happens in jsdom, so what it rests on is read from the sheet.
+  // in to 400px, and the change between the two is animated, as is the change
+  // back when the email is closed. None of that happens in jsdom, so what it
+  // rests on is read from the sheet.
   const sheet = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const squash = (text) => text.replace(/\s+/g, "");
 
@@ -282,6 +283,21 @@ describe("reader layout", () => {
     return { first, rest: squash(rest) };
   };
 
+  /** A rule's `transition` as { property: "duration easing" }. */
+  const timings = (body) => {
+    const transition = decl(body, "transition");
+    expect(transition, "no transition").not.toBeNull();
+    return Object.fromEntries(
+      transition.split(/,(?![^(]*\))/).map((part) => {
+        const [prop, ...rest] = part.trim().split(/\s+/);
+        return [prop, rest.join(" ")];
+      })
+    );
+  };
+
+  /** The slide: how long the list's column takes to change, and on what curve. */
+  const slide = () => timings(splitStates().closed)["grid-template-columns"];
+
   it("with nothing open the list's column is the whole width, and an open email restores the split", () => {
     const { base, closed, open } = splitStates();
 
@@ -307,14 +323,7 @@ describe("reader layout", () => {
   });
 
   it("the split animates its columns, and the gap in step with them", () => {
-    const transition = decl(splitStates().closed, "transition");
-    expect(transition, "the split has no transition").not.toBeNull();
-    const timing = Object.fromEntries(
-      transition.split(/,(?![^(]*\))/).map((part) => {
-        const [prop, ...rest] = part.trim().split(/\s+/);
-        return [prop, rest.join(" ")];
-      })
-    );
+    const timing = timings(splitStates().closed);
 
     expect(parseFloat(timing["grid-template-columns"])).toBeGreaterThan(0);
     // Same duration and easing. A gap that opened at once, beside a column
@@ -322,12 +331,37 @@ describe("reader layout", () => {
     expect(timing["column-gap"]).toBe(timing["grid-template-columns"]);
   });
 
+  it("the slide takes about half a second, on a curve that starts and stops at rest", () => {
+    const [, seconds, curve] = slide().match(/^([\d.]+)s\s+cubic-bezier\(([^)]+)\)$/);
+    const [x1, y1, x2, y2] = curve.split(",").map(Number);
+
+    expect(Number(seconds)).toBeGreaterThanOrEqual(0.4);
+    expect(Number(seconds)).toBeLessThanOrEqual(0.6);
+    // A curve leaves (0,0) towards its first control point and arrives at
+    // (1,1) from its second, so y1 of 0 and y2 of 1 are no speed at the start
+    // and none at the end. The curve this replaced, (0.22,1,0.36,1), left at
+    // 1/0.22, four and a half times its average speed: measured in Chrome,
+    // 482 of the list's 708px were covered in the first 124ms, a jump and
+    // then a long tail.
+    expect(y1).toBe(0);
+    expect(y2).toBe(1);
+    expect(x1).toBeGreaterThan(0);
+    // The same from either end, so closing is opening backwards.
+    expect(x1 + x2).toBeCloseTo(1, 10);
+    // Such a curve is fastest half way, at 1/(1 - x1) times its average
+    // speed. Twice is the most allowed here: (0.65,0,0.35,1) reaches 2.9
+    // times, which puts the jump in the middle instead of at the start.
+    expect(1 / (1 - x1)).toBeLessThanOrEqual(2);
+  });
+
   it("the animation is switched off for anyone who asks for reduced motion", () => {
     const off = mediaBlocks("(prefers-reduced-motion:reduce)")
       .filter((block) => decl(ruleBody(block.text, ".inbox-split"), "transition") === "none");
 
     expect(off, "no reduced-motion rule turns the split's transition off").toHaveLength(1);
-    // It has the selector of the rule that sets the transition, so it wins
+    // The pane's fade goes with the slide it is timed to.
+    expect(decl(ruleBody(off[0].text, ".inbox-right"), "transition")).toBe("none");
+    // Each has the selector of the rule that sets the transition, so it wins
     // only by coming after it.
     expect(off[0].at).toBeGreaterThan(wideBlock().at);
   });
@@ -370,8 +404,69 @@ describe("reader layout", () => {
     expect(decl(ruleBody(wide, ".inbox-right"), "overflow")).toBe("hidden");
   });
 
-  it("an open pane is padded in by what it overhangs, with room for the reader's shadow", () => {
-    const pane = ruleBody(wideBlock().text, ".inbox-split.has-selection .inbox-right");
+  it("the reader is laid out at its finished width from the start, so it slides in and does not re-wrap", () => {
+    const wide = wideBlock().text;
+    const { closed, open } = splitStates();
+
+    // The finished width is the split's, less the list and the gap. 100cqi is
+    // the split's width only because the split is a size container, in both
+    // its states; with no container the unit is the window's width, which is
+    // the sidebar and the page's padding too many.
+    expect(decl(closed, "container-type")).toBe("inline-size");
+    expect(decl(open, "container-type")).toBeNull();
+    const width = squash(decl(ruleBody(wide, ".inbox-right > *"), "width") ?? "");
+    expect(width).toMatch(/^calc\(100cqi-[\d.]+px\)$/);
+    expect(px(width.match(/-([\d.]+px)\)$/)[1])).toBe(px(tracks(open).first) + px(decl(open, "column-gap")));
+    // It is wider than the pane until the pane has finished widening, and
+    // only the pane's clipping keeps that off the page.
+    expect(decl(ruleBody(wide, ".inbox-right"), "overflow")).toBe("hidden");
+  });
+
+  it("inside the split the reader has no entrance of its own: the pane fades on the slide's clock", () => {
+    const wide = wideBlock().text;
+
+    // cardUp rises and scales as well as fading, and ran on top of the slide.
+    expect(decl(ruleBody(wide, ".inbox-right > *"), "animation")).toBe("none");
+    // The pane is clear when closed and solid when open, and goes from one to
+    // the other exactly as the columns do, whichever way they are going.
+    expect(parseFloat(decl(ruleBody(wide, ".inbox-right"), "opacity"))).toBe(0);
+    expect(parseFloat(decl(ruleBody(wide, ".inbox-split.has-selection .inbox-right"), "opacity"))).toBe(1);
+    expect(timings(ruleBody(wide, ".inbox-right")).opacity).toBe(slide());
+  });
+
+  it("cardUp is left on everything else that has it, the narrow window's reader included", () => {
+    for (const selector of [".login-card", ".reader", ".feature-card", ".ai-panel"]) {
+      expect(decl(ruleBody(sheet, selector), "animation"), selector).toMatch(/^cardUp\s/);
+    }
+  });
+
+  it("a closed reader is kept for longer than the slide, and only where the sheet slides", () => {
+    const inbox = readFileSync(join(here, "views", "Inbox.jsx"), "utf8");
+    // The timer stands in for a transitionend that never comes. Shorter than
+    // the slide, it would take the reader away while it could still be seen.
+    const fallback = Number(inbox.match(/CLOSE_FALLBACK_MS\s*=\s*(\d+)/)[1]);
+    expect(fallback).toBeGreaterThan(parseFloat(slide()) * 1000);
+    // The transition whose end it waits for is the one this sheet runs.
+    expect(inbox).toContain('"grid-template-columns"');
+    // And it asks this sheet's two queries before keeping a reader at all: the
+    // one-pane rule's, and the one that turns the slide off. On any other
+    // answer it would wait out a slide that was never going to run.
+    expect(squash(inbox)).toContain(`matchMedia("${squash(NARROW)}")`);
+    expect(squash(inbox)).toContain('matchMedia("(prefers-reduced-motion:reduce)")');
+  });
+
+  it("a pane with a reader in it is padded in by what it overhangs, with room for the reader's shadow", () => {
+    const wide = wideBlock().text;
+    // The rule reads the pane, not the mark on the split. The mark goes the
+    // moment a close begins, and a shadow tied to it would be cut while the
+    // reader was still on its way out. An empty pane does not overhang: it
+    // would lie over the edge of the list.
+    for (const selector of [".inbox-right", ".inbox-split.has-selection .inbox-right"]) {
+      expect(decl(ruleBody(wide, selector), "margin"), selector).toBeNull();
+      expect(decl(ruleBody(wide, selector), "padding"), selector).toBeNull();
+    }
+    const pane = ruleBody(wide, ".inbox-right:not(:empty)");
+    expect(pane, "no rule for a pane with something in it").not.toBeNull();
     const sides = (value) => {
       const p = value.split(/\s+/).map(px);
       return [p[0], p[1] ?? p[0], p[2] ?? p[0], p[3] ?? p[1] ?? p[0]];
@@ -397,17 +492,23 @@ describe("reader layout", () => {
     expect(decl(ruleBody(narrow, ".inbox-split.has-selection .inbox-left"), "display")).toBe("none");
     expect(decl(ruleBody(narrow, ".inbox-split.has-selection .inbox-right"), "display")).toBe("block");
 
-    // With the wide-window block taken out, nothing left animates the split,
-    // clips the pane or holds the reader to a width.
+    // With the wide-window block taken out, nothing left animates the split or
+    // makes it a container, clips or fades the pane or makes it overhang, or
+    // holds the reader to a width or takes its entrance away.
     const rest = sheet.replace(wideBlock().text, "");
-    const own = /(^|\s)\.inbox-(split(\.[\w-]+)*|right(\s*>\s*\*)?)$/;
+    const own = /(^|\s)\.inbox-(split(\.[\w-]+)*|right(:not\(:empty\))?(\s*>\s*\*)?)$/;
+    const wideOnly = ["overflow", "opacity", "margin", "padding", "width", "container-type", "animation"];
+    let seen = 0;
     for (const m of rest.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       const selector = m[1].trim();
       if (!own.test(selector)) continue;
+      seen += 1;
       expect(decl(m[2], "transition") ?? "none", selector).toBe("none");
-      expect(decl(m[2], "overflow"), selector).toBeNull();
       expect(parseFloat(decl(m[2], "min-width") ?? "0"), selector).toBe(0);
+      for (const prop of wideOnly) expect(decl(m[2], prop), `${selector} { ${prop} }`).toBeNull();
     }
+    // The base rules and the one-pane rules, at least, were read.
+    expect(seen).toBeGreaterThanOrEqual(5);
   });
 });
 

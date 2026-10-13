@@ -67,6 +67,7 @@ let clicks;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.localStorage.clear();   // usePreference remembers the note being closed
   created = [];
   URL.createObjectURL = vi.fn(() => {
     created.push(`blob:mock/${created.length}`);
@@ -91,6 +92,96 @@ function renderList(attachments, emailId = "email-1") {
 
 const viewButton = (name) => screen.getByRole("button", { name: `View ${name}` });
 const saveButton = (name) => screen.getByRole("button", { name: `Save ${name}` });
+
+describe("the note about where attachments go", () => {
+  // It says two things the user is owed: nothing is fetched until they ask,
+  // and no attachment reaches the AI. It is a popup so it can be put away, and
+  // it must be possible to get it back.
+  const note = () => screen.queryByRole("note");
+  const infoButton = () => screen.getByRole("button", { name: "About attachments" });
+  const closeButton = () => screen.getByRole("button", { name: "Close this note" });
+
+  it("is open until it is closed, and says both things", () => {
+    renderList([PDF]);
+
+    expect(note()).toHaveTextContent(
+      "An attachment is fetched only when you open or save it, and is never sent to the AI."
+    );
+    expect(infoButton()).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("closes from its own button, and focus goes to the button that reopens it", async () => {
+    const user = userEvent.setup();
+    renderList([PDF]);
+
+    await user.click(closeButton());
+
+    expect(note()).toBeNull();
+    expect(infoButton()).toHaveAttribute("aria-expanded", "false");
+    // The close button is gone with the note; focus must not drop to the page.
+    expect(infoButton()).toHaveFocus();
+  });
+
+  it("closes on Escape", async () => {
+    const user = userEvent.setup();
+    renderList([PDF]);
+
+    closeButton().focus();
+    await user.keyboard("{Escape}");
+
+    expect(note()).toBeNull();
+    expect(infoButton()).toHaveFocus();
+  });
+
+  it("stays closed for the next email, and after the page is loaded again", async () => {
+    const user = userEvent.setup();
+    const { rerender, unmount } = renderList([PDF]);
+    await user.click(closeButton());
+
+    rerender(<Attachments emailId="email-2" attachments={[IMAGE]} />);
+    expect(note()).toBeNull();
+
+    unmount();
+    renderList([NOTES], "email-3");      // a fresh mount reads what was stored
+    expect(note()).toBeNull();
+  });
+
+  it("comes back from the info button, and that is remembered too", async () => {
+    window.localStorage.setItem("mailkit:attachmentNoteClosed", JSON.stringify(true));
+    const user = userEvent.setup();
+    const { unmount } = renderList([PDF]);
+    expect(note()).toBeNull();
+
+    await user.click(infoButton());
+
+    expect(note()).toBeInTheDocument();
+    expect(infoButton()).toHaveAttribute("aria-expanded", "true");
+
+    unmount();
+    renderList([PDF]);
+    expect(note()).toBeInTheDocument();
+  });
+
+  it("stores a yes or no and nothing about the email", async () => {
+    const user = userEvent.setup();
+    renderList([PDF], "email-secret-id");
+
+    await user.click(closeButton());
+
+    expect(Object.keys(window.localStorage)).toEqual(["mailkit:attachmentNoteClosed"]);
+    expect(window.localStorage.getItem("mailkit:attachmentNoteClosed")).toBe("true");
+  });
+
+  it("fetches nothing by being opened or closed", async () => {
+    const user = userEvent.setup();
+    renderList([PDF]);
+
+    await user.click(closeButton());
+    await user.click(infoButton());
+
+    expect(api.fetchAttachment).not.toHaveBeenCalled();
+  });
+});
 
 describe("the list", () => {
   it("renders nothing for an email without attachments", () => {

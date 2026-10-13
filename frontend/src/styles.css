@@ -211,7 +211,20 @@
 .att-chip svg { flex-shrink:0; color:var(--grey-2); }
 .att-name { min-width:0; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .att-size { flex-shrink:0; color:var(--grey); font-variant-numeric:tabular-nums; }
-.att-note { font-size:12px; color:var(--grey); }
+/* The note on where attachments go ("fetched only when you open or save it,
+   never sent to the AI") is a popup that can be closed, not a line of text
+   under every list. Its info button sits at the top right of the block, which
+   is why the list keeps 36px clear there, and the popup hangs under it. It is
+   never wider than the block, so it fits the 329px reader of the narrowest
+   split. The button's edge is the #3B82F6 the other attachment buttons use. */
+.reader-attachments { position:relative; }
+.reader-attachments .att-list { padding-right:36px; }
+.iq button.att-info { position:absolute; top:0; right:0; display:inline-grid; place-items:center; width:28px; height:28px; background:#fff; border:1px solid #3B82F6; border-radius:50%; color:var(--blue-deep); transition:background 0.15s; }
+.iq button.att-info:hover, .iq button.att-info[aria-expanded="true"] { background:var(--blue-wash); }
+.iq button.att-info:focus-visible { box-shadow:0 0 0 3px rgba(37,99,235,0.25); }
+.att-pop { position:absolute; z-index:5; top:36px; right:0; width:300px; max-width:100%; padding:12px 38px 12px 14px; background:#fff; border:1px solid var(--line); border-radius:var(--r-md); box-shadow:var(--shadow-lg); font-size:12.5px; line-height:1.5; color:var(--ink-3); animation:toastIn 0.2s cubic-bezier(0.22,1,0.36,1); }
+.att-pop .ai-close { position:absolute; top:8px; right:8px; margin-left:0; }
+@media (prefers-reduced-motion:reduce) { .att-pop { animation:none; } }
 /* Qualified with `.iq button` like every bordered button here, or the global
    button reset strips the border and fill (see styles.test.js). #3B82F6 is the
    3.68:1 boundary colour the AI tool buttons use. */
@@ -669,19 +682,19 @@ body { background:var(--paper); overflow:hidden; }
 .dash-fill > .dash-view { flex:1 1 0; min-height:0; }
 
 .command-bar { margin-bottom:16px; }
-.command-band { position:relative; overflow:hidden; padding:20px 22px; border-radius:var(--r-xl); background:linear-gradient(120deg,#1E3A8A 0%,#1E40AF 100%); color:#fff; box-shadow:var(--shadow-lg); }
+.command-band { position:relative; overflow:hidden; padding:12px 22px; border-radius:var(--r-xl); background:linear-gradient(120deg,#1E3A8A 0%,#1E40AF 100%); color:#fff; box-shadow:var(--shadow-lg); }
 /* Decoration only, borrowed from the login hero: its dot grid, and two rings
    off the top right corner. Everything real sits above them. */
 .command-band::before { content:""; position:absolute; inset:0; background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,0.06) 1px,transparent 0); background-size:22px 22px; pointer-events:none; }
-.command-band::after { content:""; position:absolute; right:-70px; top:-150px; width:300px; height:300px; border:1px solid rgba(96,165,250,0.30); border-radius:50%; outline:1px solid rgba(96,165,250,0.20); outline-offset:46px; pointer-events:none; }
+.command-band::after { content:""; position:absolute; right:-52px; top:-110px; width:220px; height:220px; border:1px solid rgba(96,165,250,0.30); border-radius:50%; outline:1px solid rgba(96,165,250,0.20); outline-offset:34px; pointer-events:none; }
 .command-band > * { position:relative; z-index:1; }
-.command-row { display:flex; align-items:center; gap:16px; }
-.command-field { flex:1; min-width:0; display:flex; align-items:center; gap:10px; min-height:56px; padding:0 6px 0 18px; background:rgba(255,255,255,0.11); border:1.5px solid rgba(255,255,255,0.6); border-radius:var(--r-lg); transition:border-color 0.16s,box-shadow 0.16s; }
+.command-row { display:flex; align-items:center; gap:12px; }
+.command-field { flex:1; min-width:0; display:flex; align-items:center; gap:8px; min-height:44px; padding:0 5px 0 14px; background:rgba(255,255,255,0.11); border:1.5px solid rgba(255,255,255,0.6); border-radius:var(--r-lg); transition:border-color 0.16s,box-shadow 0.16s; }
 .command-field:focus-within, .command-field.listening { border-color:#fff; box-shadow:0 0 0 4px rgba(96,165,250,0.35); }
 .command-icon { color:#fff; flex-shrink:0; }
-.command-field input { flex:1; min-width:0; border:none; outline:none; background:transparent; padding:7px 0; font-size:16px; color:#fff; caret-color:#fff; }
+.command-field input { flex:1; min-width:0; border:none; outline:none; background:transparent; padding:6px 0; font-size:15px; color:#fff; caret-color:#fff; }
 .command-field input::placeholder { color:rgba(255,255,255,0.78); }
-.iq button.command-run { display:inline-flex; align-items:center; gap:6px; flex-shrink:0; min-height:44px; padding:0 18px; background:#fff; border:1.5px solid #fff; color:var(--blue-dark); font-size:14px; font-weight:600; border-radius:var(--r-md); transition:background 0.15s,border-color 0.15s; }
+.iq button.command-run { display:inline-flex; align-items:center; gap:6px; flex-shrink:0; min-height:32px; padding:0 14px; background:#fff; border:1.5px solid #fff; color:var(--blue-dark); font-size:13px; font-weight:600; border-radius:var(--r-md); transition:background 0.15s,border-color 0.15s; }
 .iq button.command-run:hover:not(:disabled) { background:var(--blue-wash); border-color:var(--blue-wash); }
 .iq button.command-run:focus-visible { outline:2px solid #fff; outline-offset:2px; }
 .iq button.command-run:disabled { background:rgba(255,255,255,0.10); border-color:rgba(255,255,255,0.30); color:rgba(255,255,255,0.80); cursor:not-allowed; }
@@ -690,17 +703,19 @@ body { background:var(--paper); overflow:hidden; }
    is on. Listening is carried by the icon (a stop square), the label and the
    rings moving out from it as well as the colour, so it does not depend on
    seeing red. --coral on the white button is 4.8:1. */
-.iq button.command-mic { position:relative; display:inline-grid; place-items:center; flex-shrink:0; width:56px; height:56px; background:#fff; border:none; color:var(--blue-deep); border-radius:50%; box-shadow:0 0 0 6px rgba(255,255,255,0.16),0 10px 26px rgba(15,23,42,0.30); transition:box-shadow 0.15s,color 0.15s; }
-.iq button.command-mic:hover { box-shadow:0 0 0 8px rgba(255,255,255,0.24),0 10px 26px rgba(15,23,42,0.30); }
+.iq button.command-mic { position:relative; display:inline-grid; place-items:center; flex-shrink:0; width:44px; height:44px; background:#fff; border:none; color:var(--blue-deep); border-radius:50%; box-shadow:0 0 0 5px rgba(255,255,255,0.16),0 8px 20px rgba(15,23,42,0.30); transition:box-shadow 0.15s,color 0.15s; }
+.iq button.command-mic:hover { box-shadow:0 0 0 7px rgba(255,255,255,0.24),0 8px 20px rgba(15,23,42,0.30); }
 .iq button.command-mic:focus-visible { outline:2px solid #fff; outline-offset:4px; }
-.iq button.command-mic.on { color:var(--coral); box-shadow:0 10px 26px rgba(15,23,42,0.30); }
+.iq button.command-mic.on { color:var(--coral); box-shadow:0 8px 20px rgba(15,23,42,0.30); }
 .iq button.command-mic.on::before, .iq button.command-mic.on::after { content:""; position:absolute; inset:0; border:2px solid rgba(255,255,255,0.75); border-radius:50%; pointer-events:none; animation:micRing 1.6s ease-out infinite; }
 .iq button.command-mic.on::after { animation-delay:0.8s; }
 .iq button.command-mic[aria-disabled="true"] { opacity:0.6; cursor:progress; }
-@keyframes micRing { 0%{transform:scale(1);opacity:0.7;} 100%{transform:scale(1.6);opacity:0;} }
+/* The band clips what leaves it, so the rings stop inside its padding: 1.5
+   times the 44px button is 11px past its edge, and there are 12px above it. */
+@keyframes micRing { 0%{transform:scale(1);opacity:0.7;} 100%{transform:scale(1.5);opacity:0;} }
 /* The bars beside "Listening…". With nothing typed the field narrows to that
    placeholder and the bars take the rest of it. */
-.command-wave { flex:1 1 0; min-width:0; display:flex; align-items:center; gap:4px; height:32px; overflow:hidden; }
+.command-wave { flex:1 1 0; min-width:0; display:flex; align-items:center; gap:4px; height:24px; overflow:hidden; }
 .command-wave span { flex:0 0 3px; border-radius:2px; background:rgba(255,255,255,0.88); animation:micWave 1.1s ease-in-out infinite; }
 .command-field.listening input:placeholder-shown { flex:0 0 10ch; }
 @keyframes micWave { 0%,100%{transform:scaleY(0.3);} 50%{transform:scaleY(1);} }
@@ -709,11 +724,11 @@ body { background:var(--paper); overflow:hidden; }
    because a live region that is added already filled is often not read out.
    It and the examples take turns in one row of the same height, so the band
    does not jump as the bar starts and stops listening. */
-.command-hint { display:flex; align-items:center; min-height:36px; margin-top:14px; font-size:13px; line-height:1.5; color:rgba(255,255,255,0.88); }
+.command-hint { display:flex; align-items:center; min-height:30px; margin-top:8px; font-size:13px; line-height:1.5; color:rgba(255,255,255,0.88); }
 .command-hint:empty { min-height:0; margin-top:0; }
-.command-examples { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.command-examples { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }
 .command-examples-label { margin-right:4px; font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.80); }
-.iq button.command-example { min-height:36px; padding:0 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.5); border-radius:999px; color:#fff; font-size:13px; transition:background 0.15s,border-color 0.15s; }
+.iq button.command-example { min-height:30px; padding:0 12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.5); border-radius:999px; color:#fff; font-size:13px; transition:background 0.15s,border-color 0.15s; }
 .iq button.command-example:hover { background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.8); }
 .iq button.command-example:focus-visible { outline:2px solid #fff; outline-offset:2px; }
 .command-bar .feature-error { margin-top:10px; }
@@ -852,6 +867,8 @@ body { background:var(--paper); overflow:hidden; }
    With nothing open, the right of the split was a card saying "Select an
    email to read". It is gone. The list takes the whole width, and opening an
    email brings it in to its 400px column while the reader comes in beside it.
+   Pressing the open email's row again closes it, and the same change runs
+   backwards.
 
    It is the same grid in both states; only the first track and the gap
    change, and both are animated. A browser animates grid-template-columns
@@ -863,6 +880,16 @@ body { background:var(--paper); overflow:hidden; }
    The row is not touched: it is the bounded one declared under SPLIT INBOX.
    With reduced motion asked for, the change is made at once.
 
+   The slide takes 0.5s on cubic-bezier(0.45,0,0.55,1): the same curve from
+   either end, at rest when it starts and when it stops. It replaced 0.45s on
+   (0.22,1,0.36,1), which starts at its fastest. Measured in Chrome on a
+   1440px window, that took the list from 1108px to 626px in 124ms, 314px of
+   it in the second 62ms, and then some 330ms over the last 226px: a jump and
+   a long tail. By the curve, not yet by measurement, the fastest 62ms now
+   cover 158px and the first 62ms cover 19px. The steeper (0.65,0,0.35,1) was
+   left: it covers 49px in its first 124ms and then 236px in its fastest
+   62ms, three quarters of the old jump.
+
    The rules have the same selectors as the ones under SPLIT INBOX and win by
    coming later, which is why this section is at the end of the file. They are
    wrapped in the exact opposite of the one-pane rule's query, so every width
@@ -870,25 +897,47 @@ body { background:var(--paper); overflow:hidden; }
    min-width:1081px would give that neither. At 1080px and below nothing here
    applies.
 
-   The reader is never laid out narrower than 320px: the pane clips it and
-   uncovers it as it widens. Laid out at the pane's own width it would start
-   as a sliver and re-wrap every line on the way out. 320px because the pane
-   is 329px in the narrowest window that splits (1081px, less the 264px
-   sidebar, 68px of page padding, the 400px list and the 20px gap); a larger
-   minimum would stay cut off there.
+   The reader is laid out at its finished width from the first frame, and the
+   pane, which clips, uncovers it as it widens, so it slides in whole. It used
+   to be laid out at the pane's width down to a 320px minimum, and re-wrapped
+   every line while the pane went from there to 688px on that window. The
+   finished width is the split's, less the 400px list and the 20px gap. A
+   percentage would be of the pane, which is the thing still moving; 100cqi
+   is the width of the split, because the split is made a size container, and
+   that is all container-type is here for. min-width is what a browser
+   without container units falls back to, and the floor if the two ever
+   disagree: 320px because the pane is 329px in the narrowest window that
+   splits (1081px, less the 264px sidebar, 68px of page padding, the 400px
+   list and the 20px gap); a larger minimum would stay cut off there.
+
+   The reader has one motion. Its own entrance, cardUp, rises and scales as
+   well as fading, and ran on top of the slide; inside the split it is off,
+   and the pane fades in on the slide's clock instead. The fade is on the pane
+   because the pane is there before the reader and after it: it can fade out
+   as well as in, and a close that cuts an opening short turns round from
+   where the opening had got to. On a narrow window the reader keeps cardUp,
+   and so does everything else that has it.
+
+   Closing is opening backwards. views/Inbox.jsx leaves the closed reader in
+   the pane, inert, until the list's column says it has finished widening, so
+   it slides and fades out and is not gone before the list has moved.
 
    A pane that clips would also cut the reader's shadow (--shadow-md: 16px of
-   blur, 4px down), which reaches 16px to each side and 20px below. So an open
-   pane overhangs its track by 20px at the sides and below and 16px above, and
-   is padded back in by the same, which leaves the reader the size and in the
-   place it was. The overhang lies over nothing: the 20px gap on the left, the
-   page's padding on the right and below, and the 16px under the command bar
-   above. */
+   blur, 4px down), which reaches 16px to each side and 20px below. So a pane
+   with a reader in it overhangs its track by 20px at the sides and below and
+   16px above, and is padded back in by the same, which leaves the reader the
+   size and in the place it was. It is the pane not being empty that the rule
+   reads, not the mark on the split: the mark goes when a close begins, and
+   the shadow has to last until the reader has gone. An empty pane must not
+   overhang, or it would lie over the last 20px of the list. Once open, the
+   overhang lies over nothing: the 20px gap on the left, the page's padding on
+   the right and below, and the 16px under the command bar above. */
 @media not all and (max-width:1080px) {
-  .inbox-split { grid-template-columns:100% minmax(0,1fr); column-gap:0; transition:grid-template-columns 0.45s cubic-bezier(0.22,1,0.36,1),column-gap 0.45s cubic-bezier(0.22,1,0.36,1); }
+  .inbox-split { container-type:inline-size; grid-template-columns:100% minmax(0,1fr); column-gap:0; transition:grid-template-columns 0.5s cubic-bezier(0.45,0,0.55,1),column-gap 0.5s cubic-bezier(0.45,0,0.55,1); }
   .inbox-split.has-selection { grid-template-columns:400px minmax(0,1fr); column-gap:20px; }
-  .inbox-right { overflow:hidden; }
-  .inbox-split.has-selection .inbox-right { margin:-16px -20px -20px; padding:16px 20px 20px; }
-  .inbox-right > * { min-width:320px; }
+  .inbox-right { overflow:hidden; opacity:0; transition:opacity 0.5s cubic-bezier(0.45,0,0.55,1); }
+  .inbox-split.has-selection .inbox-right { opacity:1; }
+  .inbox-right:not(:empty) { margin:-16px -20px -20px; padding:16px 20px 20px; }
+  .inbox-right > * { min-width:320px; width:calc(100cqi - 420px); animation:none; }
 }
-@media (prefers-reduced-motion:reduce) { .inbox-split { transition:none; } }
+@media (prefers-reduced-motion:reduce) { .inbox-split { transition:none; } .inbox-right { transition:none; } }

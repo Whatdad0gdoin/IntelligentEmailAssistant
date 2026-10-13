@@ -1,4 +1,4 @@
-"""Build the demo mailbox: twelve full-length emails, five of them with PDFs.
+"""Build the demo mailbox: twenty full-length emails, six of them with PDFs.
 
     python tools/build_demo_mailbox.py
     python tools/build_demo_mailbox.py --today 2026-10-16
@@ -15,11 +15,12 @@ and leaves the fixtures alone.
 
 WHAT IT WRITES
 --------------
-Twelve .eml files into backend/demo_mailbox (gitignored): three Work, four
-Studies, three Personal and two Promotions, each several paragraphs long, all
-addressed to one invented student, Alex Tan. Five carry PDFs (six PDFs in all)
-and one carries a CSV. Nobody in them is real, and the companies use the
-reserved .example domain.
+Twenty .eml files into backend/demo_mailbox (gitignored): five Work, six
+Studies, five Personal and four Promotions, each several paragraphs long, all
+addressed to one invented student, Alex Tan. Six carry PDFs (seven PDFs in all)
+and two carry a CSV. Nobody in them is real, and the companies use the
+reserved .example domain. Every sender appears once, so "the email from Hannah"
+names one email and a spoken command is never left choosing between two.
 
 Every date is worked out from the day the script is run: the newest email
 arrived this morning, and a deadline an email mentions is still ahead. Run it
@@ -104,6 +105,9 @@ class Calendar:
         self.pay_day = self.period_end + days(4)
         self.bank_details_due = self.period_end - days(2)
         self.outage = self.ahead(SAT, 2)
+        self.showcase = self.ahead(TUE, 10)
+        self.showcase_reply_due = self.showcase - days(5)    # the Thursday before
+        self.privacy_training_due = self.ahead(WED, 3)
 
         # Studies. Everything hangs off the presentation day.
         self.presentations = self.ahead(WED, 8)
@@ -118,6 +122,10 @@ class Calendar:
         self.clash_due = self.ahead(FRI, 4)
         self.revision_due = self.ahead(WED, 5)
         self.supervision = self.revision_due + days(2)
+        self.quiz_review = self.ahead(THU, 3)
+        self.revision_workshop = self.exam_2 - days(6)       # the Friday before
+        self.recall_due = self.ahead(THU, 2)
+        self.loans_due = self.ahead(MON, 5)
 
         # Personal. The trip is the weekend after the birthday, never the same one.
         self.birthday = self.ahead(SAT, 5)
@@ -130,10 +138,18 @@ class Calendar:
         self.inspection = self.ahead(TUE, 6)
         self.bills_due = self.ahead(FRI, 2)
         self.house_dinner = self.ahead(THU, 1)
+        # Trivia is the Thursday after the house dinner, never the same night.
+        self.trivia = self.house_dinner + days(7)
+        self.trivia_reply_due = self.trivia - days(2)        # Tuesday
+        # Three days out at the least, so the Friday before it is still ahead.
+        self.semi_final = self.ahead(SUN, 3)
+        self.fees_due = self.semi_final - days(2)            # Friday
 
         # Promotions
         self.coffee_sale_ends = self.ahead(SUN, 2)
         self.members_weekend = self.ahead(SAT, 1)
+        self.books_sale_ends = self.ahead(SUN, 4)
+        self.mealkit_offer_ends = self.ahead(FRI, 5)
 
     def ahead(self, weekday, at_least=1):
         """The first `weekday` that is at least `at_least` days away."""
@@ -468,7 +484,7 @@ class Pdf:
         return bytes(out)
 
 
-# --- The six documents -------------------------------------------------------
+# --- The seven documents -----------------------------------------------------
 
 HARBOURLINE = (0.11, 0.30, 0.58)
 UNIVERSITY = (0.05, 0.35, 0.42)
@@ -746,6 +762,53 @@ def exam_timetable(cal):
     return pdf.render()
 
 
+def revision_checklist(cal):
+    pdf = Pdf("Revision checklist", "STA3120 Bayesian Data Analysis", UNIVERSITY,
+              author="Nikhil Sharma", created=cal.now)
+    pdf.letterhead(f"Exam: {nice(cal.exam_2)}, 2:00 pm  ·  Clayton campus, Sports Centre")
+
+    pdf.paragraph(
+        "The exam has five questions worth 20 marks each and covers weeks 1 to 11. This list "
+        "follows the order of the lectures. Tick a topic off only when you can do a question on "
+        "it without your notes.")
+
+    pdf.heading("Topics, and where to practise them")
+    pdf.table(
+        ["Weeks", "Topic", "Practise with"],
+        [["1 and 2", "Bayes' theorem, priors and likelihoods", "Tutorial 2, questions 1 to 4"],
+         ["3 and 4", "Conjugate models: beta-binomial and gamma-Poisson",
+          "Quiz 1, and the 2025 exam, question 1"],
+         ["5", "Credible intervals and posterior summaries", "Tutorial 5, questions 2 and 3"],
+         ["6 and 7", "Markov chain Monte Carlo and convergence checks", "Quiz 3, and lab 7"],
+         ["8 and 9", "Hierarchical models and partial pooling",
+          "Lab 9, and the 2025 exam, question 4"],
+         ["10", "Posterior predictive checks", "Quiz 4, questions 3 to 5"],
+         ["11", "Model comparison", "Tutorial 11, all questions"]],
+        widths=[0.14, 0.46, 0.40], bold_rows=(4, 5))
+    pdf.note("The two rows in bold carry the most marks, and are where most of the class lost "
+             "marks in quiz 4.")
+
+    pdf.heading("Before the exam")
+    pdf.bullets([
+        f"Quiz 4 drop-in: {nice(cal.quiz_review)}, 1:00 pm to 2:00 pm, Mathematics building, "
+        "Room 1.17. Not recorded.",
+        f"Revision workshop with Dr Park: {nice(cal.revision_workshop)}, 10:00 am to 12:00 pm, "
+        "lecture theatre S3. Recorded.",
+        "Sit the 2025 exam under time: 2 hours, plus 10 minutes of reading.",
+        "Write your page of notes: one double-sided A4 page, handwritten. Printed or "
+        "photocopied pages are taken away at the door.",
+    ])
+
+    pdf.heading("In the exam")
+    pdf.bullets([
+        "Bring an approved calculator. Phones and smart watches are not calculators.",
+        "Show your working. A wrong answer with the right method earns most of the marks; a "
+        "right answer with no method earns very few.",
+        "Each question is worth the same, so give each about 24 minutes and move on.",
+    ])
+    return pdf.render()
+
+
 def trip_itinerary(cal):
     start = cal.trip_start
     second, third = start + dt.timedelta(days=1), cal.trip_end
@@ -863,7 +926,34 @@ def task_list(cal):
     return out.getvalue().encode("utf-8")
 
 
-# --- The twelve emails -------------------------------------------------------
+def data_dictionary():
+    """The customer events table's columns, as the CSV a data catalogue exports."""
+    rows = [
+        ("Column", "Type", "Description", "Sensitivity"),
+        ("event_id", "string", "Unique identifier for the event", "Internal"),
+        ("account_id", "string", "Customer account the event belongs to", "Confidential"),
+        ("event_time", "timestamp", "When the event happened, in UTC", "Internal"),
+        ("event_type", "string",
+         "One of login, invoice_viewed, ticket_opened, plan_changed, cancelled", "Internal"),
+        ("plan", "string", "Plan at the time of the event: starter, team or enterprise", "Internal"),
+        ("segment", "string", "Small business or enterprise", "Internal"),
+        ("contact_email", "string", "Email address of the user who triggered the event",
+         "Personal information"),
+        ("contact_name", "string", "Name of the user who triggered the event",
+         "Personal information"),
+        ("ip_address", "string", "Address the request came from", "Personal information"),
+        ("ticket_text", "string", "Free text of a support ticket, for ticket_opened events",
+         "Personal information"),
+        ("monthly_value", "decimal", "Monthly contract value in Australian dollars",
+         "Confidential"),
+        ("loaded_at", "timestamp", "When the row reached the warehouse", "Internal"),
+    ]
+    out = io.StringIO()
+    csv.writer(out, lineterminator="\r\n").writerows(rows)
+    return out.getvalue().encode("utf-8")
+
+
+# --- The twenty emails -------------------------------------------------------
 
 _LIST_ITEM = re.compile(r"(?:- |\d+\. )")
 
@@ -891,7 +981,11 @@ def flow(text):
 
 
 def emails(cal):
-    """The twelve messages, in no particular order: each carries its own date.
+    """The twenty messages, in no particular order: each carries its own date.
+
+    Priya's is the only one sent this morning after the coffee offer, so once
+    the mailbox is built later than 8:47 am, "the latest email" is hers: a long
+    one with a PDF. Keep it that way when adding to the list.
 
     `closing` is appended as written, because a sign-off and the name block
     under it are separate lines, not a paragraph.
@@ -1023,6 +1117,94 @@ def emails(cal):
                 """),
             closing="IT Service Desk\nHarbourline Analytics\n"
                     "servicedesk@harbourline.example, extension 4000",
+        ),
+        dict(
+            file="work-showcase-talk",
+            sender=("Hannah Reid", "hannah.reid@harbourline.example"),
+            subject="Analytics showcase: would you give a ten-minute talk?",
+            received=cal.received(1, 9, 12, working_day=True),
+            unread=True,
+            body=flow(f"""
+                Hi Alex,
+
+                I run the analytics showcase, where once a month a few people from the team
+                show the rest of the company something they have been working on. The next one
+                is on {nice(cal.showcase)} from 3:00 pm to 4:00 pm in the Level 4 town hall
+                space, and I would like you to take one of the three slots.
+
+                Priya showed me the survival curves you built for the small business segment,
+                and I think they would make a very good talk. Most people outside the team have
+                never seen churn drawn as a curve over time, and the point where customers on
+                monthly plans drop away after their third invoice is exactly the kind of thing
+                the account managers need to hear.
+
+                Each talk is ten minutes with five minutes for questions. It does not need to be
+                polished. Three or four slides are plenty, and a chart that people can read from
+                the back of the room matters more than anything else. Please leave out customer
+                names and anything from the support tickets, because the session is recorded
+                and the recording goes on the intranet.
+
+                If you are happy to do it, could you send me a title and one sentence about the
+                talk by {nice(cal.showcase_reply_due)}? I will put the running order together
+                that afternoon. I can also book you 20 minutes with me earlier that week to run
+                through it first, which most first-time speakers find useful.
+
+                I know this lands in the middle of your exams and the capstone, so please say
+                no if the timing is bad. There is another showcase in late November and the
+                offer stands for that one too.
+                """),
+            closing="Thanks,\nHannah\n\nHannah Reid\nAnalytics Manager, Harbourline Analytics",
+        ),
+        dict(
+            file="work-data-access",
+            sender=("Lucas Meyer", "lucas.meyer@harbourline.example"),
+            subject="Access approved: the customer events table, with three conditions",
+            received=cal.received(3, 14, 40, working_day=True),
+            unread=False,
+            body=flow(f"""
+                Hi Alex,
+
+                Your request for read access to the customer events table has been approved.
+                Priya sponsored it, and it stays active until the end of your internship unless
+                she asks for it to be extended.
+
+                The access is live now. The table is analytics.customer_events in the
+                warehouse, and it holds one row for every login, invoice view, support ticket,
+                plan change and cancellation since January 2024, which is about 41 million
+                rows. A data dictionary is attached so you can see what each column holds
+                before you query it.
+
+                It comes with three conditions, because four of the columns hold personal
+                information.
+
+                1. Complete the Handling Customer Data module in the learning portal by
+                {nice(cal.privacy_training_due)}. It takes about 40 minutes. If it is not done
+                by then the access is switched off automatically and you will need to ask
+                again.
+                2. Do not copy the contact_email, contact_name, ip_address or ticket_text
+                columns out of the warehouse. That includes notebooks saved to your laptop,
+                spreadsheets and anything pasted into a chat. Aggregate first, then export.
+                3. Filter on event_time in every query. The table is partitioned by day, and a
+                query without a date range scans all of it, which costs real money and slows
+                the dashboards down for everyone.
+
+                For the churn work you will mostly want the cancelled and ticket_opened events
+                joined to accounts on account_id. There is a view called
+                analytics.customer_events_safe that leaves out the four personal columns, and I
+                would start there. Most questions can be answered from it, and nothing you take
+                from it needs a second look from us.
+
+                One more thing to plan around. The warehouse is offline overnight on
+                {nice(cal.outage)} for the storage upgrade, so do not leave a long query
+                running into that evening.
+
+                If a query runs for more than ten minutes, stop it and send it to me. It is
+                nearly always a missing date filter, and I would rather look at it than have
+                you wait.
+                """),
+            closing="Cheers,\nLucas\n\nLucas Meyer\nData Engineering, Harbourline Analytics",
+            attachments=[("customer-events-data-dictionary.csv", ("text", "csv"),
+                          data_dictionary())],
         ),
 
         # ---- Studies --------------------------------------------------------
@@ -1212,6 +1394,98 @@ def emails(cal):
             closing="Cheers,\nWei Jie",
             attachments=[("group7-task-list.csv", ("text", "csv"), task_list(cal))],
         ),
+        dict(
+            file="studies-quiz-feedback",
+            sender=("Nikhil Sharma", "nikhil.sharma@monash.edu"),
+            subject="STA3120 quiz 4: your result, and what to revise before the exam",
+            received=cal.received(1, 16, 45, working_day=True),
+            unread=True,
+            body=flow(f"""
+                Hi Alex,
+
+                Quiz 4 has been marked and your result is on Moodle: 14 out of 20, which is
+                70%. The class average was 12.6, so you are comfortably above it, but I wanted
+                to write because the marks you lost were all in one place, and it is a place
+                the exam will go.
+
+                Questions 1 and 2, on choosing priors and reading a trace plot, were full
+                marks. Questions 3 to 5 were on posterior predictive checks, and that is where
+                the six marks went. In question 4 you compared the observed mean with the
+                posterior mean of the parameter, when the check needs data simulated from the
+                model. It is a very common mix-up, and it is easier to fix now than in the
+                exam.
+
+                Three things I would do, in this order:
+
+                1. Redo lab 9 without looking at the solution. It builds a hierarchical model
+                and then checks it, which covers both of the topics the exam weights most
+                heavily.
+                2. Work through the 2025 exam under time: 2 hours, plus 10 minutes of reading.
+                Questions 1 and 4 are the closest to what you will see this year.
+                3. Write your page of notes early. You may bring one double-sided A4 page,
+                handwritten, and making it is half the revision.
+
+                I have attached a revision checklist that lists every topic by week and says
+                which tutorial, quiz or past exam question to practise it with. The two rows in
+                bold are the ones I would spend longest on.
+
+                There are two chances to ask questions before the exam on {nice(cal.exam_2)}.
+                I am holding a drop-in to go through quiz 4 on {nice(cal.quiz_review)} from
+                1:00 pm to 2:00 pm in Room 1.17 of the Mathematics building, and Dr Park is
+                running a revision workshop on {nice(cal.revision_workshop)} from 10:00 am to
+                12:00 pm in lecture theatre S3. The workshop will be recorded, but the drop-in
+                will not.
+
+                If you would like your quiz paper looked at again, reply to this email before
+                the drop-in and tell me which question. Marks can go down as well as up when a
+                paper is looked at again.
+                """),
+            closing="Nikhil\n\nNikhil Sharma\nTeaching Associate, STA3120 Bayesian Data Analysis",
+            attachments=[("STA3120-revision-checklist.pdf", pdf, revision_checklist(cal))],
+        ),
+        dict(
+            file="studies-library-loans",
+            sender=("Hargrave-Andrew Library", "library@monash.edu"),
+            subject="Two loans due soon, and one item recalled",
+            received=cal.received(4, 9, 0, working_day=True),
+            unread=False,
+            body=flow(f"""
+                Dear Alex,
+
+                Here is a summary of the items on your library account that need attention.
+                Two loans are due soon, and one of them has been requested by another borrower,
+                which shortens the time you have it.
+
+                Recalled item. Pattern Recognition and Machine Learning has been recalled and
+                is now due on {nice(cal.recall_due)}. A recalled item cannot be renewed. If it
+                comes back late, the charge is $2.00 a day up to $30.00, and you will not be
+                able to borrow or renew anything else until it is returned.
+
+                Due soon. Bayesian Data Analysis, third edition, is due on
+                {nice(cal.loans_due)}. Nobody else has asked for it, so you can renew it twice
+                more, for three weeks each time. Renew it under My Loans in Library Search, or
+                at any self-service kiosk.
+
+                Ready to collect. The interlibrary loan you asked for, Statistical Rethinking,
+                second edition, has arrived and is on the hold shelf at the Hargrave-Andrew
+                Library under the first four letters of your surname. It will be kept until
+                closing on {nice(cal.loans_due)} and then sent back.
+
+                Items can be returned through the after-hours chute beside the main entrance,
+                or at any Monash library, whichever campus they came from. Returns are taken
+                off your account the next working day, so a book put in the chute on the day it
+                is due counts as on time.
+
+                During the exam period the library opens from 8:00 am to midnight on weekdays
+                and from 10:00 am to 10:00 pm at weekends, and group study rooms can be booked
+                for up to two hours a day. A room booked and left empty for 15 minutes is given
+                to the next group waiting.
+
+                If you believe a recall or a charge is a mistake, reply to this email or speak
+                to the staff at the information desk on the ground floor.
+                """),
+            closing="Hargrave-Andrew Library\nMonash University Library\nlibrary@monash.edu",
+        ),
 
         # ---- Personal -------------------------------------------------------
         dict(
@@ -1340,6 +1614,84 @@ def emails(cal):
                 """),
             closing="Mia",
         ),
+        dict(
+            file="personal-trivia-night",
+            sender=("Grace Liu", "grace.liu@example.com"),
+            subject="Trivia night: we need a fourth, and it is your turn",
+            received=cal.received(1, 19, 5),
+            unread=True,
+            body=flow(f"""
+                Hey Alex,
+
+                The Rose and Crown has brought trivia back, and Dev, Hana and I have a table
+                booked for {nice(cal.trivia)}. We are one short, and after the way you carried
+                us on the geography round last time, you are the obvious fourth.
+
+                It starts at 7:30 pm sharp, and they collect the answer sheets at the end of
+                each round, so being late costs points. I have booked the table from 6:45 pm so
+                we can eat first. It is $10 each to play and that goes into the prize pool.
+                First place is a $150 bar tab, second is $60, and last place gets a jar of
+                pickled onions, which we have won twice and never opened.
+
+                There are six rounds this time: general knowledge, music from the 2000s, flags
+                and capitals, science, a picture round and a mystery round the host announces
+                on the night. Hana has music, Dev thinks he has science, and I am useless at
+                all of it but good at writing neatly. You would have flags and capitals,
+                obviously.
+
+                Two things I need from you. First, tell me by {nice(cal.trivia_reply_due)}
+                whether you are in, because if you are not I have to ask my brother, and nobody
+                wants that. Second, we still need a team name. Last time it was Les
+                Quizerables and the host groaned, so the bar is low.
+
+                I know you have exams coming, so no pressure if you would rather study. It will
+                be over by 10:00 pm and the tram stops right outside, so you would be home
+                before 11.
+
+                Also, you still have my copy of Dune. Bring it, or I am keeping your umbrella.
+                """),
+            closing="Grace",
+        ),
+        dict(
+            file="personal-futsal-semi-final",
+            sender=("Ben Kowalski", "ben.kowalski@example.com"),
+            subject="Semi-final: we need you in goal",
+            received=cal.received(2, 21, 40),
+            unread=False,
+            body=flow(f"""
+                Hi team,
+
+                We made it. The 4-3 win last week put us third on the ladder, which means
+                Northside Wanderers are in the semi-final for the first time in three seasons.
+                It is on {nice(cal.semi_final)} at 6:10 pm on Court 2 at the Brunswick Indoor
+                Sports Centre, against the Inbetweeners, who beat us 6-2 back in round four.
+
+                Alex, this one is mostly for you. Jordan has rolled an ankle and is out, so you
+                are our only goalkeeper. Can you confirm you can make it? If you cannot, I need
+                to know by {nice(cal.fees_due)} so I can ask the league for a fill-in, and they
+                want 48 hours of notice.
+
+                Everyone else, please be there by 5:45 pm for a warm-up. We lost the first ten
+                minutes last time because half of us were still putting on shin pads, and
+                against this team we cannot give away an early goal. Wear the blue shirts. They
+                wear white, so the grey away shirts are too close.
+
+                Now the money. The semi-final costs the team $90 on top of the season fee,
+                which is $15 each for the six of us playing. Four people also still owe the
+                second half of the season fee, which is $45. I have paid the centre for all of
+                it so that we could play, so please send me what you owe by
+                {nice(cal.fees_due)}. I will post who has paid in the group chat, and I am not
+                above naming names.
+
+                If we win, the grand final is the following Sunday at 7:00 pm on Court 1, so
+                keep that evening free. If we lose there is a playoff for third at 5:20 pm the
+                same day, which nobody wants to play in.
+
+                Afterwards we are going to the souvlaki place on Sydney Road whatever happens.
+                Sam is injured and coming anyway, so bring your loudest friends.
+                """),
+            closing="Ben",
+        ),
 
         # ---- Promotions -----------------------------------------------------
         dict(
@@ -1393,6 +1745,93 @@ def emails(cal):
                     "You are receiving this email because you are a Trailhead Rewards member. "
                     "To stop receiving member offers, update your preferences or unsubscribe at "
                     "https://trailhead-outdoor.example/preferences",
+        ),
+        dict(
+            file="promo-bookshop",
+            sender=("Pagewise Books", "news@pagewise.example"),
+            subject="Exam season: 3 for 2 on every paperback this week",
+            received=cal.received(1, 7, 30),
+            unread=False,
+            body=flow(f"""
+                Hi Alex,
+
+                Exams are close, and we have never met a student who did not buy a novel the
+                week before one. So until {nice(cal.books_sale_ends)}, every paperback in the
+                shop is 3 for 2: buy any three and the cheapest is free. It works in all eleven
+                Pagewise stores and online, and it stacks with your student discount.
+
+                A few that our booksellers keep pressing into people's hands:
+
+                - The Salt Road, the new novel from the author of Low Tide: $22.99
+                - A Field Guide to Getting Lost in the Suburbs, essays: $24.99
+                - The Orchard at the End of the Line, shortlisted for the Whitlock Prize: $19.99
+                - Slow Cooking for Fast Weeks, 90 dinners that mostly cook themselves: $34.99
+                - Any title in the Pocket Classics range: $12.99 each
+
+                Students get more than the offer. Show your student card in store, or add it to
+                your account online, and you take a further 10% off everything, including
+                stationery and study guides. Our exam packs are back as well: two notebooks, a
+                set of highlighters, 200 flash cards and a pack of sticky tabs for $18, which
+                is $11 less than buying them one at a time.
+
+                Delivery is free on orders over $40 and usually takes two to four working days
+                in Melbourne. Click and collect is ready within three hours at most stores, and
+                you can return anything unread within 30 days.
+
+                Our Carlton store is staying open until 9:00 pm on weeknights through the exam
+                period, with free tea, a quiet table at the back and no obligation to buy
+                anything at all.
+                """),
+            closing="Happy reading,\nThe Pagewise team\n\n"
+                    "You are receiving this email because you joined Pagewise Rewards. "
+                    "To stop receiving offers, update your preferences or unsubscribe at "
+                    "https://pagewise.example/preferences",
+        ),
+        dict(
+            file="promo-meal-kits",
+            sender=("FreshCrate", "offers@freshcrate.example"),
+            subject="50% off your first two boxes: dinner sorted for exam season",
+            received=cal.received(4, 12, 10),
+            unread=False,
+            body=flow(f"""
+                Hi Alex,
+
+                When the calendar fills up, dinner is the first thing to go. FreshCrate sends
+                you the ingredients for the week, measured out, with recipes that take 30
+                minutes or less, and right now your first two boxes are half price.
+
+                Here is the offer. Order by {nice(cal.mealkit_offer_ends)} with the code
+                STUDY50 and you get 50% off your first box and 50% off your second. For the
+                plan most students pick, three dinners for two people, that brings each of the
+                first two boxes down from $69.90 to $34.95. Delivery is free on both.
+
+                On the menu next week:
+
+                - Honey soy chicken with sesame greens and rice, 25 minutes
+                - One-pan chorizo and white bean stew, 30 minutes
+                - Crispy tofu noodle bowls with peanut dressing, 20 minutes, vegan
+                - Lemon and herb fish with roast potatoes, 30 minutes
+                - Mushroom and spinach gnocchi, 15 minutes, vegetarian
+
+                There are 24 recipes to choose from every week, including eight vegetarian and
+                four vegan, and you can swap any of them until midnight on the Wednesday before
+                your box arrives.
+
+                There is no lock-in. Skip a week, pause for a month or cancel altogether from
+                your account page, with nothing to pay as long as you do it five days before
+                the next delivery. Boxes arrive chilled, in packaging that goes straight into
+                the recycling bin, on a day and in a two-hour window that you choose.
+
+                Living with housemates? The four-person plan works out at $8.70 a serve, which
+                is less than most takeaway, and you can split the cost between cards at
+                checkout.
+
+                The half-price offer is for new customers and ends at midnight on
+                {nice(cal.mealkit_offer_ends)}.
+                """),
+            closing="Enjoy,\nThe FreshCrate kitchen\n\n"
+                    "You are receiving this email because you signed up at freshcrate.example. "
+                    "To stop receiving offers, unsubscribe at https://freshcrate.example/unsubscribe",
         ),
     ]
 
