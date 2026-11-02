@@ -32,6 +32,9 @@ EXPECTED = {
     PROMO_EMAIL_ID: "Promotions",
     "1f5a8c72-studies-005@monash.edu": "Studies",
     "5d94b1c3-work-006@github.com": "Work",
+    # The invoice with a PDF, a CSV and a PNG attached (fixture 07), so the demo
+    # inbox shows attachments that can be viewed and saved.
+    "b4d7e118-work-007@northgate.com.au": "Work",
 }
 
 
@@ -88,7 +91,7 @@ def test_every_email_appears_exactly_once(client, auth_headers, config, stub_llm
     stub_llm.answer_classification(_labels(config))
     groups = client.get("/api/inbox", headers=auth_headers).get_json()["groups"]
     ids = [email["id"] for items in groups.values() for email in items]
-    assert len(ids) == len(set(ids)) == 6
+    assert len(ids) == len(set(ids)) == len(EXPECTED) == 7
 
 
 def test_an_unverified_label_lands_in_review(client, auth_headers, config, stub_llm):
@@ -212,8 +215,8 @@ def _session_key(token):
 
 def test_a_cold_load_costs_the_session_one_unit_per_twenty_emails(client, auth_headers, token,
                                                                   config, stub_llm):
-    """Six emails, six calls, one unit of MAX_REQUESTS_PER_SESSION -- what the
-    single batched call cost -- and nothing for the cached reload."""
+    """Seven emails, seven calls, one unit of MAX_REQUESTS_PER_SESSION -- what
+    the single batched call cost -- and nothing for the cached reload."""
     stub_llm.answer_classification(_labels(config))
     client.get("/api/inbox", headers=auth_headers)
     client.get("/api/inbox", headers=auth_headers)

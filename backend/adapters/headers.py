@@ -72,11 +72,13 @@ class Attachment:
 
 @dataclass(frozen=True)
 class AttachmentContent:
-    """One attachment's bytes, read because a person opened that attachment.
+    """One attachment's bytes, read because a person opened that attachment
+    or asked for a summary of its email.
 
     Built per request by a source's get_attachment() and dropped with the
-    response. It is never put on a SourceEmail, cached, logged or sent to a
-    model (NFR-03).
+    response. It is never put on a SourceEmail, cached or logged (NFR-03). A
+    summary sends the text extracted from a document attachment to the model,
+    as it sends the body (orchestrator/attachments.py).
     """
 
     filename: str

@@ -19,6 +19,8 @@ import logging
 import re
 
 from backend.orchestrator import prompts
+from backend.orchestrator.attachments import grounding_text as attachment_grounding_text
+from backend.orchestrator.attachments import prompt_block as attachment_prompt_block
 from backend.orchestrator.cache import SUMMARY_CACHE
 from backend.orchestrator.client import LLMError, get_client
 from backend.orchestrator.provenance import locate
@@ -162,8 +164,17 @@ def _validate(payload, repair=False):
     return sentences, items
 
 
-def summarise_email(email, config, session_key=None, user=None, use_cache=True):
-    """Summarise one SourceEmail. Returns the /api/summarise response body."""
+def summarise_email(email, config, session_key=None, user=None, use_cache=True,
+                    read_attachments=None):
+    """Summarise one SourceEmail. Returns the /api/summarise response body.
+
+    `read_attachments`, when given, returns the email's attachments as read by
+    orchestrator.attachments.read_attachments. It is called only on a cache
+    miss, so a cached summary downloads nothing. Their text joins the prompt
+    and the grounding source: a figure the summary quotes from an attached
+    invoice is checked against that invoice, not flagged as invented. Only the
+    summary is cached; the attachment text is not kept (NFR-03).
+    """
     if use_cache:
         cached = SUMMARY_CACHE.get(user, email.id)
         if cached is not None:
@@ -171,14 +182,18 @@ def summarise_email(email, config, session_key=None, user=None, use_cache=True):
             return cached
 
     cleaned = preprocess_email(email, config.token_budget_chars, label=f"summarise {email.id[:12]}")
-    if cleaned.is_empty:
+    attached = list(read_attachments()) if read_attachments else []
+    # "Please see the attached invoice" with nothing else is still worth a
+    # summary when the invoice can be read.
+    if cleaned.is_empty and not any(item.has_text for item in attached):
         raise EmptyEmailError(
             "This email has no readable text to summarise once quoted replies "
             "and footers are removed."
         )
 
     client = get_client(config)
-    user_prompt = prompts.summary_user(email.subject, email.sender_name, cleaned.text)
+    user_prompt = (prompts.summary_user(email.subject, email.sender_name, cleaned.text)
+                   + attachment_prompt_block(attached))
 
     last_error = None
     sentences = action_items = None
@@ -227,7 +242,9 @@ def summarise_email(email, config, session_key=None, user=None, use_cache=True):
 
     # The model was given the subject and sender name as well as the body, so
     # all three are legitimate sources for a claim.
-    grounding_source = f"{email.subject}\n{email.sender_name}\n{cleaned.text}"
+    # So is the text of any attachment it was shown.
+    grounding_source = (f"{email.subject}\n{email.sender_name}\n{cleaned.text}\n"
+                        + attachment_grounding_text(attached))
     checked = " ".join(sentences + [item["text"] for item in action_items])
     result = check_grounding(checked, grounding_source)
 
@@ -244,6 +261,8 @@ def summarise_email(email, config, session_key=None, user=None, use_cache=True):
         "provenance": locate(sentences, cleaned.text),
         "grounded": result.grounded,
         "ungrounded_flags": result.as_api_flags(),
+        # Which attachments the summary could read, so the reader can say so.
+        "attachments_read": [item.filename for item in attached if item.has_text],
     }
 
     if use_cache:

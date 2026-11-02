@@ -216,13 +216,13 @@ def test_the_reading_pane_lists_attachments_without_their_content(client, auth_h
     assert CONTENT_MARKER not in response.get_data(as_text=True)
 
 
-def test_attachment_names_and_content_never_reach_the_model(client, auth_headers, stub_llm, tmp_path):
+def test_the_classifier_never_sees_attachment_names_or_content(client, auth_headers, stub_llm,
+                                                              tmp_path):
+    """Sorting the inbox reads the body only. A summary does read attached
+    documents: tests/test_attachment_summary.py."""
     _deliver(tmp_path, _message_with_attachments())
     _empty_classification(stub_llm)
     client.get("/api/inbox", headers=auth_headers)
-    stub_llm.queue({"summary": ["The brief is attached.", "It covers the assignment."],
-                    "action_items": []})
-    client.post("/api/summarise", json={"email_id": "brief@example.org"}, headers=auth_headers)
     assert stub_llm.calls, "the model was never called, so this proves nothing"
     for call in stub_llm.calls:
         prompt = call["system"] + call["user"]
@@ -241,11 +241,26 @@ def test_attachment_names_and_content_never_reach_the_log(client, auth_headers, 
     assert CONTENT_MARKER not in caplog.text
 
 
-def test_the_demo_fixtures_have_no_attachments(client, auth_headers, stub_llm):
+INVOICE_FIXTURE_ID = "b4d7e118-work-007@northgate.com.au"
+
+
+def test_only_the_invoice_fixture_has_attachments_and_they_are_listed_not_read(
+        client, auth_headers, stub_llm):
+    """Fixture 07 carries a PDF, a CSV and a PNG so the demo inbox has
+    something to View and Save. The inbox lists them by name, type and size;
+    the other six fixtures have none."""
     _empty_classification(stub_llm)
     groups = client.get("/api/inbox", headers=auth_headers).get_json()["groups"]
-    emails = [e for name in list(CATEGORIES) + ["Review"] for e in groups[name]]
-    assert emails and all(e["attachments"] == [] for e in emails)
+    emails = {e["id"]: e for name in list(CATEGORIES) + ["Review"] for e in groups[name]}
+
+    invoice = emails.pop(INVOICE_FIXTURE_ID)
+    assert [(a["filename"], a["content_type"]) for a in invoice["attachments"]] == [
+        ("invoice-NG-2291.pdf", "application/pdf"),
+        ("milestone-schedule.csv", "text/csv"),
+        ("office-photo.png", "image/png"),
+    ]
+    assert all(set(a) == {"filename", "content_type", "size"} for a in invoice["attachments"])
+    assert emails and all(e["attachments"] == [] for e in emails.values())
 
 
 def test_a_malformed_attachment_costs_its_entry_not_the_email(monkeypatch):

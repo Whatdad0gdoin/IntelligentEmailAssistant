@@ -194,10 +194,11 @@ def test_response_matches_the_documented_contract(config, stub_llm):
     stub_llm.queue(_payload())
     result = summarise_email(_email(config), config)
     # `provenance` is an approved addition to the documented shape: offsets
-    # locating the source passage behind each summary sentence.
+    # locating the source passage behind each summary sentence. So is
+    # `attachments_read`: the attached documents the summary could read.
     assert set(result) == {
         "email_id", "summary", "action_items", "grounded", "ungrounded_flags",
-        "provenance",
+        "provenance", "attachments_read",
     }
     assert result["email_id"] == WORK_EMAIL_ID
 

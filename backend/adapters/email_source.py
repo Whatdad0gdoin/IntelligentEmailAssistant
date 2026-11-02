@@ -58,8 +58,9 @@ class EmailSource:
         """Return the content of one attachment as an AttachmentContent, or None.
 
         `index` is the attachment's position in that message's `attachments`
-        list. This is the only method that reads attachment bytes, and only
-        the route that serves an attachment a person opened calls it.
+        list. This is the only method that reads attachment bytes. Two callers:
+        the route that serves an attachment a person opened, and the summarise
+        route, for the documents a summary reads (orchestrator/attachments.py).
         """
         raise NotImplementedError
 

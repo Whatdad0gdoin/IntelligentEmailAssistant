@@ -37,7 +37,7 @@ dropped when the request ends. Nothing is written to disk, nothing is cached,
 and every log line in this file carries counts and MIME types only -- never a
 filename's contents and never the extracted text.
 
-The viewing route (routes/attachment.py) streams those same in-memory bytes to
+The viewing route (routes/attachments.py) streams those same in-memory bytes to
 the browser on request. That is a display path, not a storage one: the file is
 re-read from the mailbox each time and still never touches disk, which is the
 same posture the email body has always had.
@@ -405,10 +405,13 @@ def extract_all(attachments):
     unreadable images spends nothing on the images, so the PDF still gets its
     full allowance.
     """
-    extracted = []
+    return _within_budget([extract_one(a) for a in visible(attachments)])
+
+
+def _within_budget(extracted):
+    """Trim extracted text, in order, to MAX_TOTAL_ATTACHMENT_CHARS in all."""
     spent = 0
-    for attachment in visible(attachments):
-        item = extract_one(attachment)
+    for item in extracted:
         if item.has_text:
             remaining = MAX_TOTAL_ATTACHMENT_CHARS - spent
             if remaining <= 0:
@@ -418,8 +421,71 @@ def extract_all(attachments):
                 item.text = item.text[:remaining].rstrip()
                 item.truncated = True
             spent += len(item.text)
-        extracted.append(item)
     return extracted
+
+
+# --- reading an email's attachments for its summary (FR-01) ----------------
+
+# A document larger than this is named to the model but not downloaded: a
+# summary should not wait on a 40 MB file, and MAX_PDF_PAGES would discard
+# most of it anyway.
+MAX_READ_BYTES = 5 * 1024 * 1024
+
+
+class _Listed:
+    """One listed attachment (adapters.headers.Attachment, which carries a
+    name, a type and a size) in the shape extract_one() reads."""
+
+    __slots__ = ("id", "filename", "content_type", "size_bytes", "too_large",
+                 "data", "is_embedded")
+
+    def __init__(self, index, listed, data=b"", too_large=False):
+        self.id = str(index)
+        self.filename = listed.filename
+        self.content_type = listed.content_type or ""
+        size = getattr(listed, "size", None)
+        self.size_bytes = size if isinstance(size, int) and size >= 0 else len(data)
+        self.too_large = too_large
+        self.data = data
+        self.is_embedded = False
+
+
+def _readable(content_type):
+    """True for the types extract_one() can turn into text."""
+    return (content_type in (_PDF_TYPE, _DOCX_TYPE)
+            or content_type in _PLAIN_TEXT_TYPES
+            or content_type.startswith("text/"))
+
+
+def read_attachments(listed, fetch, max_bytes=MAX_READ_BYTES):
+    """The extracted text of an email's attachments, for its summary.
+
+    `listed` is SourceEmail.attachments: names, types and sizes only. `fetch`
+    takes an attachment's position in that list and returns its bytes, or
+    None. It is called only for a document this module can read and that is
+    no larger than `max_bytes`, so an image or an archive is never downloaded
+    just to be set aside: an image comes back as STATUS_IMAGE, which tells the
+    model one is attached without describing it, and anything else as
+    STATUS_UNSUPPORTED.
+
+    The bytes and the text live for this call and the request that made it.
+    Nothing here caches, stores or logs them (NFR-03).
+    """
+    extracted = []
+    for index, item in enumerate(listed or []):
+        content_type = (item.content_type or "").lower().split(";")[0].strip()
+        size = getattr(item, "size", None)
+        if content_type.startswith("image/"):
+            extracted.append(ExtractedAttachment(_Listed(index, item), STATUS_IMAGE))
+        elif not _readable(content_type):
+            extracted.append(ExtractedAttachment(
+                _Listed(index, item), STATUS_UNSUPPORTED,
+                detail=f"{content_type or 'This file type'} cannot be read."))
+        elif isinstance(size, int) and size > max_bytes:
+            extracted.append(extract_one(_Listed(index, item, too_large=True)))
+        else:
+            extracted.append(extract_one(_Listed(index, item, data=fetch(index) or b"")))
+    return _within_budget(extracted)
 
 
 def prompt_block(extracted):

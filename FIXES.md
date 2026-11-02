@@ -7,8 +7,8 @@ like.
 Every figure here was measured, not estimated. Where something is a judgement
 call rather than a task, it says so.
 
-Status at time of writing (2026-10-12): **819 backend tests passing (2 skipped,
-8 expected failures), 323 frontend tests passing.**
+Status at time of writing (2026-11-02): **829 backend tests passing (2 skipped,
+8 expected failures), 438 frontend tests passing.**
 
 Item numbers are kept from earlier versions of this file, because code and other
 documents cite them; new items continue from 16.
@@ -73,21 +73,34 @@ question.
 
 ---
 
+### 23. Two checks the RTM gives to a person (20 to 40 minutes each)
+
+The RTM verifies FR-06 by a blind review of 15 drafts (80% agreement) and
+DR-01 by a second rater, and the report quotes both. Neither has a result
+in the repository. `eval/human_checks.py` packages each so a teammate only has
+to read and answer:
+
+```bash
+python -m eval.human_checks fr06-build     # 15 drafts, tone hidden (15 model calls)
+python -m eval.human_checks fr06-score     # agreement against the hidden key
+python -m eval.human_checks labels-build   # 60 real emails, label hidden
+python -m eval.human_checks labels-score   # agreement and Cohen's kappa
+```
+
+The sheets land in `eval/data/human_checks/`. The rater opens only the sheet,
+never the key, and for the labels it should be someone who did not do the
+first labelling.
+
+**Done when:** both scores are recorded in `eval/BENCHMARKS.md` and the RTM
+quotes them, or the report says plainly that the check was not done.
+
+---
+
 ### 14. The product has three names (a decision)
 
 **MailKit** is the name in the code and the UI. **InboxIQ** survives only in
 comments in four frontend files; **Inbox AI** (`inboxai.app`) is in the Week 11
 wireframes. Pick one before the demo and the report.
-
----
-
-### 17. Attachment text in summaries (a decision)
-
-Attachments are now listed (name, type and size) and their content still
-never reaches a body, a summary or a model. Reading PDF text for summaries would
-break that promise, which the README and the reading pane both make, so it needs
-a team decision and its own test set before any code. It is new scope beyond the
-RTM.
 
 ---
 
@@ -151,6 +164,7 @@ re-run; the result is not kept.
 | 4 | Decide FR-07 (translation) | **Built** (2026-10-08). `POST /api/translate` translates an email or a drafted reply into one of 15 languages, from the reading pane, the draft panel and a Settings default; nothing translated is kept between calls (NFR-03). Every number, link and address is checked: figures preserved in 89.2% (Spanish) and 86.5% (Chinese, Simplified) of 37 test-split emails (`eval/BENCHMARKS.md`). Left out on purpose: a voice or typed "translate" command, which would change `INTENT_SYSTEM` and need FR-05 re-measured |
 | 15 | `.vscode/settings.json` tracked | No longer tracked, and ignored by `.gitignore` (`git ls-files .vscode/` is empty) |
 | 16 | DR-01's 400 emails | Twelve more Work emails read and confirmed (2026-10-08); the 100-per-class merge wrote **400 rows, 300 real**. Run 13 measures the shipped configuration on it: 89.8% strict, 86.9% on real email. The 17 holdout rows the merge took were dropped from `holdout_unscored.csv` |
+| 17 | Attachment text in summaries (a decision) | **Decided yes, and connected** (2026-11-02). A summary reads the text of attached PDF, Word and text documents (up to 5 MB each); it joins the prompt and the grounding source, so the invoice total that is only in fixture 07's PDF comes back grounded. Images are named, never read; the classifier never sees an attachment; a cached summary downloads nothing; nothing is logged or stored. `tests/test_attachment_summary.py` (10 tests) |
 | 22 | New users could not sign up, and only one Gmail inbox could be read (peer feedback: "how will the app get emails from the user?") | **Built** (2026-10-12). *Create an account* on the login page, and *Connect Gmail* in Settings: Google's read-only consent in a popup, one encrypted token per user, Disconnect revokes it. A new account sees the demo inbox and is told so. 48 backend and 22 frontend tests; checked in a real browser up to Google's page |
 
 Found in the October review, not previously listed, and fixed:

@@ -443,6 +443,16 @@ export default function ReadingPane({
                   );
                 })}
               </ol>
+              {/* The summary also read these attachments (FR-01). Said here
+                  because a sentence taken from one finds no passage in the
+                  email itself, and would otherwise look unsupported. */}
+              {summary.attachments_read && summary.attachments_read.length > 0 && (
+                <p className="ai-note">
+                  Also read the attached {summary.attachments_read.join(", ")}. A sentence
+                  taken from an attachment shows "no source found", because the highlight
+                  covers the email itself.
+                </p>
+              )}
               {summary.action_items && summary.action_items.length > 0 && (
                 <div className="ai-actions-list">
                   <b>Action items</b>

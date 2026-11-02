@@ -89,6 +89,7 @@ _NOT_SENT = object()
 
 
 def _review(email_id, confidence=0.0, evidence=""):
+    """A Review result: the email is kept, but not filed under any category."""
     return {
         "id": email_id,
         "category": REVIEW_CATEGORY,
@@ -98,6 +99,7 @@ def _review(email_id, confidence=0.0, evidence=""):
 
 
 def _clamp(value):
+    """Confidence as a number from 0 to 1; anything unreadable counts as 0."""
     try:
         return max(0.0, min(1.0, float(value)))
     except (TypeError, ValueError):

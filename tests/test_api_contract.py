@@ -45,10 +45,11 @@ def test_summarise_returns_the_documented_shape(client, auth_headers, stub_llm):
     body = response.get_json()
     # `provenance` extends the spec's documented shape (section 3). It is an
     # approved scope addition, not drift: it carries the character offsets
-    # behind each summary sentence so the UI can show where it came from.
+    # behind each summary sentence so the UI can show where it came from. So
+    # is `attachments_read`: the attached documents the summary read (FR-01).
     assert set(body) == {
         "email_id", "summary", "action_items", "grounded", "ungrounded_flags",
-        "provenance",
+        "provenance", "attachments_read",
     }
     assert 2 <= len(body["summary"]) <= 3
 

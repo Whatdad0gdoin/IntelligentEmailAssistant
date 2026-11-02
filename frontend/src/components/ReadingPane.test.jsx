@@ -245,3 +245,33 @@ describe("SR-01: a browser without speech synthesis", () => {
     expect(api.summarise).toHaveBeenCalledWith(EMAIL.id);
   });
 });
+
+
+describe("FR-01: a summary that read an attachment says so", () => {
+  const SUMMARY = {
+    email_id: EMAIL.id,
+    summary: ["Northgate invoiced 5,335.00.", "Payment is due on 26 September."],
+    action_items: [], grounded: true, ungrounded_flags: [],
+  };
+
+  it("names the attachments it read", async () => {
+    const user = userEvent.setup();
+    api.summarise.mockResolvedValue({ ...SUMMARY, attachments_read: ["invoice-NG-2291.pdf"] });
+    renderPane();
+
+    await user.click(screen.getByRole("button", { name: /^summarise$/i }));
+
+    expect(await screen.findByText(/also read the attached invoice-NG-2291\.pdf/i)).toBeVisible();
+  });
+
+  it("says nothing about attachments when it read none", async () => {
+    const user = userEvent.setup();
+    api.summarise.mockResolvedValue({ ...SUMMARY, attachments_read: [] });
+    renderPane();
+
+    await user.click(screen.getByRole("button", { name: /^summarise$/i }));
+
+    expect(await screen.findByText("Northgate invoiced 5,335.00.")).toBeVisible();
+    expect(screen.queryByText(/also read the attached/i)).toBeNull();
+  });
+});

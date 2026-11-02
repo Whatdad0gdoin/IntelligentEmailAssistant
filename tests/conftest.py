@@ -48,7 +48,7 @@ PROMO_EMAIL_ID = "7e02f9aa-promo-004@techdeals-mail.example"
 def config(monkeypatch, tmp_path):
     monkeypatch.setenv("JWT_SECRET", "test-secret-not-used-in-production")
     # Point the delivery directory at an empty temp dir. The suite asserts on
-    # the six committed fixtures, and a message the developer sent to the local
+    # the seven committed fixtures, and a message the developer sent to the local
     # mail server must not change the mailbox the tests see.
     monkeypatch.setenv("EMAIL_INBOX_DIR", str(tmp_path / "mailbox"))
     monkeypatch.setenv(

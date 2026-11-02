@@ -1,0 +1,16 @@
+﻿n,email_id,tone
+1,enron-4cd84732b140,formal
+2,enron-0c46f4281958,casual
+3,enron-53c2b7317973,professional
+4,enron-e3b7f10eab55,formal
+5,enron-0e8a95e47904,formal
+6,enron-0c46f4281958,formal
+7,enron-53c2b7317973,casual
+8,enron-53c2b7317973,formal
+9,enron-e3b7f10eab55,professional
+10,enron-4cd84732b140,casual
+11,enron-0e8a95e47904,professional
+12,enron-0e8a95e47904,casual
+13,enron-0c46f4281958,professional
+14,enron-4cd84732b140,professional
+15,enron-e3b7f10eab55,casual

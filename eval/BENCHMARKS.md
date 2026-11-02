@@ -28,6 +28,7 @@ Measured with the shipped configuration (`gpt-4o-mini`, as set in
 | **FR-05** voice intent | dispatch accuracy, 60 held-out transcripts, three runs | **91.7–95.0%**: at or above ≥90% on every run; the 95% CIs still reach below it |
 | | wrong action dispatched | **0 of 180** attempts |
 | **NFR-01** latency | cold inbox load, 25 emails, 8 loads | **median 2.0 s, worst 2.7 s**: all under 5 s |
+| | p95 over 100 logged requests, every one a cache miss calling the model | **3.18 s** (2 of 100 over 5 s) |
 | **FR-07** translation | numbers, links and addresses preserved, 37 test-split emails each | **89.2%** Spanish, **86.5%** Chinese (Simplified): figures only, not meaning |
 
 The FR-02 figures are **run 13**, measured on the 400-email set, and recompute
@@ -845,10 +846,45 @@ the target on 3 of 9 loads; it is now 25.
 - **What is not measured**: the browser, the network between browser and
   server, and the mail source. A fixture directory stands in for Gmail, whose
   fetch adds its own time before classification starts.
-- **Eight loads are not a p95.** `GET /api/metrics` reports the p95 the spec
-  asks for over the last 100 requests, and a session's requests are mostly
-  cached reloads, so that figure will sit far below these. The cold load is
-  quoted instead because it is the request a user waits for.
+- **Eight loads are not a p95.** The RTM's own method is measured next.
+
+### p95 over 100 logged requests (the RTM's method)
+
+```bash
+python -m eval.session_p95 --out eval/data/nfr01/session_p95_<date>.json
+```
+
+The RTM verifies NFR-01 as "p95 latency under 5 s across 100 logged
+requests". The app keeps that log itself: `middleware/timing.py` records every
+request into a ring of 100, and `GET /api/metrics` reports the nearest-rank
+p95 over it. The script fills the ring with 100 requests through the real
+Flask app and the real model, on the same 25-email test-split mailbox as the
+cold load, and reads the app's own report.
+
+**Every one of the 100 calls the model, and every cache is cleared before
+each**, so none is a cached reload: the pessimistic version. A real session is
+mostly reloads of milliseconds, which would pull the p95 down. The mix, in a
+fixed shuffled order: 4 cold inbox loads (25 emails classified in each), 40
+summaries, 24 drafts (6 per tone), 16 translations (Spanish and Chinese,
+Simplified) and 16 typed commands. Measured 2026-11-02, one laptop, home
+connection; every request is in `eval/data/nfr01/session_p95_2026-11-02.json`.
+
+| Route | n | p50 | p95 | Max |
+|---|---|---|---|---|
+| **All 100** | **100** | **1.47 s** | **3.18 s** | 15.05 s |
+| `GET /api/inbox` (cold) | 4 | 1.48 s | 1.80 s | 1.80 s |
+| `POST /api/summarise` | 40 | 1.74 s | 4.73 s | 15.05 s |
+| `POST /api/draft` | 24 | 1.16 s | 1.61 s | 1.91 s |
+| `POST /api/translate` | 16 | 1.91 s | 4.82 s | 4.82 s |
+| `POST /api/voice/intent` | 16 | 0.86 s | 2.38 s | 2.38 s |
+
+- **p95 3.18 s: the RTM's criterion is met**, with no failed request.
+- **2 of 100 took longer than 5 s.** The 15.05 s one is the first request of
+  the run, which also opens the connections the rest reuse (the cold load
+  shows the same first-request effect); the other is a summary at 5.07 s.
+  Summaries and translations have the longest tail, because each can make a
+  second model call: a summary retries once when its output is out of shape,
+  and long text is translated in pieces.
 
 ---
 

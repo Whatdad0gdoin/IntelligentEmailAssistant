@@ -13,6 +13,7 @@ There is deliberately no send route. See the module note on draft() below.
 from flask import Blueprint, jsonify
 
 from backend.adapters.email_source import get_email_source
+from backend.orchestrator.attachments import read_attachments
 from backend.orchestrator.classify import classify_emails
 from backend.orchestrator.draft import draft_reply
 from backend.orchestrator.schemas import DEFAULT_TONE, LANGUAGES, TONES
@@ -57,6 +58,11 @@ def summarise():
     body = json_body()
     email_id = required_string(body, "email_id", max_length=256)
     message = _load_email(email_id)
+    source = get_email_source(config(), current_user())
+
+    def fetch(index):
+        content = source.get_attachment(message.id, index)
+        return content.data if content else None
 
     return jsonify(
         summarise_email(
@@ -64,6 +70,9 @@ def summarise():
             config(),
             session_key=session_key(),
             user=current_user(),
+            # Documents attached to the email are read for its summary, on a
+            # cache miss only (orchestrator/attachments.py says what is read).
+            read_attachments=lambda: read_attachments(message.attachments, fetch),
         )
     ), 200
 
