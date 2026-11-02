@@ -35,6 +35,12 @@ _SECRETS = {
 }
 _NEVER = re.compile(r"(^|/)\.env$|(^|/)secrets/(?!README\.txt$)|\.db$|(^|/)node_modules/|(^|/)mailbox/")
 
+# In the repository, but not needed for the unit: the team's review sheets and
+# their hidden answer keys (working files, rebuilt by eval/human_checks.py;
+# only their *_result.json scores are evidence), the team's internal to-do list
+# (FIXES.md), and this script itself.
+_NOT_FOR_THE_UNIT = re.compile(r"^eval/data/human_checks/(?!.*_result\.json$)|^tools/make_submission_zip\.py$|^FIXES\.md$")
+
 
 def project_files():
     """Tracked files plus untracked ones git does not ignore."""
@@ -52,7 +58,7 @@ def main():
                                                       "DS25_MailKit_source_code.zip"))
     args = parser.parse_args()
 
-    files = project_files()
+    files = [p for p in project_files() if not _NOT_FOR_THE_UNIT.search(p)]
     blocked = [p for p in files if _NEVER.search(p)]
     leaks = []
     for path in files:

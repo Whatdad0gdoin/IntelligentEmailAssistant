@@ -22,7 +22,7 @@ punctuation, lowercase, filler words).
 With no options it measures exactly the 30 + 8 it always has, so the
 documented command still produces the number quoted against it. --graded and
 --probes exist because the 30 are no longer a clean test of a prompt fixed
-after reading their failures (FIXES.md item 5): a held-out set has to be
+after reading their failures (eval/BENCHMARKS.md, FR-05): a held-out set has to be
 measured by the same code, or the two numbers are not comparable.
 
 `unknown` is scored differently in the two sets, deliberately. On the graded 30
@@ -88,8 +88,8 @@ def prompt_fingerprint():
 
     Every figure this harness prints depends on the prompt as much as on the
     model, and a saved result that does not say which prompt produced it is
-    how FR-02 ended up with a headline nobody can tie to a file (FIXES.md
-    item 7). Twelve digits is plenty to tell two prompts apart and short
+    how FR-02 ended up with a headline nobody can tie to a file (run 9's
+    file was overwritten by run 10: eval/BENCHMARKS.md). Twelve digits is plenty to tell two prompts apart and short
     enough to quote.
     """
     return hashlib.sha256(prompts.INTENT_SYSTEM.encode("utf-8")).hexdigest()[:12]
@@ -155,7 +155,7 @@ def out_path_problem(path):
 
     Checked before the first API call, so a bad path costs nothing. An existing
     file is refused rather than replaced: the per-row predictions behind the
-    FR-02 headline were lost by being overwritten (FIXES.md item 7), and a
+    FR-02 headline were once lost by being overwritten (eval/BENCHMARKS.md), and a
     measurement worth saving is worth a new name.
     """
     if os.path.exists(path):

@@ -105,7 +105,7 @@ describe("the reading pane", () => {
     // A link would need the token in its URL; the file is fetched instead.
     expect(within(list).queryAllByRole("link")).toHaveLength(0);
     expect(screen.getByText(/fetched only when you open or save it/i)).toBeInTheDocument();
-    expect(screen.getByText(/never sent to the AI/i)).toBeInTheDocument();
+    expect(screen.getByText(/a summary reads attached documents, never images/i)).toBeInTheDocument();
   });
 
   it("offers Save for every attachment and View only for one the page can show", async () => {

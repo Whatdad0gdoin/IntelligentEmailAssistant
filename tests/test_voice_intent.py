@@ -192,7 +192,7 @@ def test_no_duplicate_transcripts():
 #
 # Written and frozen before INTENT_SYSTEM was rewritten to fix the misses on
 # the 30 above, so the rewrite can be measured on transcripts it was not tuned
-# against (FIXES.md item 5, route b). These tests hold the properties that
+# against (eval/BENCHMARKS.md, FR-05). These tests hold the properties that
 # claim depends on; they say nothing about how realistic the rows are.
 
 
@@ -270,7 +270,7 @@ def _must_not_run():
 
 def test_out_never_replaces_a_saved_result(tmp_path, monkeypatch, stub_llm):
     """Refused before the settings file or the model is touched, so a reused
-    name costs nothing and a saved measurement survives (FIXES.md item 7)."""
+    name costs nothing and a saved measurement survives (eval/BENCHMARKS.md)."""
     saved = tmp_path / "saved.csv"
     saved.write_text("set,transcript\ngraded,keep me\n", encoding="utf-8")
     monkeypatch.setattr(intent_harness, "load_settings_file", _must_not_run)

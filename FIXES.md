@@ -8,7 +8,7 @@ Every figure here was measured, not estimated. Where something is a judgement
 call rather than a task, it says so.
 
 Status at time of writing (2026-11-02): **829 backend tests passing (2 skipped,
-8 expected failures), 438 frontend tests passing.**
+8 expected failures), 413 frontend tests passing.**
 
 Item numbers are kept from earlier versions of this file, because code and other
 documents cite them; new items continue from 16.

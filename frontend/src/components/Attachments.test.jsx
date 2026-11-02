@@ -105,7 +105,7 @@ describe("the note about where attachments go", () => {
     renderList([PDF]);
 
     expect(note()).toHaveTextContent(
-      "An attachment is fetched only when you open or save it, and is never sent to the AI."
+      "An attachment is fetched only when you open or save it, or summarise its email: a summary reads attached documents, never images."
     );
     expect(infoButton()).toHaveAttribute("aria-expanded", "true");
   });

@@ -73,7 +73,7 @@ over the same cell for FR-04 and FR-05, so text extraction reads both
   generated, because no real corpus supplies student mail. That is why every
   FR-02 figure is also quoted on real email alone.
 - **The Gmail source has never touched real Gmail.** Every test runs against a
-  fake service; connecting an account needs a person (`FIXES.md` item 1).
+  fake service; connecting an account needs a person with a Google account.
 - **Attachments can be opened by the user, and are never read by the AI.**
   Names, types and sizes reach the inbox, and View or Save fetches one
   attachment for the person signed in. Content never reaches a summary or a
@@ -406,7 +406,7 @@ npm run dev                        # http://localhost:5173
 
 ```bash
 python -m pytest tests/ -q     # 829 passed, 2 skipped, 8 xfailed
-cd frontend && npx vitest run  # 438 passed, in 26 files
+cd frontend && npx vitest run  # 413 passed, in 25 files
 ```
 
 The two skips are deliberate: they are the FR-05 accuracy criterion, on the
@@ -492,7 +492,8 @@ degraded path is what a test gets unless it asks for more. What it covers:
 **Not covered:** layout and real speech. jsdom computes no layout, and its
 browser has no speech engine, so how the inbox fills the window and how a
 spoken command is heard are checked by hand in a real browser. The latest such
-check, and what it found, is item 3 of `FIXES.md`.
+check was in headless Edge and Chrome (Chromium) on 7 and 9 October 2026;
+Firefox and Safari have not been checked.
 
 ## Evaluation
 

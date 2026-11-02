@@ -160,7 +160,7 @@ Thinking tokens are reported separately by OpenAI and Google; Anthropic bills th
 
 ## FR-05 voice intent (30 graded transcripts + 8 out-of-scope probes)
 
-Same transcripts and scoring as `eval/intent_harness.py`: on the graded 30 an `unknown` is a miss; on the probes it is the only correct answer. The prompt is the shipped INTENT_SYSTEM, unchanged; FIXES.md item 5's prompt gap affects every model.
+Same transcripts and scoring as `eval/intent_harness.py`: on the graded 30 an `unknown` is a miss; on the probes it is the only correct answer. The prompt is the shipped INTENT_SYSTEM of the time, unchanged; its prompt gap (fixed later: eval/BENCHMARKS.md, FR-05) affects every model.
 
 | Model | Graded accuracy (95% CI) | Wrong dispatches | Declined | Probes correct | p50 / p95 s per call | USD per command |
 |---|---|---|---|---|---|---|

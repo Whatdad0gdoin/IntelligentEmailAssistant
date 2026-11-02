@@ -6,9 +6,10 @@
  * ten attachments costs nothing until the user asks for one.
  *
  * View and Save each fetch one attachment, by its position in that list, from
- * GET /api/inbox/:id/attachments/:index. Attachments are never sent to the AI:
- * nothing here calls a summarise, draft or translate route, and the backend
- * keeps attachment content out of every prompt.
+ * GET /api/inbox/:id/attachments/:index. Nothing here sends an attachment to
+ * the AI. The one place one reaches it is a summary of its email: the backend
+ * reads the text of attached documents (never images) for that summary
+ * (orchestrator/attachments.py), and the reading pane names what it read.
  *
  * Three rules shape the code below.
  *
@@ -31,8 +32,8 @@
  * amount to no sandbox while looking like one. What contains the frame is that
  * only a Blob the server labelled application/pdf is ever put in it.
  *
- * The sentence saying all this to the user (fetched only when asked for, never
- * sent to the AI) is a small popup beside the list. It is open until it is
+ * The sentence saying all this to the user (fetched only when asked for, and
+ * read by a summary only as document text) is a small popup beside the list. It is open until it is
  * closed, closing it is remembered, and the info button brings it back.
  */
 
@@ -287,7 +288,7 @@ export default function Attachments({ emailId, attachments }) {
           role="note"
           onKeyDown={(event) => { if (event.key === "Escape") closeNote(); }}
         >
-          <p>An attachment is fetched only when you open or save it, and is never sent to the AI.</p>
+          <p>An attachment is fetched only when you open or save it, or summarise its email: a summary reads attached documents, never images.</p>
           <button type="button" className="ai-close" onClick={closeNote} aria-label="Close this note">
             <X size={14} aria-hidden="true" />
           </button>

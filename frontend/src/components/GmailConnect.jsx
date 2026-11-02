@@ -187,7 +187,7 @@ export default function GmailConnect({ onMailboxChanged }) {
       <p className="setting-footnote">
         Read-only: Google lets MailKit view your email, never send, delete or change it, and you
         can remove access here or in your Google account. Each email's text is sent to OpenAI to
-        sort and summarise it, and is not stored. While MailKit is in testing, Google only lets
+        sort and summarise it (a summary also reads attached documents), and none of it is stored. While MailKit is in testing, Google only lets
         addresses the team has added as test users connect, and ends each connection after 7
         days.
       </p>
